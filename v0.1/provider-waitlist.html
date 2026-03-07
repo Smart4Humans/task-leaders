@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Provider Waitlist — Join Early</title>
+  <meta name="description" content="Join the TaskLeaders provider waitlist. Get early access to the leaderboard marketplace." />
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --purple: #7b2cbf;
+      --dark: #0a0a1a;
+      --success: #4ade80;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 32px;
+    }
+    .back:hover { color: #fff; }
+    h1 {
+      font-size: 36px;
+      margin: 0 0 12px 0;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      font-size: 18px;
+      opacity: 0.8;
+      margin: 0 0 40px 0;
+      line-height: 1.5;
+    }
+    .benefits {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 40px;
+    }
+    .benefits h3 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+    }
+    .benefits ul {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 14px;
+      line-height: 1.8;
+      opacity: 0.9;
+    }
+    .form-group {
+      margin-bottom: 24px;
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 16px;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--cyan);
+    }
+    input::placeholder { color: rgba(255,255,255,0.4); }
+    select option { background: var(--dark); }
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .checkbox-item:hover { background: rgba(255,255,255,0.1); }
+    .checkbox-item input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+    .checkbox-item span { font-size: 14px; }
+    .btn {
+      width: 100%;
+      padding: 18px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      background: var(--cyan);
+      color: #000;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,212,255,0.3);
+    }
+    .success {
+      display: none;
+      text-align: center;
+      padding: 60px 24px;
+    }
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--success);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin: 0 auto 24px;
+    }
+    .success h2 {
+      font-size: 28px;
+      margin: 0 0 12px 0;
+    }
+    .success p {
+      opacity: 0.8;
+      margin: 0;
+      line-height: 1.6;
+    }
+    footer {
+      text-align: center;
+      padding: 40px 0 0 0;
+      opacity: 0.5;
+      font-size: 12px;
+    }
+    @media (max-width: 480px) {
+      .checkbox-group { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="form-section">
+      <a href="index.html" class="back">← Back to Task Leaders</a>
+      
+      <h1>Join the Waitlist</h1>
+      <p class="subtitle">Be among the first providers. Early members get 50% off their first 3 months.</p>
+      
+      <div class="benefits">
+        <h3>✨ Why join early?</h3>
+        <ul>
+          <li>Founding Provider badge (permanent)</li>
+          <li>50% off for 3 months ($15-75/mo instead of $29-149)</li>
+          <li>Help shape the platform</li>
+          <li>First access to customer leads</li>
+          <li>No commitment — cancel anytime</li>
+        </ul>
+      </div>
+
+      <form id="waitlist-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" name="name" placeholder="Mike Johnson" required />
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number (WhatsApp)</label>
+          <input type="tel" id="phone" name="phone" placeholder="+1 (604) 555-0123" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="mike@example.com" required />
+        </div>
+
+        <div class="form-group">
+          <label>What services do you provide? (Check all that apply)</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="handyman" />
+              <span>🔧 Handyman</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="electrical" />
+              <span>⚡ Electrical</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="plumbing" />
+              <span>🚿 Plumbing</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="painting" />
+              <span>🎨 Painting</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="cleaning" />
+              <span>🧹 Cleaning</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="landscaping" />
+              <span>🌿 Landscaping</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="hvac" />
+              <span>❄️ HVAC</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="services" value="locksmith" />
+              <span>🔐 Locksmith</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="experience">Years of Experience</label>
+          <select id="experience" name="experience" required>
+            <option value="">Select...</option>
+            <option value="0-2">0-2 years</option>
+            <option value="3-5">3-5 years</option>
+            <option value="6-10">6-10 years</option>
+            <option value="10+">10+ years</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="jobs">How many jobs do you typically complete per month?</label>
+          <select id="jobs" name="jobs_per_month" required>
+            <option value="">Select...</option>
+            <option value="1-5">1-5 jobs</option>
+            <option value="6-15">6-15 jobs</option>
+            <option value="16-30">16-30 jobs</option>
+            <option value="30+">30+ jobs</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="why">Why do you want to join TaskLeaders? (Optional)</label>
+          <textarea id="why" name="why" rows="3" placeholder="Tell us about your business and what you're looking for..."></textarea>
+        </div>
+
+        <button type="submit" class="btn">Join the Waitlist</button>
+      </form>
+
+      <footer>
+        <p>Questions? Email hello@example.com</p>
+      </footer>
+    </div>
+
+    <div id="success-section" class="success">
+      <div class="success-icon">✓</div>
+      <h2>You're on the list!</h2>
+      <p>Thanks for joining the TaskLeaders waitlist. We'll be in touch soon with early access details and your founding provider discount.</p>
+      <p style="margin-top: 24px;"><a href="index.html" style="color: var(--cyan);">← Back to homepage</a></p>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('waitlist-form');
+    const formSection = document.getElementById('form-section');
+    const successSection = document.getElementById('success-section');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // TODO: Replace YOUR_FORM_ID with actual Formspree endpoint
+      // For now, just show success state
+      formSection.style.display = 'none';
+      successSection.style.display = 'block';
+      
+      // When ready, uncomment this:
+      /*
+      const formData = new FormData(form);
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (response.ok) {
+        formSection.style.display = 'none';
+        successSection.style.display = 'block';
+      }
+      */
+    });
+  </script>
+</body>
+</html>

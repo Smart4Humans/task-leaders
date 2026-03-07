@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>See Who's Available. Ranked by Speed.</title>
+  <meta name="description" content="Find service providers ranked by real response time. See who's actually available right now." />
+  <style>
+    :root {
+      --gold: #FFD700;
+      --silver: #C0C0C0;
+      --bronze: #CD7F32;
+      --cyan: #00d4ff;
+      --purple: #7b2cbf;
+      --dark: #0a0a1a;
+      --card: rgba(255,255,255,0.05);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+    header {
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .tagline {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-left: 12px;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      margin-left: 24px;
+      font-size: 14px;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    nav a:hover { opacity: 1; }
+    .hero {
+      text-align: center;
+      padding: 80px 24px 60px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .hero h1 {
+      font-size: 48px;
+      margin: 0 0 16px 0;
+      line-height: 1.1;
+    }
+    .hero h1 span {
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: 20px;
+      opacity: 0.8;
+      margin: 0 0 32px 0;
+    }
+    .cta-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary {
+      background: var(--cyan);
+      color: #000;
+      border: none;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,212,255,0.3);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .demo-leaderboard {
+      max-width: 900px;
+      margin: 0 auto 80px;
+      padding: 0 24px;
+    }
+    .demo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .demo-header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+    .live-badge {
+      background: rgba(74,222,128,0.2);
+      color: #4ade80;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .provider {
+      display: grid;
+      grid-template-columns: 50px 1fr 100px 80px 60px;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 12px;
+      transition: transform 0.2s;
+    }
+    .provider:hover {
+      transform: translateX(4px);
+      border-color: rgba(0,212,255,0.3);
+    }
+    .rank {
+      font-size: 24px;
+      font-weight: 800;
+      text-align: center;
+    }
+    .rank.gold { color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+    .rank.silver { color: var(--silver); }
+    .rank.bronze { color: var(--bronze); }
+    .info { display: flex; flex-direction: column; gap: 4px; }
+    .name { font-size: 16px; font-weight: 600; }
+    .trade { font-size: 12px; opacity: 0.6; }
+    .response { text-align: center; }
+    .response-time { font-size: 20px; font-weight: 700; color: var(--cyan); }
+    .response-label { font-size: 11px; opacity: 0.5; }
+    .rating { text-align: center; }
+    .stars { color: var(--gold); font-size: 14px; }
+    .status { text-align: center; }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
+    }
+    .how-it-works {
+      background: rgba(255,255,255,0.03);
+      padding: 80px 24px;
+    }
+    .how-it-works h2 {
+      text-align: center;
+      font-size: 32px;
+      margin: 0 0 48px 0;
+    }
+    .steps {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+    .step {
+      text-align: center;
+    }
+    .step-number {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 auto 16px;
+    }
+    .step h3 { margin: 0 0 8px 0; font-size: 18px; }
+    .step p { margin: 0; opacity: 0.7; font-size: 14px; line-height: 1.5; }
+    .tiers {
+      padding: 80px 24px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .tiers h2 {
+      text-align: center;
+      font-size: 32px;
+      margin: 0 0 16px 0;
+    }
+    .tiers > p {
+      text-align: center;
+      opacity: 0.7;
+      margin: 0 0 48px 0;
+    }
+    .tier-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .tier-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.08);
+      text-align: center;
+    }
+    .tier-card.featured {
+      border-color: var(--cyan);
+      position: relative;
+    }
+    .tier-card.featured::before {
+      content: "MOST POPULAR";
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--cyan);
+      color: #000;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+    .tier-name { font-size: 14px; opacity: 0.7; margin-bottom: 8px; }
+    .tier-price { font-size: 36px; font-weight: 800; margin-bottom: 4px; }
+    .tier-price span { font-size: 14px; opacity: 0.7; font-weight: 400; }
+    .tier-features {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+      text-align: left;
+      font-size: 14px;
+    }
+    .tier-features li {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .tier-features li:last-child { border-bottom: none; }
+    footer {
+      text-align: center;
+      padding: 40px 24px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      opacity: 0.6;
+      font-size: 14px;
+    }
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 32px; }
+      .steps { grid-template-columns: 1fr; }
+      .tier-cards { grid-template-columns: 1fr; }
+      .provider { grid-template-columns: 40px 1fr 80px; }
+      .rating, .status { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <span class="logo">Task Leaders</span>
+      <span class="tagline">Vancouver</span>
+    </div>
+    <nav>
+      <a href="#how-it-works">How it Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="provider-waitlist.html">Provider Waitlist</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>See who's available.<br><span>Ranked by speed.</span></h1>
+    <p>Find service providers who actually respond. Real-time WhatsApp response times. Live availability. No more ghosting.</p>
+    <div class="cta-group">
+      <a href="#demo" class="btn btn-primary">View Live Leaderboard</a>
+      <a href="provider-waitlist.html" class="btn btn-secondary">Provider Waitlist</a>
+    </div>
+  </section>
+
+  <section class="demo-leaderboard" id="demo">
+    <div class="demo-header">
+      <h2>🔥 Fastest Responders Right Now</h2>
+      <span class="live-badge">● LIVE</span>
+    </div>
+    <div id="leaderboard">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <section class="how-it-works" id="how-it-works">
+    <h2>How TaskLeaders Works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Post Your Job</h3>
+        <p>Tell us what you need and when. One form, 30 seconds.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>See Rankings</h3>
+        <p>Providers ranked by real response time. Pick your speed.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Connect Direct</h3>
+        <p>WhatsApp them instantly. No middleman. No waiting.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="tiers" id="pricing">
+    <h2>Provider Plans</h2>
+    <p>Join the leaderboard. Get found by customers ready to hire.</p>
+    <div class="tier-cards">
+      <div class="tier-card">
+        <div class="tier-name">ROOKIE</div>
+        <div class="tier-price">$29<span>/mo</span></div>
+        <ul class="tier-features">
+          <li>✓ 1 category</li>
+          <li>✓ Basic listing</li>
+          <li>✓ Response tracking</li>
+          <li>✓ Monthly stats email</li>
+        </ul>
+      </div>
+      <div class="tier-card featured">
+        <div class="tier-name">HUSTLER</div>
+        <div class="tier-price">$49<span>/mo</span></div>
+        <ul class="tier-features">
+          <li>✓ 3 categories</li>
+          <li>✓ Featured badge</li>
+          <li>✓ Analytics dashboard</li>
+          <li>✓ 1 boost/month</li>
+        </ul>
+      </div>
+      <div class="tier-card">
+        <div class="tier-name">BOSS</div>
+        <div class="tier-price">$79<span>/mo</span></div>
+        <ul class="tier-features">
+          <li>✓ Unlimited categories</li>
+          <li>✓ Priority placement</li>
+          <li>✓ 3 boosts/month</li>
+          <li>✓ Review alerts</li>
+        </ul>
+      </div>
+      <div class="tier-card">
+        <div class="tier-name">LEGEND</div>
+        <div class="tier-price">$149<span>/mo</span></div>
+        <ul class="tier-features">
+          <li>✓ Everything in Boss</li>
+          <li>✓ Personal account manager</li>
+          <li>✓ Weekly coaching call</li>
+          <li>✓ Exclusive leads</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 — Coming soon to Vancouver.</p>
+    <p style="margin-top: 8px; font-size: 12px;">Providers: <a href="provider-waitlist.html" style="color: var(--cyan);">Join the waitlist</a></p>
+  </footer>
+
+  <script>
+    // Demo data - will be replaced with real API
+    const providers = [
+      { name: "LockPro", trade: "Locksmith", response_time: 1.2, rating: 4.9, jobs: 62, status: "online" },
+      { name: "QuickFix Electric", trade: "Electrician", response_time: 1.8, rating: 4.8, jobs: 28, status: "busy" },
+      { name: "Mike's Handyman", trade: "Handyman", response_time: 2.3, rating: 4.9, jobs: 47, status: "online" },
+      { name: "Green Gardens", trade: "Landscaper", response_time: 3.7, rating: 4.8, jobs: 15, status: "online" },
+      { name: "Sarah's Plumbing", trade: "Plumber", response_time: 5.1, rating: 4.7, jobs: 32, status: "online" },
+    ];
+
+    function getRankClass(rank) {
+      if (rank === 1) return 'gold';
+      if (rank === 2) return 'silver';
+      if (rank === 3) return 'bronze';
+      return '';
+    }
+
+    function renderLeaderboard() {
+      const container = document.getElementById('leaderboard');
+      const sorted = [...providers].sort((a, b) => a.response_time - b.response_time);
+      
+      container.innerHTML = sorted.map((p, i) => `
+        <div class="provider">
+          <div class="rank ${getRankClass(i + 1)}">${i + 1}</div>
+          <div class="info">
+            <div class="name">${p.name}</div>
+            <div class="trade">${p.trade} • ${p.jobs} jobs</div>
+          </div>
+          <div class="response">
+            <div class="response-time">${p.response_time.toFixed(1)}m</div>
+            <div class="response-label">avg response</div>
+          </div>
+          <div class="rating">
+            <div class="stars">${'★'.repeat(Math.floor(p.rating))}${'☆'.repeat(5-Math.floor(p.rating))}</div>
+          </div>
+          <div class="status">
+            <span class="status-dot"></span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    renderLeaderboard();
+  </script>
+</body>
+</html>
