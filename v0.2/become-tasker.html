@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Become a Tasker — Task Leaders</title>
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --purple: #7b2cbf;
+      --dark: #0a0a1a;
+      --success: #4ade80;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 32px;
+    }
+    .back:hover { color: #fff; }
+    h1 {
+      font-size: 36px;
+      margin: 0 0 12px 0;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      font-size: 18px;
+      opacity: 0.8;
+      margin: 0 0 40px 0;
+      line-height: 1.5;
+    }
+    .founding-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.1));
+      border: 1px solid rgba(255,215,0,0.3);
+      padding: 12px 20px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 32px;
+    }
+    .benefits {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 40px;
+    }
+    .benefits h3 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+    }
+    .benefits ul {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 15px;
+      line-height: 1.8;
+      opacity: 0.9;
+    }
+    .benefits li {
+      margin-bottom: 8px;
+    }
+    .highlight {
+      color: var(--success);
+      font-weight: 600;
+    }
+    .form-group {
+      margin-bottom: 24px;
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 16px;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--cyan);
+    }
+    input::placeholder { color: rgba(255,255,255,0.4); }
+    select option { background: var(--dark); }
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .checkbox-item:hover { background: rgba(255,255,255,0.1); }
+    .checkbox-item input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+    .checkbox-item span { font-size: 14px; }
+    .btn {
+      width: 100%;
+      padding: 18px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      background: var(--cyan);
+      color: #000;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,212,255,0.3);
+    }
+    .next-steps {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 32px;
+    }
+    .next-steps h3 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+    }
+    .next-steps ol {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 14px;
+      line-height: 1.8;
+      opacity: 0.9;
+    }
+    .next-steps li {
+      margin-bottom: 8px;
+    }
+    footer {
+      text-align: center;
+      padding: 40px 0 0 0;
+      opacity: 0.5;
+      font-size: 12px;
+    }
+    @media (max-width: 480px) {
+      .checkbox-group { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="homepage.html" class="back">← Back to Task Leaders</a>
+    
+    <div class="founding-badge">👑 Limited: Founding Provider Program</div>
+    
+    <h1>Become a Tasker</h1>
+    <p class="subtitle">Join Vancouver's first ranked marketplace for service providers. Free forever for your first 5 customers.</p>
+    
+    <div class="benefits">
+      <h3>✨ What you get as a Founding Provider</h3>
+      <ul>
+        <li><span class="highlight">5 free customers</span> — no credit card, no catch</li>
+        <li><span class="highlight">Permanent profile</span> — stays live even if you never pay</li>
+        <li><span class="highlight">Founding badge</span> — forever, even if you unsubscribe</li>
+        <li><span class="highlight">$19/mo locked rate</span> — vs $29 regular (if you upgrade)</li>
+        <li><span class="highlight">100% of what you earn</span> — we never take a cut</li>
+        <li>Personal onboarding call with the founder</li>
+      </ul>
+    </div>
+
+    <form id="signup-form">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" placeholder="Mike Johnson" required />
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number (WhatsApp)</label>
+        <input type="tel" id="phone" name="phone" placeholder="+1 (604) 555-0123" required />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="mike@example.com" required />
+      </div>
+
+      <div class="form-group">
+        <label>What services do you provide? (Check all that apply)</label>
+        <div class="checkbox-group">
+          <label class="checkbox-item">
+            <input type="checkbox" name="services" value="handyman" />
+            <span>🔧 Handyman</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="services" value="electrical" />
+            <span>⚡ Electrical</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="services" value="plumbing" />
+            <span>🚿 Plumbing</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="services" value="painting" />
+            <span>🎨 Painting</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="services" value="cleaning" />
+            <span>🧹 Cleaning</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="services" value="landscaping" />
+            <span>🌿 Landscaping</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="services" value="hvac" />
+            <span>❄️ HVAC</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" name="services" value="locksmith" />
+            <span>🔐 Locksmith</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="experience">Years of Experience</label>
+        <select id="experience" name="experience" required>
+          <option value="">Select...</option>
+          <option value="0-2">0-2 years</option>
+          <option value="3-5">3-5 years</option>
+          <option value="6-10">6-10 years</option>
+          <option value="10+">10+ years</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="why">Tell us about your work (Optional)</label>
+        <textarea id="why" name="why" rows="3" placeholder="What makes you great at what you do?"></textarea>
+      </div>
+
+      <button type="submit" class="btn">Apply to Become a Tasker</button>
+    </form>
+
+    <div class="next-steps">
+      <h3>📋 What happens next</h3>
+      <ol>
+        <li><strong>Apply</strong> — Fill out this form (2 minutes)</li>
+        <li><strong>Video call</strong> — Quick WhatsApp video chat with Todd (founder)</li>
+        <li><strong>Approved</strong> — Get your profile live within 24 hours</li>
+        <li><strong>Start winning</strong> — Get found by customers, keep 100% of earnings</li>
+      </ol>
+    </div>
+
+    <footer>
+      <p>Questions? WhatsApp Todd: +1 (604) 555-0100</p>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById('signup-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Thanks for applying! Todd will reach out within 24 hours to schedule a quick video call.');
+    });
+  </script>
+</body>
+</html>
