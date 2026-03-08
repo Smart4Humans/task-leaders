@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign Up — Task Leaders</title>
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --purple: #7b2cbf;
+      --dark: #0a0a1a;
+      --success: #4ade80;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+    .logo {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      text-align: center;
+      opacity: 0.7;
+      margin-bottom: 40px;
+      font-size: 14px;
+    }
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+    }
+    .step-dot.active { background: var(--cyan); }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      opacity: 0.9;
+    }
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 16px;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--cyan);
+    }
+    input::placeholder { color: rgba(255,255,255,0.4); }
+    .hint {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-top: 6px;
+    }
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      background: var(--cyan);
+      color: #000;
+      margin-top: 8px;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .divider {
+      text-align: center;
+      margin: 24px 0;
+      position: relative;
+    }
+    .divider::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(255,255,255,0.2);
+    }
+    .divider span {
+      background: var(--dark);
+      padding: 0 16px;
+      position: relative;
+      font-size: 13px;
+      opacity: 0.6;
+    }
+    .google-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .google-btn:hover { background: rgba(255,255,255,0.1); }
+    .terms {
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.6;
+      margin-top: 24px;
+      line-height: 1.5;
+    }
+    .terms a { color: var(--cyan); }
+    
+    /* Step 2: Phone Verification */
+    .phone-display {
+      text-align: center;
+      padding: 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    .phone-number {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .change-link {
+      font-size: 13px;
+      color: var(--cyan);
+      cursor: pointer;
+    }
+    .code-inputs {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .code-input {
+      width: 50px;
+      height: 60px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+    }
+    .code-input:focus {
+      outline: none;
+      border-color: var(--cyan);
+      background: rgba(0,212,255,0.1);
+    }
+    .resend {
+      text-align: center;
+      font-size: 14px;
+    }
+    .resend a { color: var(--cyan); cursor: pointer; }
+    
+    /* Success */
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--success);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin: 0 auto 24px;
+    }
+    .success h2 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    .success p {
+      text-align: center;
+      opacity: 0.8;
+      line-height: 1.6;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- STEP 1: Email/Password -->
+    <div id="step1">
+      <div class="logo">Task Leaders</div>
+      <div class="subtitle">Create your account to find Taskers</div>
+      
+      <div class="step-indicator">
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+      </div>
+
+      <form id="signup-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="you@example.com" required />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Min 8 characters" required minlength="8" />
+          <div class="hint">Must include uppercase, lowercase, and number</div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number (for verification)</label>
+          <input type="tel" id="phone" placeholder="+1 (604) 555-0123" required />
+          <div class="hint">We'll send a 6-digit code to verify</div>
+        </div>
+
+        <button type="submit" class="btn">Continue</button>
+      </form>
+
+      <div class="divider"><span>or</span></div>
+
+      <button class="google-btn">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#fff" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84a3.7 3.7 0 0 1-1.6 2.43v2h2.6c1.5-1.38 2.36-3.4 2.36-5.78z"/><path fill="#fff" d="M9 18c2.16 0 3.97-.72 5.3-1.94l-2.6-2c-.72.48-1.64.77-2.7.77-2.08 0-3.84-1.4-4.47-3.28H1.9v2.06A8 8 0 0 0 9 18z"/><path fill="#fff" d="M4.53 10.55a4.77 4.77 0 0 1 0-3.1V5.38H1.9a8 8 0 0 0 0 7.24l2.63-2.07z"/><path fill="#fff" d="M9 3.58c1.17 0 2.23.4 3.05 1.2l2.3-2.3A8.02 8.02 0 0 0 1.9 5.38l2.63 2.07C5.16 5.57 6.92 3.58 9 3.58z"/></svg>
+        Continue with Google
+      </button>
+
+      <p class="terms">
+        By signing up, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.<br>
+        Already have an account? <a href="#">Log in</a>
+      </p>
+    </div>
+
+    <!-- STEP 2: Phone Verification -->
+    <div id="step2" class="hidden">
+      <div class="logo">Task Leaders</div>
+      <div class="subtitle">Verify your phone number</div>
+      
+      <div class="step-indicator">
+        <div class="step-dot"></div>
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+      </div>
+
+      <div class="phone-display">
+        <div class="phone-number" id="display-phone">+1 (604) 555-0123</div>
+        <span class="change-link" onclick="showStep(1)">Change</span>
+      </div>
+
+      <p style="text-align:center;margin-bottom:20px;opacity:0.8;">Enter the 6-digit code we sent</p>
+
+      <div class="code-inputs">
+        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" />
+        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" />
+        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" />
+        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" />
+        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" />
+        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" />
+      </div>
+
+      <button class="btn" onclick="verifyCode()">Verify</button>
+
+      <p class="resend">
+        Didn't get it? <a onclick="resendCode()">Resend code</a>
+      </p>
+    </div>
+
+    <!-- STEP 3: Success -->
+    <div id="step3" class="hidden">
+      <div class="success">
+        <div class="success-icon">✓</div>
+        <h2>You're all set!</h2>
+        <p>Your account is verified. Start browsing Taskers and get things done.</p>
+        <button class="btn" style="margin-top:32px;" onclick="location.href='homepage.html'">Find a Tasker</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Step navigation
+    function showStep(n) {
+      document.getElementById('step1').classList.add('hidden');
+      document.getElementById('step2').classList.add('hidden');
+      document.getElementById('step3').classList.add('hidden');
+      document.getElementById('step' + n).classList.remove('hidden');
+    }
+
+    // Form submission
+    document.getElementById('signup-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const phone = document.getElementById('phone').value;
+      document.getElementById('display-phone').textContent = phone;
+      showStep(2);
+      // Auto-focus first code input
+      document.querySelector('.code-input').focus();
+    });
+
+    // Code input auto-advance
+    document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
+      input.addEventListener('input', function() {
+        if (this.value && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      });
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && !this.value && index > 0) {
+          inputs[index - 1].focus();
+        }
+      });
+    });
+
+    function verifyCode() {
+      // Mock verification
+      showStep(3);
+    }
+
+    function resendCode() {
+      alert('Code resent! (Demo)');
+    }
+  </script>
+</body>
+</html>
