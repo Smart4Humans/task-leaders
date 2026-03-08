@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tasker Dashboard — Task Leaders</title>
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --purple: #7b2cbf;
+      --gold: #FFD700;
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --dark: #0a0a1a;
+      --card: rgba(255,255,255,0.05);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+    header {
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .status-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(74,222,128,0.15);
+      padding: 8px 16px;
+      border-radius: 24px;
+      cursor: pointer;
+    }
+    .status-toggle.offline {
+      background: rgba(107,114,128,0.15);
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+    .status-toggle.offline .status-dot {
+      background: #6b7280;
+      box-shadow: none;
+    }
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+    .section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .section h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .badge-count {
+      background: rgba(0,212,255,0.2);
+      color: var(--cyan);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .inquiry {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .inquiry-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .inquiry-from {
+      font-weight: 600;
+    }
+    .inquiry-time {
+      font-size: 12px;
+      opacity: 0.6;
+    }
+    .inquiry-status {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: rgba(251,191,36,0.2);
+      color: var(--warning);
+    }
+    .inquiry-status.replied {
+      background: rgba(74,222,128,0.2);
+      color: var(--success);
+    }
+    .rank-display {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.05));
+      border-radius: 16px;
+      border: 1px solid rgba(255,215,0,0.2);
+    }
+    .rank-number {
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--gold);
+    }
+    .rank-details {
+      flex: 1;
+    }
+    .rank-category {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    .rank-position {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .rank-change {
+      font-size: 12px;
+      color: var(--success);
+    }
+    .tip-box {
+      background: rgba(0,212,255,0.1);
+      border-left: 4px solid var(--cyan);
+      padding: 16px;
+      border-radius: 0 12px 12px 0;
+      margin-top: 20px;
+    }
+    .tip-box h4 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+    }
+    .tip-box p {
+      margin: 0;
+      font-size: 13px;
+      opacity: 0.8;
+      line-height: 1.5;
+    }
+    .note {
+      font-size: 12px;
+      opacity: 0.6;
+      font-style: italic;
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+    }
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Task Leaders</div>
+    <div class="status-toggle" onclick="toggleStatus()">
+      <span class="status-dot"></span>
+      <span id="status-text">🟢 Online — Receiving leads</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">1.2m</div>
+        <div class="stat-label">Avg Response</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">4.9★</div>
+        <div class="stat-label">Rating (156)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">23</div>
+        <div class="stat-label">Jobs This Month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">94%</div>
+        <div class="stat-label">Completion Rate</div>
+      </div>
+    </div>
+
+    <!-- Rank -->
+    <div class="rank-display">
+      <div class="rank-number">#3</div>
+      <div class="rank-details">
+        <div class="rank-category">Painting Category</div>
+        <div class="rank-position">You're in the top 5%!</div>
+        <div class="rank-change">↑ Moved up 2 spots this week</div>
+      </div>
+    </div>
+
+    <!-- Recent Inquiries -->
+    <div class="section" style="margin-top: 24px;">
+      <div class="section-header">
+        <h2>🔔 Recent Inquiries</h2>
+        <span class="badge-count">3 new today</span>
+      </div>
+
+      <div class="inquiry">
+        <div class="inquiry-info">
+          <span class="inquiry-from">Sarah M. — Interior painting</span>
+          <span class="inquiry-time">2 hours ago via WhatsApp</span>
+        </div>
+        <span class="inquiry-status replied">✓ Replied</span>
+      </div>
+
+      <div class="inquiry">
+        <div class="inquiry-info">
+          <span class="inquiry-from">John K. — Cabinet refinishing</span>
+          <span class="inquiry-time">5 hours ago via WhatsApp</span>
+        </div>
+        <span class="inquiry-status">⏳ Awaiting your reply</span>
+      </div>
+
+      <div class="inquiry">
+        <div class="inquiry-info">
+          <span class="inquiry-from">Lisa T. — Exterior house painting</span>
+          <span class="inquiry-time">Yesterday</span>
+        </div>
+        <span class="inquiry-status replied">✓ Replied</span>
+      </div>
+
+      <div class="note">
+        💡 <strong>Note:</strong> You cannot mark jobs as "booked" or "complete" here. 
+        Your rankings are based on customer feedback after they contact you. 
+        Keep responding fast and doing great work!
+      </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="section">
+      <h2>💡 Tips to Climb the Ranks</h2>
+      
+      <div class="tip-box">
+        <h4>⚡ Response Speed Matters Most (35% of score)</h4>
+        <p>Top Taskers respond in under 2 minutes. Enable WhatsApp notifications and keep your phone nearby.</p>
+      </div>
+
+      <div class="tip-box" style="margin-top: 12px;">
+        <h4>⭐ Customer Ratings Are Everything (25% of score)</h4>
+        <p>After each job, customers are asked to rate you. Follow up politely and ask happy customers to reply to the feedback message.</p>
+      </div>
+
+      <div class="tip-box" style="margin-top: 12px;">
+        <h4>🎯 Show Up On Time (15% of score)</h4>
+        <p>Customers are asked if you arrived on time. Being reliable is a huge differentiator.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function toggleStatus() {
+      const toggle = document.querySelector('.status-toggle');
+      const text = document.getElementById('status-text');
+      
+      if (toggle.classList.contains('offline')) {
+        toggle.classList.remove('offline');
+        text.textContent = '🟢 Online — Receiving leads';
+      } else {
+        toggle.classList.add('offline');
+        text.textContent = '⚫ Offline — Hidden from searches';
+      }
+    }
+  </script>
+</body>
+</html>
