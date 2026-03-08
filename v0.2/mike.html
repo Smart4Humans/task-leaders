@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="theme-color" content="#0a0a1a" />
+  <title>Mike Johnson — Task Leaders</title>
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --purple: #7b2cbf;
+      --gold: #FFD700;
+      --success: #25D366;
+      --dark: #0a0a1a;
+      --card: rgba(255,255,255,0.05);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      position: sticky;
+      top: 0;
+      background: rgba(10,10,26,0.95);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      padding-bottom: 100px;
+    }
+    .profile-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin: 0 auto 12px;
+      border: 3px solid rgba(255,255,255,0.1);
+    }
+    .name {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .badges {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .badge.speed { background: rgba(0,212,255,0.2); color: var(--cyan); }
+    .badge.pro { background: rgba(168,85,247,0.2); color: #a855f7; }
+    .status-online {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #4ade80;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .status-online::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: #4ade80;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #4ade80;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat {
+      background: var(--card);
+      padding: 16px 8px;
+      border-radius: 12px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .stat-label {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+    .section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .section h3 {
+      margin: 0 0 16px 0;
+      font-size: 15px;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+    .service-category {
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .service-category:last-child { border-bottom: none; }
+    .service-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+    .service-name {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .service-rate {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .service-rank {
+      font-size: 12px;
+      opacity: 0.6;
+    }
+    .about-text {
+      line-height: 1.6;
+      opacity: 0.85;
+      font-size: 14px;
+      margin: 0;
+    }
+    .connect-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 18px 24px;
+      border-radius: 14px;
+      border: none;
+      background: var(--success);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(37,211,102,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .connect-btn:active {
+      transform: scale(0.98);
+    }
+    .note {
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.5;
+      margin-top: 12px;
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: 20px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 360px;
+      border: 1px solid rgba(255,255,255,0.1);
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal h3 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      text-align: center;
+    }
+    .modal p {
+      margin: 0 0 20px 0;
+      font-size: 14px;
+      opacity: 0.7;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .phone-input {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 16px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    .phone-input:focus {
+      border-color: var(--cyan);
+    }
+    .phone-input::placeholder {
+      color: rgba(255,255,255,0.4);
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      background: var(--cyan);
+      color: #000;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    .btn-secondary {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .code-inputs {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .code-input {
+      width: 45px;
+      height: 55px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+    }
+    .code-input:focus {
+      border-color: var(--cyan);
+      outline: none;
+    }
+    .hidden { display: none !important; }
+    
+    @media (min-width: 768px) {
+      main { padding: 32px; }
+      .avatar { width: 110px; height: 110px; font-size: 48px; }
+      .name { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="category.html" class="back">← Back to Taskers</a>
+  </header>
+
+  <main>
+    <div class="profile-header">
+      <div class="avatar">👨‍🔧</div>
+      <div class="name">Mike Johnson</div>
+      <div class="badges">
+        <span class="badge speed">⚡ SPEEDSTER</span>
+        <span class="badge pro">💎 PRO</span>
+      </div>
+      <div class="status-online">Online now — responds in 1 min</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value">1.2m</div>
+        <div class="stat-label">Response</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">4.9★</div>
+        <div class="stat-label">156 Reviews</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">8yr</div>
+        <div class="stat-label">Experience</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>💰 Service Categories & Rates</h3>
+      
+      <div class="service-category">
+        <div class="service-header">
+          <span class="service-name">🎨 Painting</span>
+          <span class="service-rate">$45-55/hr</span>
+        </div>
+        <div class="service-rank">#1 in Painting • 156 jobs</div>
+      </div>
+
+      <div class="service-category">
+        <div class="service-header">
+          <span class="service-name">🔧 Handyman</span>
+          <span class="service-rate">$50/hr</span>
+        </div>
+        <div class="service-rank">#5 in Handyman • 23 jobs</div>
+      </div>
+
+      <div class="service-category">
+        <div class="service-header">
+          <span class="service-name">🧹 Cleaning</span>
+          <span class="service-rate">$40/hr</span>
+        </div>
+        <div class="service-rank">#12 in Cleaning • 8 jobs</div>
+      </div>
+
+      <div class="service-category">
+        <div class="service-header">
+          <span class="service-name">📦 Furniture Assembly</span>
+          <span class="service-rate">$45/hr</span>
+        </div>
+        <div class="service-rank">#8 in Assembly • 15 jobs</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>📝 About</h3>
+      <p class="about-text">
+        Multi-skilled professional with 8 years experience. Top-rated painter who also handles handyman work, cleaning, and furniture assembly. Clean, fast, and reliable. Available weekdays and some weekends.
+      </p>
+    </div>
+
+    <button class="connect-btn" onclick="openModal()">
+      💬 Message Mike on WhatsApp
+    </button>
+    <p class="note">Mike typically responds in under 2 minutes</p>
+  </main>
+
+  <!-- Verification Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <!-- Step 1: Phone Input -->
+      <div id="step1">
+        <h3>Connect with Mike</h3>
+        <p>Enter your WhatsApp number to start the conversation</p>
+        <input type="tel" class="phone-input" id="phoneInput" placeholder="+1 (604) 555-1234" />
+        <button class="btn-primary" onclick="sendCode()">Send Verification Code</button>
+        <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      </div>
+      
+      <!-- Step 2: Code Input -->
+      <div id="step2" class="hidden">
+        <h3>Enter Code</h3>
+        <p>We sent a 6-digit code to your WhatsApp</p>
+        <div class="code-inputs">
+          <input type="text" class="code-input" maxlength="1" onkeyup="moveToNext(this, 1)" />
+          <input type="text" class="code-input" maxlength="1" onkeyup="moveToNext(this, 2)" />
+          <input type="text" class="code-input" maxlength="1" onkeyup="moveToNext(this, 3)" />
+          <input type="text" class="code-input" maxlength="1" onkeyup="moveToNext(this, 4)" />
+          <input type="text" class="code-input" maxlength="1" onkeyup="moveToNext(this, 5)" />
+          <input type="text" class="code-input" maxlength="1" onkeyup="verifyCode()" />
+        </div>
+        <button class="btn-primary" onclick="verifyCode()">Connect</button>
+        <button class="btn-secondary" onclick="backToStep1()">Change Number</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Modal Controls
+    function openModal() {
+      document.getElementById('modal').classList.add('active');
+      document.getElementById('phoneInput').focus();
+    }
+    
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+      resetForm();
+    }
+    
+    function resetForm() {
+      document.getElementById('step1').classList.remove('hidden');
+      document.getElementById('step2').classList.add('hidden');
+      document.getElementById('phoneInput').value = '';
+      document.querySelectorAll('.code-input').forEach(input => input.value = '');
+    }
+    
+    // Step 1: Send Code
+    function sendCode() {
+      const phone = document.getElementById('phoneInput').value.trim();
+      if (!phone || phone.length < 10) {
+        alert('Please enter a valid WhatsApp number');
+        return;
+      }
+      
+      // TODO: API call to send verification code
+      console.log('Sending code to:', phone);
+      
+      document.getElementById('step1').classList.add('hidden');
+      document.getElementById('step2').classList.remove('hidden');
+      document.querySelector('.code-input').focus();
+    }
+    
+    function backToStep1() {
+      document.getElementById('step2').classList.add('hidden');
+      document.getElementById('step1').classList.remove('hidden');
+    }
+    
+    // Step 2: Code Input
+    function moveToNext(input, index) {
+      if (input.value && index < 6) {
+        document.querySelectorAll('.code-input')[index].focus();
+      }
+    }
+    
+    function verifyCode() {
+      const code = Array.from(document.querySelectorAll('.code-input'))
+        .map(input => input.value).join('');
+      
+      if (code.length !== 6) {
+        alert('Please enter all 6 digits');
+        return;
+      }
+      
+      // TODO: API call to verify code
+      console.log('Verifying code:', code);
+      
+      // Open WhatsApp with pre-filled message
+      const phone = document.getElementById('phoneInput').value.trim();
+      const message = encodeURIComponent(`Hi Mike! I'm ${phone}. Found you on Task Leaders. Are you available?`);
+      window.location.href = `https://wa.me/16045551234?text=${message}`;
+      
+      closeModal();
+    }
+    
+    // Close modal on overlay click
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+</body>
+</html>
