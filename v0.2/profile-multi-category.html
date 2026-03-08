@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mike's Services — Task Leaders</title>
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --purple: #7b2cbf;
+      --gold: #FFD700;
+      --success: #4ade80;
+      --dark: #0a0a1a;
+      --card: rgba(255,255,255,0.05);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .profile-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      margin: 0 auto 16px;
+    }
+    .name {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .badges {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .badge {
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-weight: 600;
+    }
+    .badge.speed { background: rgba(0,212,255,0.2); color: var(--cyan); }
+    .badge.pro { background: rgba(168,85,247,0.2); color: #a855f7; }
+    .status-online {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--success);
+      font-size: 14px;
+    }
+    .status-online::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--success);
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+    .section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .section h3 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+    }
+    .service-category {
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .service-category:last-child { border-bottom: none; }
+    .service-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .service-name {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .service-rate {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--success);
+    }
+    .service-rank {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+    .about-text {
+      line-height: 1.6;
+      opacity: 0.9;
+    }
+    .whatsapp-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      padding: 20px;
+      border-radius: 16px;
+      border: none;
+      background: #25D366;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 24px;
+      text-decoration: none;
+    }
+    .whatsapp-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(37,211,102,0.3);
+    }
+    .note {
+      text-align: center;
+      font-size: 13px;
+      opacity: 0.6;
+      margin-top: 16px;
+    }
+    .subscription-banner {
+      background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(123,44,191,0.15));
+      border: 1px solid rgba(0,212,255,0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .subscription-banner h4 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+    }
+    .subscription-banner p {
+      margin: 0;
+      font-size: 13px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="category.html" class="back">← Back to Taskers</a>
+  </header>
+
+  <main>
+    <div class="subscription-banner">
+      <h4>🚀 Mike is a Hustler subscriber</h4>
+      <p>Unlimited leads • Priority placement • Analytics dashboard</p>
+    </div>
+
+    <div class="profile-header">
+      <div class="avatar">👨‍🔧</div>
+      <div class="name">Mike Johnson</div>
+      <div class="badges">
+        <span class="badge speed">⚡ SPEEDSTER</span>
+        <span class="badge pro">💎 PRO</span>
+      </div>
+      <div class="status-online">Online now — typically responds in 1 min</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value">1.2m</div>
+        <div class="stat-label">Avg Response</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">4.9★</div>
+        <div class="stat-label">Rating (156)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">8yr</div>
+        <div class="stat-label">Experience</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>💰 Rates by Service</h3>
+      
+      <div class="service-category">
+        <div class="service-header">
+          <span class="service-name">🔧 Handyman Services</span>
+          <span class="service-rate">$55/hr</span>
+        </div>
+        <div class="service-rank">Ranked #2 in Handyman • 89 jobs completed</div>
+      </div>
+
+      <div class="service-category">
+        <div class="service-header">
+          <span class="service-name">🚿 Plumbing</span>
+          <span class="service-rate">$75/hr</span>
+        </div>
+        <div class="service-rank">Ranked #1 in Plumbing • 67 jobs completed</div>
+      </div>
+
+      <div class="service-category">
+        <div class="service-header">
+          <span class="service-name">🎨 Painting</span>
+          <span class="service-rate">$45/hr</span>
+        </div>
+        <div class="service-rank">Ranked #3 in Painting • 45 jobs completed</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>📝 About Mike</h3>
+      <p class="about-text">
+        Jack of all trades with 8 years experience. Licensed plumber, skilled painter, 
+        and reliable handyman. Clean, professional, and always on time. 
+        Available weekdays and some weekends. No job too small!
+      </p>
+    </div>
+
+    <a href="https://wa.me/16045551234?text=Hi%20Mike!%20I%20found%20you%20on%20Task%20Leaders.%20Are%20you%20available?" class="whatsapp-btn">
+      💬 Message Mike on WhatsApp
+    </a>
+
+    <p class="note">
+      You'll be redirected to WhatsApp. Mike typically responds in under 2 minutes.
+    </p>
+  </main>
+</body>
+</html>
