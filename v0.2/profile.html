@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mike's Painting — Task Leaders</title>
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --purple: #7b2cbf;
+      --gold: #FFD700;
+      --dark: #0a0a1a;
+      --card: rgba(255,255,255,0.05);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .profile-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      margin: 0 auto 16px;
+    }
+    .name {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .badges {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .badge {
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-weight: 600;
+    }
+    .badge.speed { background: rgba(0,212,255,0.2); color: var(--cyan); }
+    .badge.pro { background: rgba(168,85,247,0.2); color: #a855f7; }
+    .status-online {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #4ade80;
+      font-size: 14px;
+    }
+    .status-online::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: #4ade80;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #4ade80;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+    .section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .section h3 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+    }
+    .rate-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .rate-row:last-child { border-bottom: none; }
+    .rate-label { opacity: 0.8; }
+    .rate-value { font-size: 20px; font-weight: 700; }
+    .whatsapp-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      padding: 20px;
+      border-radius: 16px;
+      border: none;
+      background: #25D366;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 24px;
+      text-decoration: none;
+    }
+    .whatsapp-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(37,211,102,0.3);
+    }
+    .note {
+      text-align: center;
+      font-size: 13px;
+      opacity: 0.6;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="category.html" class="back">← Back to Painters</a>
+  </header>
+
+  <main>
+    <div class="profile-header">
+      <div class="avatar">🎨</div>
+      <div class="name">Mike's Painting</div>
+      <div class="badges">
+        <span class="badge speed">⚡ SPEEDSTER</span>
+        <span class="badge pro">💎 PRO</span>
+      </div>
+      <div class="status-online">Online now — typically responds in 1 min</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value">1.2m</div>
+        <div class="stat-label">Avg Response</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">4.9★</div>
+        <div class="stat-label">Rating (156)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">8yr</div>
+        <div class="stat-label">Experience</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>💰 Rates</h3>
+      <div class="rate-row">
+        <span class="rate-label">Interior Painting</span>
+        <span class="rate-value">$45/hr</span>
+      </div>
+      <div class="rate-row">
+        <span class="rate-label">Exterior Painting</span>
+        <span class="rate-value">$55/hr</span>
+      </div>
+      <div class="rate-row">
+        <span class="rate-label">Cabinet Painting</span>
+        <span class="rate-value">$50/hr</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>📝 About</h3>
+      <p style="opacity:0.8;line-height:1.6;margin:0;">
+        Professional painter with 8 years experience. Specializing in interior/exterior residential painting. 
+        Clean, fast, and reliable. Available weekdays and some weekends. 
+      </p>
+    </div>
+
+    <a href="https://wa.me/16045551234?text=Hi%20Mike!%20I%20found%20you%20on%20Task%20Leaders%20for%20painting.%20Are%20you%20available?" class="whatsapp-btn">
+      💬 Message Mike on WhatsApp
+    </a>
+
+    <p class="note">
+      You'll be redirected to WhatsApp. Mike typically responds in under 2 minutes.
+    </p>
+  </main>
+</body>
+</html>

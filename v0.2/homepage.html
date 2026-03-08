@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Task Leaders — Find Service Providers Ranked by Speed</title>
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --purple: #7b2cbf;
+      --gold: #FFD700;
+      --dark: #0a0a1a;
+      --card: rgba(255,255,255,0.05);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+    header {
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .location {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-left: 12px;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      margin-left: 24px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    .hero {
+      text-align: center;
+      padding: 60px 24px 40px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .hero h1 {
+      font-size: 36px;
+      margin: 0 0 12px 0;
+    }
+    .hero p {
+      font-size: 18px;
+      opacity: 0.8;
+      margin: 0 0 32px 0;
+    }
+    .categories {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+    }
+    .categories h2 {
+      font-size: 14px;
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 20px 0;
+    }
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .category-tile {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      color: #fff;
+      display: block;
+    }
+    .category-tile:hover {
+      transform: translateY(-4px);
+      border-color: var(--cyan);
+      box-shadow: 0 8px 30px rgba(0,212,255,0.15);
+    }
+    .category-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+    .category-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .category-count {
+      font-size: 12px;
+      opacity: 0.5;
+    }
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(74,222,128,0.15);
+      color: #4ade80;
+      padding: 10px 20px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 24px;
+      cursor: pointer;
+    }
+    .live-badge::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: #4ade80;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    footer {
+      text-align: center;
+      padding: 40px 24px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      opacity: 0.5;
+      font-size: 14px;
+    }
+    @media (max-width: 600px) {
+      .category-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <span class="logo">Task Leaders</span>
+      <span class="location">Vancouver</span>
+    </div>
+    <nav>
+      <a href="provider-signup.html">Become a Tasker</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>What do you need help with?</h1>
+    <p>Find service providers ranked by real response time. See who's actually available right now.</p>
+    <div class="live-badge" onclick="location.href='leaderboard-all.html'">
+      🔥 See who's fastest right now — 23 Taskers online
+    </div>
+  </section>
+
+  <section class="categories">
+    <h2>Popular Categories</h2>
+    <div class="category-grid">
+      <a href="category.html?cat=handyman" class="category-tile">
+        <div class="category-icon">🔧</div>
+        <div class="category-name">Handyman</div>
+        <div class="category-count">47 Taskers</div>
+      </a>
+      <a href="category.html?cat=plumbing" class="category-tile">
+        <div class="category-icon">🚿</div>
+        <div class="category-name">Plumbing</div>
+        <div class="category-count">32 Taskers</div>
+      </a>
+      <a href="category.html?cat=electrical" class="category-tile">
+        <div class="category-icon">⚡</div>
+        <div class="category-name">Electrical</div>
+        <div class="category-count">28 Taskers</div>
+      </a>
+      <a href="category.html?cat=painting" class="category-tile">
+        <div class="category-icon">🎨</div>
+        <div class="category-name">Painting</div>
+        <div class="category-count">156 Taskers</div>
+      </a>
+      <a href="category.html?cat=cleaning" class="category-tile">
+        <div class="category-icon">🧹</div>
+        <div class="category-name">Cleaning</div>
+        <div class="category-count">89 Taskers</div>
+      </a>
+      <a href="category.html?cat=assembly" class="category-tile">
+        <div class="category-icon">📦</div>
+        <div class="category-name">Furniture Assembly</div>
+        <div class="category-count">41 Taskers</div>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <p>No account needed. Browse → Click → WhatsApp → Done.</p>
+  </footer>
+</body>
+</html>
