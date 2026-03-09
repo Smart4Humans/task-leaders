@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Become an OG Task Leader — Task Leaders</title>
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --purple: #7b2cbf;
+      --dark: #0a0a1a;
+      --success: #4ade80;
+      --gold: #FFD700;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 24px;
+    }
+    .og-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.1));
+      border: 1px solid var(--gold);
+      padding: 10px 16px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 32px;
+      margin: 0 0 12px 0;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      font-size: 17px;
+      opacity: 0.8;
+      margin: 0 0 32px 0;
+      line-height: 1.5;
+    }
+    .offer-box {
+      background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(123,44,191,0.1));
+      border: 1px solid rgba(0,212,255,0.3);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+    .offer-box h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: var(--cyan);
+    }
+    .offer-box p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+    .og-perks {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+    .og-perks h3 {
+      margin: 0 0 16px 0;
+      font-size: 15px;
+    }
+    .og-perks ul {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 14px;
+      line-height: 1.8;
+      opacity: 0.9;
+    }
+    .og-perks li {
+      margin-bottom: 6px;
+    }
+    .highlight {
+      color: var(--gold);
+      font-weight: 600;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 16px;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--cyan);
+    }
+    input::placeholder { color: rgba(255,255,255,0.4); }
+    select option { background: var(--dark); }
+    
+    .service-select {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .service-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .service-option:hover {
+      border-color: var(--cyan);
+      background: rgba(255,255,255,0.08);
+    }
+    .service-option.selected {
+      border-color: var(--cyan);
+      background: rgba(0,212,255,0.1);
+    }
+    .service-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .service-icon {
+      font-size: 20px;
+    }
+    .service-name {
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .service-price {
+      text-align: right;
+    }
+    .price-regular {
+      font-size: 13px;
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+    .price-og {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--success);
+    }
+    .price-note {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 18px;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      background: var(--cyan);
+      color: #000;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,212,255,0.3);
+    }
+    .terms-note {
+      font-size: 12px;
+      opacity: 0.6;
+      text-align: center;
+      margin-top: 16px;
+      line-height: 1.5;
+    }
+    .terms-note a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+    footer {
+      text-align: center;
+      padding: 40px 0 0 0;
+      opacity: 0.5;
+      font-size: 12px;
+    }
+    @media (max-width: 480px) {
+      h1 { font-size: 26px; }
+      .container { padding: 24px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="homepage.html" class="back">← Back to Task Leaders</a>
+    
+    <div class="og-badge">👑 OG TASK LEADER PROGRAM</div>
+    
+    <h1>Become an OG Task Leader</h1>
+    <p class="subtitle">Join the founding community. Be first, be seen, build your reputation.</p>
+    
+    <div class="offer-box">
+      <h3>🎉 Limited Time: 2 Months Free</h3>
+      <p>Start with <strong>2 months at $0</strong>. No credit card required to apply. When you're approved, add your card — we won't charge until month 3. Cancel anytime before then.</p>
+    </div>
+    
+    <div class="og-perks">
+      <h3>✨ OG Task Leader Perks (Forever)</h3>
+      <ul>
+        <li><span class="highlight">"OG Task Leader" badge</span> on your profile</li>
+        <li><span class="highlight">Priority placement</span> in search results</li>
+        <li><span class="highlight">Locked intro rates</span> — never pay more</li>
+        <li><span class="highlight">Direct founder access</span> — WhatsApp Todd anytime</li>
+      </ul>
+    </div>
+
+    <form id="signup-form">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" placeholder="Mike Johnson" required />
+      </div>
+
+      <div class="form-group">
+        <label for="phone">WhatsApp Number</label>
+        <input type="tel" id="phone" name="phone" placeholder="+1 (604) 555-0123" required />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="mike@example.com" required />
+      </div>
+
+      <div class="form-group">
+        <label>Select Your Categories (choose all that apply)</label>
+        <div class="service-select">
+          <div class="service-option" onclick="toggleService(this)">
+            <div class="service-left">
+              <span class="service-icon">🔧</span>
+              <span class="service-name">Handyman</span>
+            </div>
+            <div class="service-price">
+              <div class="price-regular">$20/mo</div>
+              <div class="price-og">$0.00</div>
+              <div class="price-note">2 months free</div>
+            </div>
+          </div>
+          
+          <div class="service-option" onclick="toggleService(this)">
+            <div class="service-left">
+              <span class="service-icon">🚿</span>
+              <span class="service-name">Plumbing</span>
+            </div>
+            <div class="service-price">
+              <div class="price-regular">$50/mo</div>
+              <div class="price-og">$0.00</div>
+              <div class="price-note">2 months free</div>
+            </div>
+          </div>
+          
+          <div class="service-option" onclick="toggleService(this)">
+            <div class="service-left">
+              <span class="service-icon">⚡</span>
+              <span class="service-name">Electrical</span>
+            </div>
+            <div class="service-price">
+              <div class="price-regular">$50/mo</div>
+              <div class="price-og">$0.00</div>
+              <div class="price-note">2 months free</div>
+            </div>
+          </div>
+          
+          <div class="service-option" onclick="toggleService(this)">
+            <div class="service-left">
+              <span class="service-icon">🧹</span>
+              <span class="service-name">Cleaning</span>
+            </div>
+            <div class="service-price">
+              <div class="price-regular">$15/mo</div>
+              <div class="price-og">$0.00</div>
+              <div class="price-note">2 months free</div>
+            </div>
+          </div>
+          
+          <div class="service-option" onclick="toggleService(this)">
+            <div class="service-left">
+              <span class="service-icon">📦</span>
+              <span class="service-name">Moving Help</span>
+            </div>
+            <div class="service-price">
+              <div class="price-regular">$50/mo</div>
+              <div class="price-og">$0.00</div>
+              <div class="price-note">2 months free</div>
+            </div>
+          </div>
+          
+          <div class="service-option" onclick="toggleService(this)">
+            <div class="service-left">
+              <span class="service-icon">🎁</span>
+              <span class="service-name">Packing & Unpacking</span>
+            </div>
+            <div class="service-price">
+              <div class="price-regular">$40/mo</div>
+              <div class="price-og">$0.00</div>
+              <div class="price-note">2 months free</div>
+            </div>
+          </div>
+          
+          <div class="service-option" onclick="toggleService(this)">
+            <div class="service-left">
+              <span class="service-icon">🎨</span>
+              <span class="service-name">Painting</span>
+            </div>
+            <div class="service-price">
+              <div class="price-regular">$40/mo</div>
+              <div class="price-og">$0.00</div>
+              <div class="price-note">2 months free</div>
+            </div>
+          </div>
+          
+          <div class="service-option" onclick="toggleService(this)">
+            <div class="service-left">
+              <span class="service-icon">🪑</span>
+              <span class="service-name">Furniture Assembly</span>
+            </div>
+            <div class="service-price">
+              <div class="price-regular">$20/mo</div>
+              <div class="price-og">$0.00</div>
+              <div class="price-note">2 months free</div>
+            </div>
+          </div>
+          
+          <div class="service-option" onclick="toggleService(this)">
+            <div class="service-left">
+              <span class="service-icon">🌿</span>
+              <span class="service-name">Yard Work</span>
+            </div>
+            <div class="service-price">
+              <div class="price-regular">$20/mo</div>
+              <div class="price-og">$0.00</div>
+              <div class="price-note">2 months free</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="jobs">Approximate Jobs Completed</label>
+        <select id="jobs" name="jobs" required>
+          <option value="">Select...</option>
+          <option value="0-10">0-10 jobs</option>
+          <option value="11-50">11-50 jobs</option>
+          <option value="51-100">51-100 jobs</option>
+          <option value="100+">100+ jobs</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="why">Tell us about your work</label>
+        <textarea id="why" name="why" rows="3" placeholder="What makes you great at what you do?"></textarea>
+      </div>
+
+      <button type="submit" class="btn">Apply to Become an OG Task Leader</button>
+      
+      <p class="terms-note">By applying, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.<br>We'll add credit card collection after you're approved.</p>
+    </form>
+
+    <footer>
+      <p>Questions? WhatsApp Todd</p>
+    </footer>
+  </div>
+
+  <script>
+    function toggleService(el) {
+      el.classList.toggle('selected');
+    }
+    
+    document.getElementById('signup-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Thanks for applying! Todd will reach out within 24 hours via WhatsApp.');
+    });
+  </script>
+</body>
+</html>
