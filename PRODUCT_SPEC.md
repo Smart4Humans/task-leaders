@@ -1,6 +1,6 @@
 # TaskLeaders — Product Specification
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Last Updated:** March 9, 2026  
 **Status:** MVP Development
 
@@ -212,10 +212,11 @@ Avg response: 4 min
 
 ---
 
-## Provider Onboarding
+## Provider Onboarding Flow
 
-### Form Fields
+### Step 1: Initial Application
 
+**Form Fields:**
 - Name
 - Business Name
 - WhatsApp Phone Number
@@ -224,12 +225,91 @@ Avg response: 4 min
 - Hourly Rate
 - Short Description
 
-### Post-Submission
-
-Show message:
+**Post-Submission:**
 ```
 "Application received. We will contact you via WhatsApp for verification."
 ```
+
+---
+
+### Step 2: Admin Verification
+
+Admin reviews application via minimal admin panel:
+- View application details
+- Approve or reject
+- If approved: trigger setup email/WhatsApp
+
+---
+
+### Step 3: Provider Setup Page (Post-Approval)
+
+**Purpose:** Collect final details and payment before profile goes live.
+
+**Access:** Unique link sent via WhatsApp/email after admin approval.
+
+**Required Fields:**
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| Business Name | Yes | Displayed on profile |
+| Contact Name | Yes | Personal name for communications |
+| WhatsApp Number | Yes | Verified via SMS/code |
+| Category | Yes | Primary service category |
+| Service Area | Yes | Neighborhoods/cities served |
+| Hourly Rate | Yes | Displayed on profile |
+| Short Description | Yes | Max 200 characters |
+| Logo | No | Optional, displayed on profile |
+| Stripe Payment Method | Yes | Card on file for subscription |
+
+**Validation Rules:**
+- All required fields must be completed
+- WhatsApp number must be verified (6-digit code)
+- Hourly rate must be numeric, min $15
+- Description max 200 characters
+- Logo: max 2MB, JPG/PNG only
+
+**Stripe Integration:**
+- Collect card details via Stripe Elements
+- Store payment method (not charged until trial ends)
+- Show subscription summary:
+  ```
+  Subscription: $29/month (Starter Plan)
+  Trial: 2 months FREE
+  First charge: [Date 2 months from now]
+  ```
+
+**Completion Flow:**
+```
+Provider submits setup form
+    ↓
+System validates all fields
+    ↓
+WhatsApp number verified
+    ↓
+Payment method stored (Stripe)
+    ↓
+Profile created → Status: PENDING_LIVE
+    ↓
+Provider sees: "Your profile is ready! Toggle 'Available' when you're ready for customers."
+    ↓
+Provider appears in category rankings
+```
+
+**Pre-Live Checklist Displayed:**
+```
+☑ Business name set
+☑ Contact name added
+☑ WhatsApp verified
+☑ Category selected
+☑ Service area defined
+☑ Hourly rate set
+☑ Description added
+☑ Payment method on file
+
+[Go Live] ← Enabled when all checked
+```
+
+**Note:** Profile is NOT visible to customers until provider clicks "Go Live" or toggles availability.
 
 ---
 
@@ -319,6 +399,7 @@ task-leaders-deploy/
 | Date | Change |
 |------|--------|
 | 2026-03-09 | v1.0 — Canonical spec created from consolidated docs |
+| 2026-03-09 | v1.1 — Added Provider Setup Page (Post-Approval) specification |
 
 ---
 
