@@ -240,10 +240,17 @@
       <h3>✨ OG Task Leader Perks (Forever)</h3>
       <ul>
         <li><span class="highlight">"OG Task Leader" badge</span> on your profile</li>
-        <li><span class="highlight">Priority placement</span> in search results</li>
         <li><span class="highlight">Locked intro rates</span> — never pay more</li>
         <li><span class="highlight">Direct founder access</span> — WhatsApp Todd anytime</li>
       </ul>
+    </div>
+    
+    <div class="whatsapp-required" style="background: rgba(37,211,102,0.1); border: 1px solid rgba(37,211,102,0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+        <span style="font-size: 24px;">📱</span>
+        <span style="font-weight: 600;">WhatsApp Required</span>
+      </div>
+      <p style="margin: 0; font-size: 14px; opacity: 0.9; line-height: 1.5;">You must have WhatsApp installed on your phone to receive customer inquiries. All communication happens through WhatsApp — no separate app needed.</p>
     </div>
 
     <form id="signup-form">
@@ -253,7 +260,7 @@
       </div>
 
       <div class="form-group">
-        <label for="phone">WhatsApp Number</label>
+        <label for="phone">WhatsApp Number <span style="font-weight: 400; opacity: 0.7;">(required — this is how customers reach you)</span></label>
         <input type="tel" id="phone" name="phone" placeholder="+1 (604) 555-0123" required />
       </div>
 
@@ -315,7 +322,7 @@
           
           <div class="service-option" onclick="toggleService(this)">
             <div class="service-left">
-              <span class="service-icon">📦</span>
+              <span class="service-icon">🚚</span>
               <span class="service-name">Moving Help</span>
             </div>
             <div class="service-price">
@@ -327,7 +334,7 @@
           
           <div class="service-option" onclick="toggleService(this)">
             <div class="service-left">
-              <span class="service-icon">🎁</span>
+              <span class="service-icon">📦</span>
               <span class="service-name">Packing & Unpacking</span>
             </div>
             <div class="service-price">
@@ -372,6 +379,23 @@
               <div class="price-note">2 months free</div>
             </div>
           </div>
+          
+          <div class="service-option" onclick="toggleService(this)">
+            <div class="service-left">
+              <span class="service-icon">❄️</span>
+              <span class="service-name">HVAC</span>
+            </div>
+            <div class="service-price">
+              <div class="price-regular">$50/mo</div>
+              <div class="price-og">$0.00</div>
+              <div class="price-note">2 months free</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group" style="margin-top: 16px;">
+          <label for="other-category">Don't see your category? Let us know.</label>
+          <input type="text" id="other-category" name="other-category" placeholder="e.g., Appliance Repair, Window Cleaning..." />
         </div>
       </div>
 
@@ -391,9 +415,12 @@
         <textarea id="why" name="why" rows="3" placeholder="What makes you great at what you do?"></textarea>
       </div>
 
+      <div class="form-group terms-checkbox" style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+        <input type="checkbox" id="terms" name="terms" required style="width: auto; margin-top: 2px;" />
+        <label for="terms" style="margin: 0; font-weight: 400; font-size: 14px; opacity: 0.9;">I agree to the <a href="#" style="color: var(--cyan);">Terms of Service</a>. Credit card required only after approval — you won't be charged until month 3.</label>
+      </div>
+
       <button type="submit" class="btn">Apply to Become an OG Task Leader</button>
-      
-      <p class="terms-note">By applying, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.<br>We'll add credit card collection after you're approved.</p>
     </form>
 
     <footer>
