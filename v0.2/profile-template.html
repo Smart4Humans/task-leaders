@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <meta name="theme-color" content="#0a0a1a" />
-  <title>Mike Johnson — Task Leaders</title>
+  <title>{{PROVIDER_NAME}} — Task Leaders</title>
   <style>
     :root {
       --cyan: #00d4ff;
@@ -62,6 +62,11 @@
       margin: 0 auto 12px;
       border: 3px solid rgba(255,255,255,0.1);
     }
+    .avatar.photo {
+      background: transparent;
+      border: 3px solid var(--cyan);
+      overflow: hidden;
+    }
     .name {
       font-size: 24px;
       font-weight: 700;
@@ -82,6 +87,8 @@
     }
     .badge.speed { background: rgba(0,212,255,0.2); color: var(--cyan); }
     .badge.pro { background: rgba(168,85,247,0.2); color: #a855f7; }
+    .badge.rookie { background: rgba(255,255,255,0.1); color: #fff; }
+    .badge.elcheapo { background: rgba(255,215,0,0.2); color: var(--gold); }
     .status-online {
       display: inline-flex;
       align-items: center;
@@ -213,11 +220,6 @@
     main {
       padding-bottom: 140px;
     }
-    .avatar.photo {
-      background: transparent;
-      border: 3px solid var(--cyan);
-      overflow: hidden;
-    }
     .read-more {
       color: var(--cyan);
       text-decoration: none;
@@ -306,7 +308,7 @@
       text-align: center;
       line-height: 1.5;
     }
-    .phone-input {
+    .phone-input, .name-input {
       width: 100%;
       padding: 16px;
       border-radius: 12px;
@@ -317,27 +319,10 @@
       margin-bottom: 12px;
       outline: none;
     }
-    .phone-input:focus {
+    .phone-input:focus, .name-input:focus {
       border-color: var(--cyan);
     }
-    .phone-input::placeholder {
-      color: rgba(255,255,255,0.4);
-    }
-    .name-input {
-      width: 100%;
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.05);
-      color: #fff;
-      font-size: 16px;
-      margin-bottom: 16px;
-      outline: none;
-    }
-    .name-input:focus {
-      border-color: var(--cyan);
-    }
-    .name-input::placeholder {
+    .phone-input::placeholder, .name-input::placeholder {
       color: rgba(255,255,255,0.4);
     }
     .btn-primary {
@@ -473,105 +458,67 @@
   <main>
     <!-- Top CTA -->
     <button class="connect-btn top-cta" onclick="openModal()">
-      💬 Message Mike Now
+      💬 Message {{PROVIDER_FIRST_NAME}} Now
     </button>
-    <p class="note top-note">⚡ Typically responds in 1 minute</p>
+    <p class="note top-note">⚡ Typically responds in {{RESPONSE_TIME}}</p>
 
     <div class="profile-header">
       <div class="avatar photo">
-        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Mike&backgroundColor=b6e3f4" alt="Mike Johnson" style="width:100%;height:100%;border-radius:50%;" />
+        <img src="{{AVATAR_URL}}" alt="{{PROVIDER_NAME}}" style="width:100%;height:100%;border-radius:50%;" />
       </div>
-      <div class="name">Mike Johnson</div>
+      <div class="name">{{PROVIDER_NAME}}</div>
       <div class="badges">
-        <span class="badge speed">⚡ SPEEDSTER</span>
-        <span class="badge pro">💎 PRO</span>
+        {{BADGES}}
       </div>
       <div class="status-online">🟢 Online now</div>
     </div>
 
     <div class="stats">
       <div class="stat">
-        <div class="stat-value">1.2m</div>
+        <div class="stat-value">{{RESPONSE_TIME}}</div>
         <div class="stat-label">Response</div>
       </div>
       <div class="stat">
-        <div class="stat-value">4.9★</div>
-        <div class="stat-label">156 Reviews</div>
+        <div class="stat-value">{{RATING}}★</div>
+        <div class="stat-label">{{REVIEW_COUNT}} Reviews</div>
       </div>
       <div class="stat">
-        <div class="stat-value">202</div>
+        <div class="stat-value">{{JOB_COUNT}}</div>
         <div class="stat-label">Jobs</div>
       </div>
     </div>
 
     <div class="section">
       <h3>💰 Service Categories & Rates</h3>
-      
-      <div class="service-category">
-        <div class="service-header">
-          <span class="service-name">🎨 Painting</span>
-          <span class="service-rate">$45-55/hr</span>
-        </div>
-        <div class="service-rank">#1 in Painting • 156 jobs</div>
-      </div>
-
-      <div class="service-category">
-        <div class="service-header">
-          <span class="service-name">🔧 Handyman</span>
-          <span class="service-rate">$50/hr</span>
-        </div>
-        <div class="service-rank">#5 in Handyman • 23 jobs</div>
-      </div>
-
-      <div class="service-category">
-        <div class="service-header">
-          <span class="service-name">🧹 Cleaning</span>
-          <span class="service-rate">$40/hr</span>
-        </div>
-        <div class="service-rank">#12 in Cleaning • 8 jobs</div>
-      </div>
-
-      <div class="service-category">
-        <div class="service-header">
-          <span class="service-name">📦 Furniture Assembly</span>
-          <span class="service-rate">$45/hr</span>
-        </div>
-        <div class="service-rank">#8 in Assembly • 15 jobs</div>
-      </div>
+      {{SERVICE_CATEGORIES}}
     </div>
 
     <div class="section">
       <h3>📝 About</h3>
-      <p class="about-text">
-        Multi-skilled professional with 8 years experience. Top-rated painter who also handles handyman work, cleaning, and furniture assembly. <a href="#" class="read-more">Read more</a>
-      </p>
+      <p class="about-text">{{ABOUT_TEXT}}</p>
     </div>
     
     <div class="section reviews-preview">
       <h3>⭐ Recent Reviews</h3>
-      <div class="review">
-        <div class="review-stars">★★★★★</div>
-        <div class="review-text">"Mike painted our entire condo in one day. Super clean, great price."</div>
-        <div class="review-author">— Sarah K., 2 days ago</div>
-      </div>
-      <a href="#" class="view-all">View all 156 reviews →</a>
+      {{REVIEWS}}
+      <a href="#" class="view-all">View all {{REVIEW_COUNT}} reviews →</a>
     </div>
 
     <!-- Sticky Bottom CTA -->
     <div class="sticky-cta">
       <button class="connect-btn" onclick="openModal()">
-        💬 Message Mike on WhatsApp
+        💬 Message {{PROVIDER_FIRST_NAME}} on WhatsApp
       </button>
-      <p class="note">Usually responds in under 2 minutes</p>
+      <p class="note">Usually responds in under {{RESPONSE_TIME}}</p>
     </div>
   </main>
 
-  <!-- Verification Modal -->
+  <!-- Consent & Verification Modal -->
   <div class="modal-overlay" id="modal">
     <div class="modal">
       <!-- Step 1: Consent & Contact Info -->
       <div id="step1">
-        <h3>Connect with Mike</h3>
+        <h3>Connect with {{PROVIDER_FIRST_NAME}}</h3>
         <p>Get connected in 30 seconds</p>
         
         <input type="text" class="name-input" id="nameInput" placeholder="Your first name (optional)" />
@@ -581,7 +528,7 @@
           <div class="consent-item required">
             <input type="checkbox" id="consentRequired" />
             <label for="consentRequired">
-              I agree to receive WhatsApp messages about this inquiry, including responses from Mike, follow-ups, and review requests.
+              I agree to receive WhatsApp messages about this inquiry, including responses from {{PROVIDER_FIRST_NAME}}, follow-ups, and review requests.
               <span class="hint">Required to connect</span>
             </label>
           </div>
@@ -619,23 +566,34 @@
           <input type="text" class="code-input" maxlength="1" onkeyup="moveToNext(this, 5)" />
           <input type="text" class="code-input" maxlength="1" onkeyup="verifyCode()" />
         </div>
-        <button class="btn-primary" onclick="verifyCode()">Connect with Mike</button>
+        <button class="btn-primary" onclick="verifyCode()">Connect with {{PROVIDER_FIRST_NAME}}</button>
         <button class="btn-secondary" onclick="backToStep1()">Change Number</button>
       </div>
     </div>
   </div>
 
   <script>
+    // CONFIGURATION - Update these values for each provider
+    const CONFIG = {
+      providerId: '{{PROVIDER_SLUG}}',
+      providerName: '{{PROVIDER_FIRST_NAME}}',
+      category: '{{PRIMARY_CATEGORY}}',
+      whatsappNumber: '{{WHATSAPP_NUMBER}}', // E.164 format, no + (e.g., 16045551234)
+      primaryCategory: '{{PRIMARY_CATEGORY_NAME}}'
+    };
+
     // Store customer data for tracking
     let customerData = {
       name: '',
       phone: '',
       consentRequired: false,
       consentMarketing: false,
-      providerId: 'mike-johnson',
-      providerName: 'Mike',
-      category: 'painting',
-      timestamp: null
+      providerId: CONFIG.providerId,
+      providerName: CONFIG.providerName,
+      category: CONFIG.category,
+      timestamp: null,
+      verified: false,
+      verifiedAt: null
     };
 
     // Modal Controls
@@ -658,15 +616,18 @@
       document.getElementById('consentMarketing').checked = false;
       document.getElementById('errorMessage').classList.remove('show');
       document.querySelectorAll('.code-input').forEach(input => input.value = '');
+      
       customerData = {
         name: '',
         phone: '',
         consentRequired: false,
         consentMarketing: false,
-        providerId: 'mike-johnson',
-        providerName: 'Mike',
-        category: 'painting',
-        timestamp: null
+        providerId: CONFIG.providerId,
+        providerName: CONFIG.providerName,
+        category: CONFIG.category,
+        timestamp: null,
+        verified: false,
+        verifiedAt: null
       };
     }
     
@@ -707,29 +668,28 @@
         phone: phone,
         consentRequired: consentRequired,
         consentMarketing: consentMarketing,
-        providerId: 'mike-johnson',
-        providerName: 'Mike',
-        category: 'painting',
-        timestamp: new Date().toISOString()
+        providerId: CONFIG.providerId,
+        providerName: CONFIG.providerName,
+        category: CONFIG.category,
+        timestamp: new Date().toISOString(),
+        verified: false,
+        verifiedAt: null
       };
       
       // Log for tracking (replace with API call)
       console.log('Customer inquiry initiated:', customerData);
       
-      // TODO: API call to:
-      // 1. Store customer data
-      // 2. Send verification code via WhatsApp
-      // 3. Log consent for compliance
+      // TODO: API call to send verification code
+      // fetch('/api/verify/send', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ phone: customerData.phone })
+      // });
       
       // Move to verification step
       document.getElementById('step1').classList.add('hidden');
       document.getElementById('step2').classList.remove('hidden');
       document.querySelector('.code-input').focus();
-    }
-    
-    // Legacy function for backward compatibility
-    function sendCode() {
-      validateAndContinue();
     }
     
     function backToStep1() {
@@ -771,13 +731,13 @@
       // Build personalized message
       const name = customerData.name || 'there';
       const message = encodeURIComponent(
-        `Hi Mike! I'm ${name}. Found you on Task Leaders for painting.\n\n` +
+        `Hi ${CONFIG.providerName}! I'm ${name}. Found you on Task Leaders for ${CONFIG.primaryCategory}.\n\n` +
         `I need help with: [please describe your project]\n\n` +
         `I'm available: [please share your availability]`
       );
       
       // Open WhatsApp with pre-filled message
-      window.location.href = `https://wa.me/16045551234?text=${message}`;
+      window.location.href = `https://wa.me/${CONFIG.whatsappNumber}?text=${message}`;
       
       closeModal();
     }

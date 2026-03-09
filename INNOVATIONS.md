@@ -1,4 +1,12 @@
-# TaskLeaders.com — Innovation Deep Dive
+# ⚠️ DEPRECATED — Merged into PRODUCT_SPEC.md
+
+**This file has been consolidated into [PRODUCT_SPEC.md](PRODUCT_SPEC.md).**
+
+Future innovations should be added to the "Future Ideas" section of the product spec or kept as separate feature proposals.
+
+---
+
+# TaskLeaders.com — Innovation Deep Dive (Archive)
 
 ## The Core Philosophy
 **Turn service marketplaces into competitive sports.**

@@ -1,4 +1,12 @@
-# Task Leaders — Core Principles
+# ⚠️ DEPRECATED — Merged into PRODUCT_SPEC.md
+
+**This file has been consolidated into [PRODUCT_SPEC.md](PRODUCT_SPEC.md).**
+
+Please refer to the product spec for the canonical definition.
+
+---
+
+# Task Leaders — Core Principles (Archive)
 
 **Date:** March 7, 2026
 

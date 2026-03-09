@@ -1,4 +1,12 @@
-# TaskLeaders.com — MVP Plan
+# ⚠️ DEPRECATED — Merged into PRODUCT_SPEC.md
+
+**This file has been consolidated into [PRODUCT_SPEC.md](PRODUCT_SPEC.md).**
+
+Please refer to the product spec for the canonical definition.
+
+---
+
+# TaskLeaders.com — MVP Plan (Archive)
 
 ## The Big Idea
 A live leaderboard marketplace where service providers compete on responsiveness, availability, and quality. Customers see who's actually ready to work *right now*.
