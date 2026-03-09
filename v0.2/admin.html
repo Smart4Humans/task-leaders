@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="theme-color" content="#0a0a1a" />
+  <title>Admin — Task Leaders</title>
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --purple: #7b2cbf;
+      --gold: #FFD700;
+      --success: #25D366;
+      --danger: #ff6b6b;
+      --dark: #0a0a1a;
+      --card: rgba(255,255,255,0.05);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      position: sticky;
+      top: 0;
+      background: rgba(10,10,26,0.95);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .admin-badge {
+      background: var(--danger);
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      padding-bottom: 100px;
+    }
+    
+    /* Stats Bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+    
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 12px;
+    }
+    .tab-btn {
+      padding: 12px 20px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover, .tab-btn.active {
+      opacity: 1;
+      background: var(--card);
+    }
+    .tab-btn.active {
+      color: var(--cyan);
+    }
+    .tab-badge {
+      background: var(--danger);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      margin-left: 6px;
+    }
+    
+    /* Provider Cards */
+    .provider-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .provider-card {
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 20px;
+    }
+    .provider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .provider-info h3 {
+      margin: 0 0 4px 0;
+      font-size: 18px;
+    }
+    .provider-meta {
+      font-size: 13px;
+      opacity: 0.6;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-badge.pending {
+      background: rgba(251,191,36,0.2);
+      color: #fbbf24;
+    }
+    .status-badge.approved {
+      background: rgba(74,222,128,0.2);
+      color: #4ade80;
+    }
+    
+    .provider-details {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 16px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+    }
+    .detail-item {
+      font-size: 13px;
+    }
+    .detail-label {
+      opacity: 0.5;
+      margin-bottom: 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .detail-value {
+      font-weight: 500;
+    }
+    
+    .provider-description {
+      font-size: 14px;
+      line-height: 1.5;
+      opacity: 0.85;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+    }
+    
+    .provider-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn {
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+    .btn-success:hover {
+      background: #128C7E;
+    }
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-danger:hover {
+      background: #e55c5c;
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      opacity: 0.6;
+    }
+    
+    /* Edit Form Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: 20px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 500px;
+      border: 1px solid rgba(255,255,255,0.1);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal h3 {
+      margin: 0 0 20px 0;
+      font-size: 20px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      opacity: 0.8;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--cyan);
+    }
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .modal-actions .btn {
+      flex: 1;
+    }
+    
+    @media (min-width: 768px) {
+      main { padding: 32px; }
+      .provider-details {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Task Leaders Admin</div>
+    <div class="admin-badge">ADMIN</div>
+  </header>
+
+  <main>
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-label">Total Providers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-approved">0</div>
+        <div class="stat-label">Approved</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-pending">0</div>
+        <div class="stat-label">Pending</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('pending')">
+        Pending
+        <span class="tab-badge" id="tab-pending-count">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('approved')">
+        Approved
+      </button>
+      <button class="tab-btn" onclick="switchTab('all')">
+        All Providers
+      </button>
+    </div>
+
+    <!-- Provider List -->
+    <div class="provider-list" id="provider-list">
+      <!-- Dynamically populated -->
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="empty-state" style="display: none;">
+      <h3>No providers found</h3>
+      <p>No applications to review at this time.</p>
+    </div>
+  </main>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+      <h3>Edit Provider</h3>
+      <form id="edit-form">
+        <input type="hidden" id="edit-provider-id">
+        <div class="form-group">
+          <label>Business Name</label>
+          <input type="text" id="edit-business-name" required>
+        </div>
+        <div class="form-group">
+          <label>Contact Name</label>
+          <input type="text" id="edit-contact-name" required>
+        </div>
+        <div class="form-group">
+          <label>WhatsApp Number</label>
+          <input type="text" id="edit-whatsapp" required>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="edit-category" required>
+            <option value="plumbing">Plumbing</option>
+            <option value="electrical">Electrical</option>
+            <option value="painting">Painting</option>
+            <option value="cleaning">Cleaning</option>
+            <option value="handyman">Handyman</option>
+            <option value="furniture-assembly">Furniture Assembly</option>
+            <option value="moving">Moving Help</option>
+            <option value="yard-work">Yard Work</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Service Area</label>
+          <input type="text" id="edit-service-area" required>
+        </div>
+        <div class="form-group">
+          <label>Hourly Rate ($)</label>
+          <input type="number" id="edit-hourly-rate" min="15" required>
+        </div>
+        <div class="form-group">
+          <label>Response Time (minutes)</label>
+          <input type="number" id="edit-response-time" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>Reliability Score (0-5)</label>
+          <input type="number" id="edit-reliability" min="0" max="5" step="0.1" required>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="edit-description" maxlength="200" required></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn btn-success">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Load Database -->
+  <script src="js/db.js"></script>
+  
+  <script>
+    let currentTab = 'pending';
+    let editingProviderId = null;
+
+    // Initialize
+    function init() {
+      updateStats();
+      loadProviders();
+    }
+
+    // Update stats
+    function updateStats() {
+      const all = TaskLeadersDB.providers;
+      const approved = all.filter(p => p.approved).length;
+      const pending = all.filter(p => !p.approved).length;
+
+      document.getElementById('stat-total').textContent = all.length;
+      document.getElementById('stat-approved').textContent = approved;
+      document.getElementById('stat-pending').textContent = pending;
+      document.getElementById('tab-pending-count').textContent = pending;
+    }
+
+    // Switch tab
+    function switchTab(tab) {
+      currentTab = tab;
+      
+      // Update button states
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      loadProviders();
+    }
+
+    // Load providers
+    function loadProviders() {
+      let providers = [];
+      
+      switch (currentTab) {
+        case 'pending':
+          providers = TaskLeadersDB.getPendingProviders();
+          break;
+        case 'approved':
+          providers = TaskLeadersDB.getApprovedProviders();
+          break;
+        case 'all':
+          providers = TaskLeadersDB.providers;
+          break;
+      }
+      
+      const container = document.getElementById('provider-list');
+      const emptyState = document.getElementById('empty-state');
+      
+      if (providers.length === 0) {
+        container.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+      
+      emptyState.style.display = 'none';
+      container.innerHTML = providers.map(provider => createProviderCard(provider)).join('');
+    }
+
+    // Create provider card HTML
+    function createProviderCard(provider) {
+      const statusClass = provider.approved ? 'approved' : 'pending';
+      const statusText = provider.approved ? 'Approved' : 'Pending Approval';
+      const categoryName = TaskLeadersDB.categories.find(c => c.id === provider.category)?.name || provider.category;
+      
+      return `
+        <div class="provider-card" data-provider-id="${provider.provider_id}">
+          <div class="provider-header">
+            <div class="provider-info">
+              <h3>${escapeHtml(provider.business_name)}</h3>
+              <div class="provider-meta">
+                Applied ${formatDate(provider.created_at)} • ${categoryName}
+              </div>
+            </div>
+            <span class="status-badge ${statusClass}">${statusText}</span>
+          </div>
+          
+          <div class="provider-details">
+            <div class="detail-item">
+              <div class="detail-label">Contact</div>
+              <div class="detail-value">${escapeHtml(provider.contact_name)}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">WhatsApp</div>
+              <div class="detail-value">+${provider.whatsapp_number}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Rate</div>
+              <div class="detail-value">$${provider.hourly_rate}/hr</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Response</div>
+              <div class="detail-value">${provider.response_time_minutes} min</div>
+            </div>
+          </div>
+          
+          <div class="provider-description">
+            ${escapeHtml(provider.description)}
+          </div>
+          
+          <div class="provider-actions">
+            ${!provider.approved ? `
+              <button class="btn btn-success" onclick="approveProvider('${provider.provider_id}')">
+                ✅ Approve
+              </button>
+            ` : ''}
+            <button class="btn btn-secondary" onclick="editProvider('${provider.provider_id}')">
+              ✏️ Edit
+            </button>
+            <button class="btn btn-danger" onclick="removeProvider('${provider.provider_id}')">
+              🗑️ Remove
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Approve provider
+    function approveProvider(providerId) {
+      if (!confirm('Approve this provider? They will appear in category listings.')) return;
+      
+      TaskLeadersDB.approveProvider(providerId);
+      updateStats();
+      loadProviders();
+    }
+
+    // Remove provider
+    function removeProvider(providerId) {
+      if (!confirm('Are you sure? This cannot be undone.')) return;
+      
+      TaskLeadersDB.removeProvider(providerId);
+      updateStats();
+      loadProviders();
+    }
+
+    // Edit provider
+    function editProvider(providerId) {
+      const provider = TaskLeadersDB.getProviderById(providerId);
+      if (!provider) return;
+      
+      editingProviderId = providerId;
+      
+      // Populate form
+      document.getElementById('edit-provider-id').value = providerId;
+      document.getElementById('edit-business-name').value = provider.business_name;
+      document.getElementById('edit-contact-name').value = provider.contact_name;
+      document.getElementById('edit-whatsapp').value = provider.whatsapp_number;
+      document.getElementById('edit-category').value = provider.category;
+      document.getElementById('edit-service-area').value = provider.service_area;
+      document.getElementById('edit-hourly-rate').value = provider.hourly_rate;
+      document.getElementById('edit-response-time').value = provider.response_time_minutes;
+      document.getElementById('edit-reliability').value = provider.reliability_score;
+      document.getElementById('edit-description').value = provider.description;
+      
+      // Show modal
+      document.getElementById('edit-modal').classList.add('active');
+    }
+
+    // Close edit modal
+    function closeEditModal() {
+      document.getElementById('edit-modal').classList.remove('active');
+      editingProviderId = null;
+    }
+
+    // Handle edit form submission
+    document.getElementById('edit-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      if (!editingProviderId) return;
+      
+      const updates = {
+        business_name: document.getElementById('edit-business-name').value.trim(),
+        contact_name: document.getElementById('edit-contact-name').value.trim(),
+        whatsapp_number: document.getElementById('edit-whatsapp').value.trim(),
+        category: document.getElementById('edit-category').value,
+        service_area: document.getElementById('edit-service-area').value.trim(),
+        hourly_rate: parseFloat(document.getElementById('edit-hourly-rate').value),
+        response_time_minutes: parseInt(document.getElementById('edit-response-time').value),
+        reliability_score: parseFloat(document.getElementById('edit-reliability').value),
+        description: document.getElementById('edit-description').value.trim()
+      };
+      
+      TaskLeadersDB.updateProvider(editingProviderId, updates);
+      closeEditModal();
+      loadProviders();
+    });
+
+    // Close modal on overlay click
+    document.getElementById('edit-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeEditModal();
+    });
+
+    // Format date
+    function formatDate(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Painting — Task Leaders</title>
+  <title id="page-title">Category — Task Leaders</title>
   <style>
     :root {
       --cyan: #00d4ff;
@@ -13,6 +13,7 @@
       --bronze: #CD7F32;
       --dark: #0a0a1a;
       --card: rgba(255,255,255,0.05);
+      --success: #25D366;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
@@ -61,6 +62,55 @@
     @media (min-width: 768px) {
       main { max-width: 700px; }
     }
+    
+    /* Activity Indicator */
+    .activity-bar {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .activity-item {
+      text-align: center;
+    }
+    .activity-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .activity-label {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+    
+    /* Recommended Section */
+    .recommended-section {
+      margin-bottom: 24px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0.8;
+    }
+    .recommended-badge {
+      background: linear-gradient(135deg, var(--gold), #FFA500);
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    
+    /* Filters */
     .filters {
       display: flex;
       gap: 8px;
@@ -90,7 +140,7 @@
       border-color: var(--cyan);
     }
     
-    /* Mobile-First Leaderboard */
+    /* Provider Cards */
     .leaderboard {
       display: flex;
       flex-direction: column;
@@ -102,10 +152,9 @@
       border-radius: 16px;
       border: 1px solid rgba(255,255,255,0.08);
       padding: 16px;
-      cursor: pointer;
       transition: all 0.2s;
     }
-    .tasker-card:hover, .tasker-card:active {
+    .tasker-card:hover {
       border-color: var(--cyan);
       transform: translateY(-2px);
     }
@@ -188,21 +237,15 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
     }
-    .status-badge.busy {
-      background: rgba(251,191,36,0.15);
-      color: #fbbf24;
-    }
-    .status-badge.busy::before {
-      background: #fbbf24;
-      animation: none;
-    }
     
     .tasker-stats {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 12px;
-      padding-top: 12px;
+      padding: 12px 0;
       border-top: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 12px;
     }
     
     .stat {
@@ -226,10 +269,32 @@
       color: var(--gold);
     }
     
+    .whatsapp-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: var(--success);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .whatsapp-btn:hover {
+      background: #128C7E;
+      transform: scale(1.02);
+    }
+    
     .badges-row {
       display: flex;
       gap: 6px;
-      margin-top: 12px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
     }
     .badge {
@@ -243,26 +308,13 @@
     .badge.cheap { background: rgba(74,222,128,0.2); color: #4ade80; }
     .badge.new { background: rgba(251,191,36,0.2); color: #fbbf24; }
     
-    .pagination {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 24px;
-      flex-wrap: wrap;
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      opacity: 0.6;
     }
-    .page-btn {
-      padding: 10px 16px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.05);
-      color: #fff;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .page-btn.active {
-      background: var(--cyan);
-      color: #000;
-      border-color: var(--cyan);
+    .empty-state h3 {
+      margin-bottom: 12px;
     }
     
     /* Desktop improvements */
@@ -271,7 +323,6 @@
       .filters { flex-wrap: wrap; overflow: visible; }
       .tasker-card { padding: 20px; }
       .tasker-name { font-size: 18px; }
-      .tasker-stats { grid-template-columns: repeat(4, 1fr); }
     }
   </style>
 </head>
@@ -279,194 +330,209 @@
   <header>
     <a href="homepage.html" class="logo">← Task Leaders</a>
     <div style="text-align: right;">
-      <div class="category-title">🎨 Painting</div>
-      <div class="tasker-count">1,247 Task Leaders</div>
+      <div class="category-title" id="category-title">Loading...</div>
+      <div class="tasker-count" id="tasker-count">0 Task Leaders</div>
     </div>
   </header>
 
   <main>
+    <!-- Activity Indicator -->
+    <div class="activity-bar" id="activity-bar">
+      <div class="activity-item">
+        <div class="activity-value" id="available-count">0</div>
+        <div class="activity-label">Available Now</div>
+      </div>
+      <div class="activity-item">
+        <div class="activity-value" id="avg-response">--</div>
+        <div class="activity-label">Avg Response</div>
+      </div>
+    </div>
+    
+    <!-- Recommended Providers -->
+    <div class="recommended-section" id="recommended-section">
+      <div class="section-header">
+        <span>⭐ Recommended TaskLeaders</span>
+        <span class="recommended-badge">TOP PICKS</span>
+      </div>
+      <div class="leaderboard" id="recommended-list">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+    <!-- Sort Filters -->
     <div class="filters">
-      <button class="filter-btn active">🏆 Rank</button>
-      <button class="filter-btn">🟢 Online</button>
-      <button class="filter-btn">⚡ Response</button>
-      <button class="filter-btn">⭐ Rating</button>
-      <button class="filter-btn">🛡️ Reliability</button>
-      <button class="filter-btn">💰 Price</button>
+      <button class="filter-btn active" onclick="setSort('default')">🏆 Rank</button>
+      <button class="filter-btn" onclick="setSort('response_time')">⚡ Response</button>
+      <button class="filter-btn" onclick="setSort('reliability')">⭐ Reliability</button>
+      <button class="filter-btn" onclick="setSort('price')">💰 Price</button>
     </div>
 
-    <div class="leaderboard">
-      <!-- Mike -->
-      <div class="tasker-card" onclick="location.href='mike.html'">
-        <div class="tasker-header">
-          <div class="rank gold">1</div>
-          <div class="tasker-main">
-            <div class="tasker-name">Mike Johnson</div>
-            <div class="tasker-meta">156 jobs</div>
-          </div>
-          <div class="status-badge">Online</div>
-        </div>
-        <div class="tasker-stats">
-          <div class="stat rate">
-            <div class="stat-value">$45</div>
-            <div class="stat-label">per hour</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">1.2m</div>
-            <div class="stat-label">response</div>
-          </div>
-          <div class="stat rating">
-            <div class="stat-value">4.9★</div>
-            <div class="stat-label">156 reviews</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">98%</div>
-            <div class="stat-label">reliability</div>
-          </div>
-        </div>
-        <div class="badges-row">
-          <span class="badge speed">⚡ SPEEDSTER</span>
-          <span class="badge pro">💎 PRO</span>
-        </div>
-      </div>
-
-      <!-- Budget Brush -->
-      <div class="tasker-card">
-        <div class="tasker-header">
-          <div class="rank silver">2</div>
-          <div class="tasker-main">
-            <div class="tasker-name">Budget Brush Co.</div>
-            <div class="tasker-meta">89 jobs</div>
-          </div>
-          <div class="status-badge">Online</div>
-        </div>
-        <div class="tasker-stats">
-          <div class="stat rate">
-            <div class="stat-value">$32</div>
-            <div class="stat-label">per hour</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">3.5m</div>
-            <div class="stat-label">response</div>
-          </div>
-          <div class="stat rating">
-            <div class="stat-value">4.3★</div>
-            <div class="stat-label">89 reviews</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">85%</div>
-            <div class="stat-label">reliability</div>
-          </div>
-        </div>
-        <div class="badges-row">
-          <span class="badge cheap">💰 BEST PRICE</span>
-        </div>
-      </div>
-
-      <!-- Elite Painters -->
-      <div class="tasker-card">
-        <div class="tasker-header">
-          <div class="rank bronze">3</div>
-          <div class="tasker-main">
-            <div class="tasker-name">Elite Painters</div>
-            <div class="tasker-meta">234 jobs</div>
-          </div>
-          <div class="status-badge busy">Busy</div>
-        </div>
-        <div class="tasker-stats">
-          <div class="stat rate">
-            <div class="stat-value">$58</div>
-            <div class="stat-label">per hour</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">2.1m</div>
-            <div class="stat-label">response</div>
-          </div>
-          <div class="stat rating">
-            <div class="stat-value">4.9★</div>
-            <div class="stat-label">234 reviews</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">96%</div>
-            <div class="stat-label">reliability</div>
-          </div>
-        </div>
-        <div class="badges-row">
-          <span class="badge pro">💎 PRO</span>
-        </div>
-      </div>
-
-      <!-- QuickCoat -->
-      <div class="tasker-card">
-        <div class="tasker-header">
-          <div class="rank other">4</div>
-          <div class="tasker-main">
-            <div class="tasker-name">QuickCoat</div>
-            <div class="tasker-meta">45 jobs</div>
-          </div>
-          <div class="status-badge">Online</div>
-        </div>
-        <div class="tasker-stats">
-          <div class="stat rate">
-            <div class="stat-value">$38</div>
-            <div class="stat-label">per hour</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">4.2m</div>
-            <div class="stat-label">response</div>
-          </div>
-          <div class="stat rating">
-            <div class="stat-value">4.6★</div>
-            <div class="stat-label">45 reviews</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">88%</div>
-            <div class="stat-label">reliability</div>
-          </div>
-        </div>
-        <div class="badges-row">
-          <span class="badge new">🌱 NEW</span>
-        </div>
-      </div>
-
-      <!-- Sarah -->
-      <div class="tasker-card">
-        <div class="tasker-header">
-          <div class="rank other">5</div>
-          <div class="tasker-main">
-            <div class="tasker-name">Sarah's Brushwork</div>
-            <div class="tasker-meta">67 jobs</div>
-          </div>
-          <div class="status-badge">Online</div>
-        </div>
-        <div class="tasker-stats">
-          <div class="stat rate">
-            <div class="stat-value">$42</div>
-            <div class="stat-label">per hour</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">5.8m</div>
-            <div class="stat-label">response</div>
-          </div>
-          <div class="stat rating">
-            <div class="stat-value">4.8★</div>
-            <div class="stat-label">67 reviews</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value">94%</div>
-            <div class="stat-label">reliability</div>
-          </div>
-        </div>
-      </div>
+    <!-- Provider List -->
+    <div class="leaderboard" id="provider-list">
+      <!-- Dynamically populated -->
     </div>
-
-    <div class="pagination">
-      <button class="page-btn active">1</button>
-      <button class="page-btn">2</button>
-      <button class="page-btn">3</button>
-      <span style="opacity:0.5;padding:10px;">...</span>
-      <button class="page-btn">63</button>
-      <button class="page-btn">→</button>
+    
+    <!-- Empty State -->
+    <div class="empty-state" id="empty-state" style="display: none;">
+      <h3>No providers yet</h3>
+      <p>Be the first to join this category!</p>
+      <a href="become-task-leader.html" style="color: var(--cyan);">Apply now →</a>
     </div>
   </main>
+
+  <!-- Load Database -->
+  <script src="js/db.js"></script>
+  
+  <script>
+    // Get category from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryId = urlParams.get('category') || 'painting';
+    
+    // Current sort
+    let currentSort = 'default';
+    
+    // Initialize page
+    function init() {
+      const category = TaskLeadersDB.categories.find(c => c.id === categoryId);
+      if (category) {
+        document.getElementById('category-title').textContent = `${category.icon} ${category.name}`;
+        document.getElementById('page-title').textContent = `${category.name} — Task Leaders`;
+      }
+      
+      loadProviders();
+    }
+    
+    // Load and display providers
+    function loadProviders() {
+      const providers = TaskLeadersDB.getProvidersByCategory(categoryId);
+      const stats = TaskLeadersDB.getCategoryStats(categoryId);
+      
+      // Update stats
+      document.getElementById('tasker-count').textContent = `${providers.length} Task Leader${providers.length !== 1 ? 's' : ''}`;
+      document.getElementById('available-count').textContent = stats.available_now;
+      document.getElementById('avg-response').textContent = stats.avg_response_time > 0 ? `~${stats.avg_response_time}m` : '--';
+      
+      // Show empty state if no providers
+      if (providers.length === 0) {
+        document.getElementById('empty-state').style.display = 'block';
+        document.getElementById('recommended-section').style.display = 'none';
+        document.getElementById('provider-list').style.display = 'none';
+        return;
+      }
+      
+      // Load recommended providers
+      loadRecommendedProviders();
+      
+      // Load main provider list
+      renderProviderList(providers);
+    }
+    
+    // Load recommended providers
+    function loadRecommendedProviders() {
+      const recommended = TaskLeadersDB.getRecommendedProviders(categoryId, 3);
+      const container = document.getElementById('recommended-list');
+      
+      if (recommended.length === 0) {
+        document.getElementById('recommended-section').style.display = 'none';
+        return;
+      }
+      
+      container.innerHTML = recommended.map((provider, index) => 
+        createProviderCard(provider, index + 1, true)
+      ).join('');
+    }
+    
+    // Render provider list
+    function renderProviderList(providers) {
+      const sorted = TaskLeadersDB.sortProviders(providers, currentSort);
+      const container = document.getElementById('provider-list');
+      
+      container.innerHTML = sorted.map((provider, index) => 
+        createProviderCard(provider, index + 1, false)
+      ).join('');
+    }
+    
+    // Create provider card HTML
+    function createProviderCard(provider, rank, isRecommended) {
+      const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'other';
+      const responseTime = TaskLeadersDB.formatResponseTime(provider.response_time_minutes);
+      const price = TaskLeadersDB.formatPrice(provider.hourly_rate);
+      
+      // Generate badges
+      let badges = '';
+      if (provider.response_time_minutes <= 5) {
+        badges += '<span class="badge speed">⚡ SPEEDSTER</span>';
+      }
+      if (provider.founding_provider_status) {
+        badges += '<span class="badge pro">💎 FOUNDING</span>';
+      }
+      
+      // WhatsApp link with prefilled message
+      const whatsappNumber = provider.whatsapp_number;
+      const categoryName = TaskLeadersDB.categories.find(c => c.id === provider.category)?.name || provider.category;
+      const message = encodeURIComponent(`Hi! I found you on TaskLeaders and need help with ${categoryName}.`);
+      const whatsappLink = `https://wa.me/${whatsappNumber}?text=${message}`;
+      
+      return `
+        <div class="tasker-card">
+          <div class="tasker-header">
+            <div class="rank ${rankClass}">${rank}</div>
+            <div class="tasker-main">
+              <div class="tasker-name">${escapeHtml(provider.business_name)}</div>
+              <div class="tasker-meta">${provider.service_area}</div>
+            </div>
+            <div class="status-badge">Online</div>
+          </div>
+          <div class="tasker-stats">
+            <div class="stat rate">
+              <div class="stat-value">${price}</div>
+              <div class="stat-label">per hour</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">${responseTime}</div>
+              <div class="stat-label">response</div>
+            </div>
+            <div class="stat rating">
+              <div class="stat-value">${provider.reliability_score.toFixed(1)}★</div>
+              <div class="stat-label">rating</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">${provider.response_rate}%</div>
+              <div class="stat-label">response rate</div>
+            </div>
+          </div>
+          ${badges ? `<div class="badges-row">${badges}</div>` : ''}
+          <a href="${whatsappLink}" class="whatsapp-btn" target="_blank">
+            💬 Message on WhatsApp
+          </a>
+        </div>
+      `;
+    }
+    
+    // Set sort option
+    function setSort(sortBy) {
+      currentSort = sortBy;
+      
+      // Update button states
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Reload providers with new sort
+      const providers = TaskLeadersDB.getProvidersByCategory(categoryId);
+      renderProviderList(providers);
+    }
+    
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    // Initialize on load
+    init();
+  </script>
 </body>
 </html>

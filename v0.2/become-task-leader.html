@@ -2,445 +2,407 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Become an OG Task Leader — Task Leaders</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="theme-color" content="#0a0a1a" />
+  <title>Become a Task Leader — Task Leaders</title>
   <style>
     :root {
       --cyan: #00d4ff;
       --purple: #7b2cbf;
-      --dark: #0a0a1a;
-      --success: #4ade80;
       --gold: #FFD700;
+      --success: #25D366;
+      --dark: #0a0a1a;
+      --card: rgba(255,255,255,0.05);
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
       background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
       color: #fff;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 40px 20px;
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      position: sticky;
+      top: 0;
+      background: rgba(10,10,26,0.95);
+      backdrop-filter: blur(10px);
+      z-index: 100;
     }
     .back {
       color: rgba(255,255,255,0.6);
       text-decoration: none;
-      font-size: 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 24px;
-    }
-    .og-badge {
-      display: inline-flex;
+      font-size: 16px;
+      display: flex;
       align-items: center;
       gap: 8px;
-      background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.1));
-      border: 1px solid var(--gold);
-      padding: 10px 16px;
-      border-radius: 24px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--gold);
-      margin-bottom: 24px;
     }
-    h1 {
-      font-size: 32px;
-      margin: 0 0 12px 0;
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      padding-bottom: 100px;
+    }
+    .hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .hero h1 {
+      font-size: 28px;
+      margin-bottom: 12px;
       background: linear-gradient(90deg, var(--cyan), var(--purple));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    .subtitle {
-      font-size: 17px;
-      opacity: 0.8;
-      margin: 0 0 32px 0;
-      line-height: 1.5;
-    }
-    .offer-box {
-      background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(123,44,191,0.1));
-      border: 1px solid rgba(0,212,255,0.3);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 32px;
-    }
-    .offer-box h3 {
-      margin: 0 0 12px 0;
-      font-size: 16px;
-      color: var(--cyan);
-    }
-    .offer-box p {
-      margin: 0;
-      font-size: 14px;
-      opacity: 0.9;
+    .hero p {
+      opacity: 0.7;
       line-height: 1.6;
     }
-    .og-perks {
-      background: rgba(255,255,255,0.05);
+    .benefits {
+      background: var(--card);
       border-radius: 16px;
       padding: 20px;
       margin-bottom: 32px;
+      border: 1px solid rgba(255,255,255,0.08);
     }
-    .og-perks h3 {
+    .benefits h3 {
       margin: 0 0 16px 0;
-      font-size: 15px;
+      font-size: 16px;
     }
-    .og-perks ul {
+    .benefits ul {
       margin: 0;
       padding-left: 20px;
-      font-size: 14px;
+      opacity: 0.85;
       line-height: 1.8;
-      opacity: 0.9;
     }
-    .og-perks li {
-      margin-bottom: 6px;
+    .form-section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.08);
     }
-    .highlight {
-      color: var(--gold);
-      font-weight: 600;
+    .form-section h2 {
+      margin: 0 0 24px 0;
+      font-size: 20px;
     }
     .form-group {
       margin-bottom: 20px;
     }
-    label {
+    .form-group label {
       display: block;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 500;
       margin-bottom: 8px;
+      opacity: 0.9;
     }
-    input, select, textarea {
+    .form-group label .required {
+      color: #ff6b6b;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
       width: 100%;
-      padding: 14px 16px;
-      border-radius: 10px;
+      padding: 16px;
+      border-radius: 12px;
       border: 1px solid rgba(255,255,255,0.2);
       background: rgba(255,255,255,0.05);
       color: #fff;
       font-size: 16px;
-      font-family: inherit;
-    }
-    input:focus, select:focus, textarea:focus {
       outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
       border-color: var(--cyan);
     }
-    input::placeholder { color: rgba(255,255,255,0.4); }
-    select option { background: var(--dark); }
-    
-    .service-select {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(255,255,255,0.4);
     }
-    .service-option {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 16px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.1);
+    .form-group select {
       cursor: pointer;
-      transition: all 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
     }
-    .service-option:hover {
-      border-color: var(--cyan);
-      background: rgba(255,255,255,0.08);
+    .form-group select option {
+      background: var(--dark);
+      color: #fff;
     }
-    .service-option.selected {
-      border-color: var(--cyan);
-      background: rgba(0,212,255,0.1);
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
     }
-    .service-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .service-icon {
-      font-size: 20px;
-    }
-    .service-name {
-      font-size: 15px;
-      font-weight: 500;
-    }
-    .service-price {
-      text-align: right;
-    }
-    .price-regular {
-      font-size: 13px;
-      opacity: 0.5;
-      text-decoration: line-through;
-    }
-    .price-og {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--success);
-    }
-    .price-note {
-      font-size: 11px;
-      opacity: 0.7;
-    }
-    
-    .btn {
+    .submit-btn {
       width: 100%;
       padding: 18px;
-      border-radius: 12px;
+      border-radius: 14px;
+      border: none;
+      background: var(--success);
+      color: #fff;
       font-size: 17px;
       font-weight: 700;
       cursor: pointer;
-      border: none;
-      background: var(--cyan);
-      color: #000;
-      transition: all 0.2s;
       margin-top: 8px;
+      transition: all 0.2s;
     }
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(0,212,255,0.3);
+    .submit-btn:hover {
+      background: #128C7E;
     }
-    .terms-note {
-      font-size: 12px;
-      opacity: 0.6;
-      text-align: center;
-      margin-top: 16px;
-      line-height: 1.5;
-    }
-    .terms-note a {
-      color: var(--cyan);
-      text-decoration: none;
-    }
-    footer {
-      text-align: center;
-      padding: 40px 0 0 0;
+    .submit-btn:disabled {
       opacity: 0.5;
-      font-size: 12px;
+      cursor: not-allowed;
     }
-    @media (max-width: 480px) {
-      h1 { font-size: 26px; }
-      .container { padding: 24px 16px; }
+    
+    /* Success State */
+    .success-message {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success-message.show {
+      display: block;
+    }
+    .success-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    .success-message h2 {
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+    .success-message p {
+      opacity: 0.8;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .success-message .btn-secondary {
+      display: inline-block;
+      padding: 14px 28px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #fff;
+      font-size: 15px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    
+    /* Error Message */
+    .error-message {
+      color: #ff6b6b;
+      font-size: 13px;
+      margin-top: 6px;
+      display: none;
+    }
+    .error-message.show {
+      display: block;
+    }
+    .form-group.has-error input,
+    .form-group.has-error select,
+    .form-group.has-error textarea {
+      border-color: #ff6b6b;
+    }
+    
+    @media (min-width: 768px) {
+      main { padding: 32px; }
+      .hero h1 { font-size: 32px; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <header>
     <a href="homepage.html" class="back">← Back to Task Leaders</a>
-    
-    <div class="og-badge">👑 OG TASK LEADER PROGRAM</div>
-    
-    <h1>Become an OG Task Leader</h1>
-    <ul class="subtitle" style="list-style: none; padding: 0; margin: 0 0 32px 0;">
-        <li style="margin-bottom: 8px;">• Join the founding community for advanced lead generation</li>
-        <li style="margin-bottom: 8px;">• Get qualified customer inquiries delivered directly to your WhatsApp</li>
-        <li>• Keep 100% of your rates</li>
-      </ul>
-    
-    <div class="offer-box">
-      <h3>🎉 Limited Time: 2 Month Free Trial</h3>
-      <p>Start with 2 months at $0. No credit card required to apply. When you're approved, add your card — we won't charge until month 3. If you're not satisfied, cancel anytime before then.</p>
+  </header>
+
+  <main>
+    <!-- Application Form -->
+    <div id="application-form">
+      <div class="hero">
+        <h1>Become a Task Leader</h1>
+        <p>Join Vancouver's fastest-growing service provider community. Get qualified leads delivered directly to your WhatsApp.</p>
+      </div>
+
+      <div class="benefits">
+        <h3>🎉 Founding Provider Benefits</h3>
+        <ul>
+          <li><strong>2 months FREE</strong> — No subscription fees</li>
+          <li><strong>Keep 100%</strong> of your earnings</li>
+          <li><strong>Founding badge</strong> — Permanent status</li>
+          <li><strong>Priority placement</strong> — Top of search results</li>
+        </ul>
+      </div>
+
+      <div class="form-section">
+        <h2>Apply Now</h2>
+        <form id="provider-form" onsubmit="handleSubmit(event)">
+          <div class="form-group">
+            <label>Contact Name <span class="required">*</span></label>
+            <input type="text" id="contactName" placeholder="Your full name" required />
+            <div class="error-message" id="error-contactName">Please enter your name</div>
+          </div>
+
+          <div class="form-group">
+            <label>Business Name <span class="required">*</span></label>
+            <input type="text" id="businessName" placeholder="Your business name" required />
+            <div class="error-message" id="error-businessName">Please enter your business name</div>
+          </div>
+
+          <div class="form-group">
+            <label>WhatsApp Number <span class="required">*</span></label>
+            <input type="tel" id="whatsappNumber" placeholder="+1 (604) 555-1234" required />
+            <div class="error-message" id="error-whatsappNumber">Please enter a valid WhatsApp number</div>
+          </div>
+
+          <div class="form-group">
+            <label>Service Category <span class="required">*</span></label>
+            <select id="category" required>
+              <option value="">Select a category</option>
+              <option value="plumbing">Plumbing</option>
+              <option value="electrical">Electrical</option>
+              <option value="painting">Painting</option>
+              <option value="cleaning">Cleaning</option>
+              <option value="handyman">Handyman</option>
+              <option value="furniture-assembly">Furniture Assembly</option>
+              <option value="moving">Moving Help</option>
+              <option value="yard-work">Yard Work</option>
+            </select>
+            <div class="error-message" id="error-category">Please select a category</div>
+          </div>
+
+          <div class="form-group">
+            <label>Service Area <span class="required">*</span></label>
+            <input type="text" id="serviceArea" placeholder="e.g., Vancouver, Burnaby, Richmond" required />
+            <div class="error-message" id="error-serviceArea">Please enter your service area</div>
+          </div>
+
+          <div class="form-group">
+            <label>Hourly Rate ($) <span class="required">*</span></label>
+            <input type="number" id="hourlyRate" placeholder="e.g., 75" min="15" required />
+            <div class="error-message" id="error-hourlyRate">Please enter your hourly rate (minimum $15)</div>
+          </div>
+
+          <div class="form-group">
+            <label>Short Description <span class="required">*</span></label>
+            <textarea id="description" placeholder="Tell customers about your experience and services..." maxlength="200" required></textarea>
+            <div class="error-message" id="error-description">Please enter a description (max 200 characters)</div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitBtn">
+            Submit Application
+          </button>
+        </form>
+      </div>
     </div>
-    
-    <div class="og-perks">
-      <h3>✨ OG Task Leader Perks (Forever)</h3>
-      <ul>
-        <li><span class="highlight">"OG Task Leader" badge</span> on your profile</li>
-        <li><span class="highlight">Locked intro rates</span> — never pay more</li>
-        <li><span class="highlight">Direct founder access</span> — WhatsApp Todd anytime</li>
-      </ul>
+
+    <!-- Success Message -->
+    <div class="success-message" id="success-message">
+      <div class="success-icon">✅</div>
+      <h2>Application Received!</h2>
+      <p>Thank you for applying to become a Task Leader. We will contact you via WhatsApp within 24 hours for verification.</p>
+      <a href="homepage.html" class="btn-secondary">Back to Home</a>
     </div>
-    
-    <div class="whatsapp-required" style="background: rgba(37,211,102,0.1); border: 1px solid rgba(37,211,102,0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-        <span style="font-size: 24px;">📱</span>
-        <span style="font-weight: 600;">WhatsApp Required</span>
-      </div>
-      <p style="margin: 0; font-size: 14px; opacity: 0.9; line-height: 1.5;">You must have WhatsApp installed on your phone or desktop to receive customer inquiries. All communication happens through WhatsApp — no separate app needed.</p>
-    </div>
+  </main>
 
-    <form id="signup-form">
-      <div class="form-group">
-        <label for="name">Full Name</label>
-        <input type="text" id="name" name="name" placeholder="Mike Johnson" required />
-      </div>
-
-      <div class="form-group">
-        <label for="phone">WhatsApp Number <span style="font-weight: 400; opacity: 0.7;">(required — this is how customers reach you)</span></label>
-        <input type="tel" id="phone" name="phone" placeholder="+1 (604) 555-0123" required />
-      </div>
-
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" placeholder="mike@example.com" required />
-      </div>
-
-      <div class="form-group">
-        <label>Select Your Categories (choose all that apply)</label>
-        <div class="service-select">
-          <div class="service-option" onclick="toggleService(this)">
-            <div class="service-left">
-              <span class="service-icon">🔧</span>
-              <span class="service-name">Handyman</span>
-            </div>
-            <div class="service-price">
-              <div class="price-regular">$20/mo</div>
-              <div class="price-og">$0.00</div>
-              <div class="price-note">2 months free</div>
-            </div>
-          </div>
-          
-          <div class="service-option" onclick="toggleService(this)">
-            <div class="service-left">
-              <span class="service-icon">🚿</span>
-              <span class="service-name">Plumbing</span>
-            </div>
-            <div class="service-price">
-              <div class="price-regular">$50/mo</div>
-              <div class="price-og">$0.00</div>
-              <div class="price-note">2 months free</div>
-            </div>
-          </div>
-          
-          <div class="service-option" onclick="toggleService(this)">
-            <div class="service-left">
-              <span class="service-icon">⚡</span>
-              <span class="service-name">Electrical</span>
-            </div>
-            <div class="service-price">
-              <div class="price-regular">$50/mo</div>
-              <div class="price-og">$0.00</div>
-              <div class="price-note">2 months free</div>
-            </div>
-          </div>
-          
-          <div class="service-option" onclick="toggleService(this)">
-            <div class="service-left">
-              <span class="service-icon">🧹</span>
-              <span class="service-name">Cleaning</span>
-            </div>
-            <div class="service-price">
-              <div class="price-regular">$15/mo</div>
-              <div class="price-og">$0.00</div>
-              <div class="price-note">2 months free</div>
-            </div>
-          </div>
-          
-          <div class="service-option" onclick="toggleService(this)">
-            <div class="service-left">
-              <span class="service-icon">🚚</span>
-              <span class="service-name">Moving Help</span>
-            </div>
-            <div class="service-price">
-              <div class="price-regular">$50/mo</div>
-              <div class="price-og">$0.00</div>
-              <div class="price-note">2 months free</div>
-            </div>
-          </div>
-          
-          <div class="service-option" onclick="toggleService(this)">
-            <div class="service-left">
-              <span class="service-icon">📦</span>
-              <span class="service-name">Packing & Unpacking</span>
-            </div>
-            <div class="service-price">
-              <div class="price-regular">$40/mo</div>
-              <div class="price-og">$0.00</div>
-              <div class="price-note">2 months free</div>
-            </div>
-          </div>
-          
-          <div class="service-option" onclick="toggleService(this)">
-            <div class="service-left">
-              <span class="service-icon">🎨</span>
-              <span class="service-name">Painting</span>
-            </div>
-            <div class="service-price">
-              <div class="price-regular">$40/mo</div>
-              <div class="price-og">$0.00</div>
-              <div class="price-note">2 months free</div>
-            </div>
-          </div>
-          
-          <div class="service-option" onclick="toggleService(this)">
-            <div class="service-left">
-              <span class="service-icon">🪑</span>
-              <span class="service-name">Furniture Assembly</span>
-            </div>
-            <div class="service-price">
-              <div class="price-regular">$20/mo</div>
-              <div class="price-og">$0.00</div>
-              <div class="price-note">2 months free</div>
-            </div>
-          </div>
-          
-          <div class="service-option" onclick="toggleService(this)">
-            <div class="service-left">
-              <span class="service-icon">🌿</span>
-              <span class="service-name">Yard Work</span>
-            </div>
-            <div class="service-price">
-              <div class="price-regular">$20/mo</div>
-              <div class="price-og">$0.00</div>
-              <div class="price-note">2 months free</div>
-            </div>
-          </div>
-          
-          <div class="service-option" onclick="toggleService(this)">
-            <div class="service-left">
-              <span class="service-icon">❄️</span>
-              <span class="service-name">HVAC</span>
-            </div>
-            <div class="service-price">
-              <div class="price-regular">$50/mo</div>
-              <div class="price-og">$0.00</div>
-              <div class="price-note">2 months free</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="form-group" style="margin-top: 16px;">
-          <label for="other-category">Don't see your category? Let us know.</label>
-          <input type="text" id="other-category" name="other-category" placeholder="e.g., Appliance Repair, Window Cleaning..." />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="jobs">Approximate Jobs Completed</label>
-        <select id="jobs" name="jobs" required>
-          <option value="">Select...</option>
-          <option value="0-10">0-10 jobs</option>
-          <option value="11-50">11-50 jobs</option>
-          <option value="51-100">51-100 jobs</option>
-          <option value="100+">100+ jobs</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="why">Tell us about your work</label>
-        <textarea id="why" name="why" rows="3" placeholder="What makes you great at what you do?"></textarea>
-      </div>
-
-      <div class="form-group terms-checkbox" style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-        <input type="checkbox" id="terms" name="terms" required style="width: auto; margin-top: 2px;" />
-        <label for="terms" style="margin: 0; font-weight: 400; font-size: 14px; opacity: 0.9;">I agree to the <a href="#" style="color: var(--cyan);">Terms of Service</a>. Credit card required only after approval — you won't be charged until month 3.</label>
-      </div>
-
-      <button type="submit" class="btn">Apply to Become an OG Task Leader</button>
-    </form>
-
-    <footer>
-      <p>Questions? WhatsApp Todd</p>
-    </footer>
-  </div>
-
+  <!-- Load Database -->
+  <script src="js/db.js"></script>
+  
   <script>
-    function toggleService(el) {
-      el.classList.toggle('selected');
+    function handleSubmit(event) {
+      event.preventDefault();
+      
+      // Clear previous errors
+      document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
+      document.querySelectorAll('.form-group').forEach(el => el.classList.remove('has-error'));
+      
+      // Get form values
+      const formData = {
+        contact_name: document.getElementById('contactName').value.trim(),
+        business_name: document.getElementById('businessName').value.trim(),
+        whatsapp_number: document.getElementById('whatsappNumber').value.trim(),
+        category: document.getElementById('category').value,
+        service_area: document.getElementById('serviceArea').value.trim(),
+        hourly_rate: document.getElementById('hourlyRate').value,
+        description: document.getElementById('description').value.trim(),
+        founding_provider_status: true, // All new signups are founding providers during MVP
+        response_time_minutes: 5, // Default until proven
+        reliability_score: 0, // No reviews yet
+        response_rate: 95 // Default
+      };
+      
+      // Validate
+      let hasError = false;
+      
+      if (!formData.contact_name) {
+        showError('contactName');
+        hasError = true;
+      }
+      
+      if (!formData.business_name) {
+        showError('businessName');
+        hasError = true;
+      }
+      
+      if (!formData.whatsapp_number || formData.whatsapp_number.length < 10) {
+        showError('whatsappNumber');
+        hasError = true;
+      }
+      
+      if (!formData.category) {
+        showError('category');
+        hasError = true;
+      }
+      
+      if (!formData.service_area) {
+        showError('serviceArea');
+        hasError = true;
+      }
+      
+      if (!formData.hourly_rate || parseFloat(formData.hourly_rate) < 15) {
+        showError('hourlyRate');
+        hasError = true;
+      }
+      
+      if (!formData.description) {
+        showError('description');
+        hasError = true;
+      }
+      
+      if (hasError) return;
+      
+      // Disable submit button
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+      
+      // Save provider (approved = false, requires admin approval)
+      try {
+        const provider = TaskLeadersDB.addProvider(formData);
+        console.log('Provider application saved:', provider);
+        
+        // Show success message
+        document.getElementById('application-form').style.display = 'none';
+        document.getElementById('success-message').classList.add('show');
+        
+      } catch (error) {
+        console.error('Error saving provider:', error);
+        alert('Something went wrong. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Application';
+      }
     }
     
-    document.getElementById('signup-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      alert('Thanks for applying! Todd will reach out within 24 hours via WhatsApp.');
-    });
+    function showError(fieldId) {
+      const errorEl = document.getElementById('error-' + fieldId);
+      const inputEl = document.getElementById(fieldId);
+      if (errorEl) errorEl.classList.add('show');
+      if (inputEl) inputEl.closest('.form-group').classList.add('has-error');
+    }
   </script>
 </body>
 </html>
