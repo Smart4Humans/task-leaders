@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Complete Your Profile — TaskLeaders</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #0a0a1a;
+      color: #fff;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+    }
+    .logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: #00d4ff;
+    }
+    .logo span { color: #fff; }
+    
+    main {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    
+    .progress {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .progress-step {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+    }
+    .progress-step.active { background: #00d4ff; }
+    .progress-step.complete { background: #4ade80; }
+    
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+    }
+    .subtitle {
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    
+    .section {
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 12px;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .form-group label .required { color: #ff6b6b; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #00d4ff;
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(255,255,255,0.3);
+    }
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    .form-group select option {
+      background: #0a0a1a;
+      color: #fff;
+    }
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .char-count {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      text-align: right;
+      margin-top: 4px;
+    }
+    
+    /* Photo Upload */
+    .photo-upload {
+      border: 2px dashed rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .photo-upload:hover { border-color: rgba(255,255,255,0.3); }
+    .photo-upload input { display: none; }
+    .photo-placeholder {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .photo-text {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+    }
+    
+    /* Stripe Placeholder */
+    .stripe-box {
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      padding: 16px;
+      background: rgba(255,255,255,0.03);
+    }
+    .stripe-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 12px;
+    }
+    .stripe-inputs {
+      display: flex;
+      gap: 8px;
+    }
+    .stripe-input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      font-size: 14px;
+    }
+    .stripe-input::placeholder { color: rgba(255,255,255,0.3); }
+    
+    /* Agreement */
+    .agreement {
+      background: rgba(255,255,255,0.03);
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .agreement-text {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .checkbox-label input {
+      margin-top: 2px;
+    }
+    
+    /* Submit */
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 8px;
+      border: none;
+      background: #00d4ff;
+      color: #000;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .submit-btn:hover { background: #33ddff; }
+    .submit-btn:disabled {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.3);
+      cursor: not-allowed;
+    }
+    
+    /* Success State */
+    .success-state {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success-state.active { display: block; }
+    .success-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+    .success-state h2 {
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+    .success-state p {
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 24px;
+    }
+    .go-live-btn {
+      display: inline-block;
+      padding: 16px 32px;
+      border-radius: 8px;
+      border: none;
+      background: #4ade80;
+      color: #000;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    
+    /* Error */
+    .error {
+      color: #ff6b6b;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    
+    @media (min-width: 768px) {
+      main { padding: 32px 24px 64px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="logo">Task<span>Leaders</span></span>
+  </header>
+
+  <main>
+    <!-- Form State -->
+    <div id="form-state">
+      <div class="progress">
+        <div class="progress-step complete"></div>
+        <div class="progress-step active"></div>
+        <div class="progress-step"></div>
+      </div>
+
+      <h1>Complete Your Profile</h1>
+      <p class="subtitle">You're approved! Finish setup to start receiving customer inquiries.</p>
+
+      <form id="setup-form" onsubmit="handleSubmit(event)">
+        <div class="section">
+          <div class="section-title">Business Information</div>
+          
+          <div class="form-group">
+            <label>Business Name <span class="required">*</span></label>
+            <input type="text" id="businessName" placeholder="Your business name" required>
+          </div>
+
+          <div class="form-group">
+            <label>Contact Name <span class="required">*</span></label>
+            <input type="text" id="contactName" placeholder="Your full name" required>
+          </div>
+
+          <div class="form-group">
+            <label>WhatsApp Number <span class="required">*</span></label>
+            <input type="tel" id="whatsappNumber" placeholder="+1 (604) 555-1234" required>
+          </div>
+
+          <div class="form-group">
+            <label>Service Category <span class="required">*</span></label>
+            <select id="category" required>
+              <option value="">Select category</option>
+              <option value="plumbing">Plumbing</option>
+              <option value="electrical">Electrical</option>
+              <option value="painting">Painting</option>
+              <option value="cleaning">Cleaning</option>
+              <option value="handyman">Handyman</option>
+              <option value="furniture-assembly">Furniture Assembly</option>
+              <option value="moving">Moving Help</option>
+              <option value="yard-work">Yard Work</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Service Area <span class="required">*</span></label>
+            <input type="text" id="serviceArea" placeholder="e.g., Vancouver, Burnaby, Richmond" required>
+          </div>
+
+          <div class="form-group">
+            <label>Hourly Rate ($) <span class="required">*</span></label>
+            <input type="number" id="hourlyRate" placeholder="75" min="15" required>
+          </div>
+
+          <div class="form-group">
+            <label>Short Description <span class="required">*</span></label>
+            <textarea id="description" placeholder="Describe your services and experience..." maxlength="200" required></textarea>
+            <div class="char-count"><span id="char-count">0</span>/200</div>
+          </div>
+
+          <div class="form-group">
+            <label>Logo or Photo <span style="color: rgba(255,255,255,0.4);">(optional)</span></label>
+            <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
+              <input type="file" id="photoInput" accept="image/*">
+              <div class="photo-placeholder">📷</div>
+              <div class="photo-text">Tap to upload photo</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Payment Method</div>
+          <div class="stripe-box">
+            <div class="stripe-label">Card on file (not charged until trial ends)</div>
+            <div class="stripe-inputs">
+              <input type="text" class="stripe-input" placeholder="Card number" maxlength="19">
+              <input type="text" class="stripe-input" placeholder="MM/YY" maxlength="5" style="flex: 0.5;">
+              <input type="text" class="stripe-input" placeholder="CVC" maxlength="4" style="flex: 0.5;">
+            </div>
+            <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 12px; margin-bottom: 0;">
+              🔒 Secured by Stripe. 2 months FREE, then $29/month.
+            </p>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Agreement</div>
+          <div class="agreement">
+            <p class="agreement-text">
+              TaskLeaders connects you directly with customers via WhatsApp. 
+              To maintain quality service, you agree to:
+            </p>
+            <ul style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 16px; padding-left: 20px;">
+              <li>Respond to customer inquiries within 24 hours</li>
+              <li>Maintain 80%+ response rate</li>
+              <li>Provide accurate service information</li>
+            </ul>
+            <label class="checkbox-label">
+              <input type="checkbox" id="agreementCheck" required>
+              <span>I agree to respond within 24 hours and maintain service quality standards.</span>
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Complete Setup</button>
+      </form>
+    </div>
+
+    <!-- Success State -->
+    <div class="success-state" id="success-state">
+      <div class="success-icon">✅</div>
+      <h2>Profile Complete!</h2>
+      <p>Your profile is ready. Toggle "Available" when you're ready to receive customer inquiries.</p>
+      <button class="go-live-btn" onclick="goLive()">Go Live</button>
+    </div>
+  </main>
+
+  <script src="js/db.js"></script>
+  <script>
+    // Character count
+    document.getElementById('description').addEventListener('input', function() {
+      document.getElementById('char-count').textContent = this.value.length;
+    });
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      // Simulate save
+      setTimeout(() => {
+        document.getElementById('form-state').style.display = 'none';
+        document.getElementById('success-state').classList.add('active');
+      }, 800);
+    }
+
+    function goLive() {
+      // In real implementation, this would activate the provider profile
+      alert('You are now LIVE! Customers can find you in category listings.');
+      window.location.href = 'homepage.html';
+    }
+  </script>
+</body>
+</html>
