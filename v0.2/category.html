@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>Painting — Task Leaders</title>
   <style>
     :root {
@@ -14,23 +14,29 @@
       --dark: #0a0a1a;
       --card: rgba(255,255,255,0.05);
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
       background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
       color: #fff;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
     header {
-      padding: 16px 24px;
+      padding: 16px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid rgba(255,255,255,0.1);
+      position: sticky;
+      top: 0;
+      background: rgba(10,10,26,0.95);
+      backdrop-filter: blur(10px);
+      z-index: 100;
     }
     .logo {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 800;
       background: linear-gradient(90deg, var(--cyan), var(--purple));
       -webkit-background-clip: text;
@@ -38,99 +44,194 @@
       text-decoration: none;
     }
     .category-title {
-      font-size: 24px;
+      font-size: 20px;
       font-weight: 700;
     }
     .tasker-count {
-      font-size: 14px;
+      font-size: 13px;
       opacity: 0.6;
-      margin-left: 12px;
+      margin-left: 8px;
     }
     main {
       max-width: 1000px;
       margin: 0 auto;
-      padding: 24px;
+      padding: 16px;
+      padding-bottom: 100px;
     }
     .filters {
       display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 8px;
     }
+    .filters::-webkit-scrollbar { display: none; }
     .filter-btn {
-      padding: 10px 18px;
-      border-radius: 24px;
+      padding: 10px 16px;
+      border-radius: 20px;
       border: 1px solid rgba(255,255,255,0.2);
       background: rgba(255,255,255,0.05);
       color: #fff;
       cursor: pointer;
       font-size: 13px;
+      font-weight: 500;
       transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .filter-btn:hover, .filter-btn.active {
       background: var(--cyan);
       color: #000;
       border-color: var(--cyan);
     }
-    .leaderboard-header {
-      display: grid;
-      grid-template-columns: 50px 1fr 80px 90px 70px 60px 100px;
+    
+    /* Mobile-First Leaderboard */
+    .leaderboard {
+      display: flex;
+      flex-direction: column;
       gap: 12px;
-      padding: 12px 16px;
-      font-size: 11px;
-      opacity: 0.6;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
-    .tasker {
-      display: grid;
-      grid-template-columns: 50px 1fr 80px 90px 70px 60px 100px;
-      gap: 12px;
-      align-items: center;
-      padding: 16px;
+    
+    .tasker-card {
       background: var(--card);
-      border-radius: 12px;
+      border-radius: 16px;
       border: 1px solid rgba(255,255,255,0.08);
-      margin-bottom: 10px;
-      transition: all 0.2s;
+      padding: 16px;
       cursor: pointer;
+      transition: all 0.2s;
     }
-    .tasker:hover {
+    .tasker-card:hover, .tasker-card:active {
       border-color: var(--cyan);
-      transform: translateX(4px);
+      transform: translateY(-2px);
     }
+    
+    .tasker-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    
     .rank {
-      font-size: 20px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
       font-weight: 800;
-      text-align: center;
+      flex-shrink: 0;
     }
-    .rank.gold { color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,0.4); }
-    .rank.silver { color: var(--silver); }
-    .rank.bronze { color: var(--bronze); }
-    .tasker-info { display: flex; flex-direction: column; gap: 4px; }
-    .tasker-name { font-size: 15px; font-weight: 600; }
-    .tasker-meta { font-size: 12px; opacity: 0.6; }
-    .rate { font-size: 15px; font-weight: 700; color: #4ade80; }
-    .response { font-size: 15px; font-weight: 700; color: var(--cyan); }
-    .rating { font-size: 14px; }
-    .stars { color: var(--gold); }
-    .status {
+    .rank.gold { 
+      background: linear-gradient(135deg, var(--gold), #FFA500);
+      color: #000;
+    }
+    .rank.silver { 
+      background: linear-gradient(135deg, var(--silver), #808080);
+      color: #000;
+    }
+    .rank.bronze { 
+      background: linear-gradient(135deg, var(--bronze), #8B4513);
+      color: #fff;
+    }
+    .rank.other { 
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    
+    .tasker-main {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .tasker-name {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .tasker-meta {
+      font-size: 12px;
+      opacity: 0.6;
+    }
+    
+    .status-badge {
       display: flex;
       align-items: center;
       gap: 6px;
       font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(74,222,128,0.15);
+      color: #4ade80;
+      flex-shrink: 0;
     }
-    .status-dot {
+    .status-badge::before {
+      content: "";
       width: 8px;
       height: 8px;
+      background: #4ade80;
       border-radius: 50%;
+      animation: pulse 2s infinite;
     }
-    .status-dot.online { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
-    .status-dot.busy { background: #fbbf24; }
-    .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .status-badge.busy {
+      background: rgba(251,191,36,0.15);
+      color: #fbbf24;
+    }
+    .status-badge.busy::before {
+      background: #fbbf24;
+      animation: none;
+    }
+    
+    .tasker-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .stat-label {
+      font-size: 10px;
+      opacity: 0.6;
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+    .stat.rate .stat-value {
+      color: #4ade80;
+    }
+    .stat.rating .stat-value {
+      color: var(--gold);
+    }
+    
+    .badges-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
     .badge {
       font-size: 10px;
-      padding: 4px 8px;
+      padding: 4px 10px;
       border-radius: 12px;
       font-weight: 600;
     }
@@ -138,30 +239,36 @@
     .badge.pro { background: rgba(168,85,247,0.2); color: #a855f7; }
     .badge.cheap { background: rgba(74,222,128,0.2); color: #4ade80; }
     .badge.new { background: rgba(251,191,36,0.2); color: #fbbf24; }
+    
     .pagination {
       display: flex;
       justify-content: center;
       gap: 8px;
-      margin-top: 30px;
+      margin-top: 24px;
+      flex-wrap: wrap;
     }
     .page-btn {
       padding: 10px 16px;
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.2);
       background: rgba(255,255,255,0.05);
       color: #fff;
       cursor: pointer;
+      font-size: 14px;
     }
     .page-btn.active {
       background: var(--cyan);
       color: #000;
       border-color: var(--cyan);
     }
-    @media (max-width: 768px) {
-      .leaderboard-header, .tasker {
-        grid-template-columns: 40px 1fr 70px 60px;
-      }
-      .tasker-meta, .badges { display: none; }
+    
+    /* Desktop improvements */
+    @media (min-width: 768px) {
+      main { padding: 24px; }
+      .filters { flex-wrap: wrap; overflow: visible; }
+      .tasker-card { padding: 20px; }
+      .tasker-name { font-size: 18px; }
+      .tasker-stats { grid-template-columns: repeat(4, 1fr); }
     }
   </style>
 </head>
@@ -170,112 +277,183 @@
     <a href="homepage.html" class="logo">← Task Leaders</a>
     <div>
       <span class="category-title">🎨 Painting</span>
-      <span class="tasker-count">1,247 Taskers</span>
+      <span class="tasker-count">1,247 Task Leaders</span>
     </div>
-    <div></div>
   </header>
 
   <main>
     <div class="filters">
-      <button class="filter-btn active">🏆 Overall Rank</button>
-      <button class="filter-btn">🟢 Online Now</button>
-      <button class="filter-btn">⚡ Fastest Response</button>
-      <button class="filter-btn">⭐ Top Rated</button>
-      <button class="filter-btn">💰 Best Price</button>
+      <button class="filter-btn active">🏆 Rank</button>
+      <button class="filter-btn">🟢 Online</button>
+      <button class="filter-btn">⚡ Speed</button>
+      <button class="filter-btn">⭐ Rating</button>
+      <button class="filter-btn">🛡️ Reliable</button>
+      <button class="filter-btn">💰 Price</button>
     </div>
 
-    <div class="leaderboard-header">
-      <div>Rank</div>
-      <div>Tasker</div>
-      <div>Rate</div>
-      <div>Response</div>
-      <div>Rating</div>
-      <div>Status</div>
-      <div>Badges</div>
-    </div>
+    <div class="leaderboard">
+      <!-- Mike -->
+      <div class="tasker-card" onclick="location.href='mike.html'">
+        <div class="tasker-header">
+          <div class="rank gold">1</div>
+          <div class="tasker-main">
+            <div class="tasker-name">Mike Johnson</div>
+            <div class="tasker-meta">156 jobs • 8 years</div>
+          </div>
+          <div class="status-badge">Online</div>
+        </div>
+        <div class="tasker-stats">
+          <div class="stat rate">
+            <div class="stat-value">$45</div>
+            <div class="stat-label">per hour</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">1.2m</div>
+            <div class="stat-label">response</div>
+          </div>
+          <div class="stat rating">
+            <div class="stat-value">4.9★</div>
+            <div class="stat-label">156 reviews</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">98%</div>
+            <div class="stat-label">reliable</div>
+          </div>
+        </div>
+        <div class="badges-row">
+          <span class="badge speed">⚡ SPEEDSTER</span>
+          <span class="badge pro">💎 PRO</span>
+        </div>
+      </div>
 
-    <div class="tasker" onclick="location.href='mike.html?v=2'">
-      <div class="rank gold">1</div>
-      <div class="tasker-info">
-        <div class="tasker-name">Mike's Painting</div>
-        <div class="tasker-meta">156 jobs • 8 years experience</div>
+      <!-- Budget Brush -->
+      <div class="tasker-card">
+        <div class="tasker-header">
+          <div class="rank silver">2</div>
+          <div class="tasker-main">
+            <div class="tasker-name">Budget Brush Co.</div>
+            <div class="tasker-meta">89 jobs • 5 years</div>
+          </div>
+          <div class="status-badge">Online</div>
+        </div>
+        <div class="tasker-stats">
+          <div class="stat rate">
+            <div class="stat-value">$32</div>
+            <div class="stat-label">per hour</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">3.5m</div>
+            <div class="stat-label">response</div>
+          </div>
+          <div class="stat rating">
+            <div class="stat-value">4.3★</div>
+            <div class="stat-label">89 reviews</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">85%</div>
+            <div class="stat-label">reliable</div>
+          </div>
+        </div>
+        <div class="badges-row">
+          <span class="badge cheap">💰 BEST PRICE</span>
+        </div>
       </div>
-      <div class="rate">$45/hr</div>
-      <div class="response">1.2m</div>
-      <div class="rating"><span class="stars">★★★★★</span> 4.9</div>
-      <div class="status">
-        <span class="status-dot online"></span> Online
-      </div>
-      <div class="badges">
-        <span class="badge speed">⚡ SPEEDSTER</span>
-        <span class="badge pro">💎 PRO</span>
-      </div>
-    </div>
 
-    <div class="tasker">
-      <div class="rank silver">2</div>
-      <div class="tasker-info">
-        <div class="tasker-name">Budget Brush Co.</div>
-        <div class="tasker-meta">89 jobs • 5 years experience</div>
+      <!-- Elite Painters -->
+      <div class="tasker-card">
+        <div class="tasker-header">
+          <div class="rank bronze">3</div>
+          <div class="tasker-main">
+            <div class="tasker-name">Elite Painters</div>
+            <div class="tasker-meta">234 jobs • 12 years</div>
+          </div>
+          <div class="status-badge busy">Busy</div>
+        </div>
+        <div class="tasker-stats">
+          <div class="stat rate">
+            <div class="stat-value">$58</div>
+            <div class="stat-label">per hour</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">2.1m</div>
+            <div class="stat-label">response</div>
+          </div>
+          <div class="stat rating">
+            <div class="stat-value">4.9★</div>
+            <div class="stat-label">234 reviews</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">96%</div>
+            <div class="stat-label">reliable</div>
+          </div>
+        </div>
+        <div class="badges-row">
+          <span class="badge pro">💎 PRO</span>
+        </div>
       </div>
-      <div class="rate">$32/hr</div>
-      <div class="response">3.5m</div>
-      <div class="rating"><span class="stars">★★★★☆</span> 4.3</div>
-      <div class="status">
-        <span class="status-dot online"></span> Online
-      </div>
-      <div class="badges">
-        <span class="badge cheap">💰 EL CHEAPO</span>
-      </div>
-    </div>
 
-    <div class="tasker">
-      <div class="rank bronze">3</div>
-      <div class="tasker-info">
-        <div class="tasker-name">Elite Painters</div>
-        <div class="tasker-meta">234 jobs • 12 years experience</div>
+      <!-- QuickCoat -->
+      <div class="tasker-card">
+        <div class="tasker-header">
+          <div class="rank other">4</div>
+          <div class="tasker-main">
+            <div class="tasker-name">QuickCoat</div>
+            <div class="tasker-meta">45 jobs • 3 years</div>
+          </div>
+          <div class="status-badge">Online</div>
+        </div>
+        <div class="tasker-stats">
+          <div class="stat rate">
+            <div class="stat-value">$38</div>
+            <div class="stat-label">per hour</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">4.2m</div>
+            <div class="stat-label">response</div>
+          </div>
+          <div class="stat rating">
+            <div class="stat-value">4.6★</div>
+            <div class="stat-label">45 reviews</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">88%</div>
+            <div class="stat-label">reliable</div>
+          </div>
+        </div>
+        <div class="badges-row">
+          <span class="badge new">🌱 NEW</span>
+        </div>
       </div>
-      <div class="rate">$58/hr</div>
-      <div class="response">2.1m</div>
-      <div class="rating"><span class="stars">★★★★★</span> 4.9</div>
-      <div class="status">
-        <span class="status-dot busy"></span> Busy
-      </div>
-      <div class="badges">
-        <span class="badge pro">💎 PRO</span>
-      </div>
-    </div>
 
-    <div class="tasker">
-      <div class="rank">4</div>
-      <div class="tasker-info">
-        <div class="tasker-name">QuickCoat</div>
-        <div class="tasker-meta">45 jobs • 3 years experience</div>
+      <!-- Sarah -->
+      <div class="tasker-card">
+        <div class="tasker-header">
+          <div class="rank other">5</div>
+          <div class="tasker-main">
+            <div class="tasker-name">Sarah's Brushwork</div>
+            <div class="tasker-meta">67 jobs • 4 years</div>
+          </div>
+          <div class="status-badge">Online</div>
+        </div>
+        <div class="tasker-stats">
+          <div class="stat rate">
+            <div class="stat-value">$42</div>
+            <div class="stat-label">per hour</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">5.8m</div>
+            <div class="stat-label">response</div>
+          </div>
+          <div class="stat rating">
+            <div class="stat-value">4.8★</div>
+            <div class="stat-label">67 reviews</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">94%</div>
+            <div class="stat-label">reliable</div>
+          </div>
+        </div>
       </div>
-      <div class="rate">$38/hr</div>
-      <div class="response">4.2m</div>
-      <div class="rating"><span class="stars">★★★★☆</span> 4.6</div>
-      <div class="status">
-        <span class="status-dot online"></span> Online
-      </div>
-      <div class="badges">
-        <span class="badge new">🌱 NEW</span>
-      </div>
-    </div>
-
-    <div class="tasker">
-      <div class="rank">5</div>
-      <div class="tasker-info">
-        <div class="tasker-name">Sarah's Brushwork</div>
-        <div class="tasker-meta">67 jobs • 4 years experience</div>
-      </div>
-      <div class="rate">$42/hr</div>
-      <div class="response">5.8m</div>
-      <div class="rating"><span class="stars">★★★★★</span> 4.8</div>
-      <div class="status">
-        <span class="status-dot online"></span> Online
-      </div>
-      <div class="badges"></div>
     </div>
 
     <div class="pagination">
