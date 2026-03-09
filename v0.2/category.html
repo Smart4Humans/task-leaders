@@ -53,10 +53,13 @@
       margin-left: 8px;
     }
     main {
-      max-width: 1000px;
+      max-width: 600px;
       margin: 0 auto;
       padding: 16px;
       padding-bottom: 100px;
+    }
+    @media (min-width: 768px) {
+      main { max-width: 700px; }
     }
     .filters {
       display: flex;
@@ -275,9 +278,9 @@
 <body>
   <header>
     <a href="homepage.html" class="logo">← Task Leaders</a>
-    <div>
-      <span class="category-title">🎨 Painting</span>
-      <span class="tasker-count">1,247 Task Leaders</span>
+    <div style="text-align: right;">
+      <div class="category-title">🎨 Painting</div>
+      <div class="tasker-count">1,247 Task Leaders</div>
     </div>
   </header>
 
@@ -285,9 +288,9 @@
     <div class="filters">
       <button class="filter-btn active">🏆 Rank</button>
       <button class="filter-btn">🟢 Online</button>
-      <button class="filter-btn">⚡ Speed</button>
+      <button class="filter-btn">⚡ Response</button>
       <button class="filter-btn">⭐ Rating</button>
-      <button class="filter-btn">🛡️ Reliable</button>
+      <button class="filter-btn">🛡️ Reliability</button>
       <button class="filter-btn">💰 Price</button>
     </div>
 
@@ -298,7 +301,7 @@
           <div class="rank gold">1</div>
           <div class="tasker-main">
             <div class="tasker-name">Mike Johnson</div>
-            <div class="tasker-meta">156 jobs • 8 years</div>
+            <div class="tasker-meta">156 jobs</div>
           </div>
           <div class="status-badge">Online</div>
         </div>
@@ -317,7 +320,7 @@
           </div>
           <div class="stat">
             <div class="stat-value">98%</div>
-            <div class="stat-label">reliable</div>
+            <div class="stat-label">reliability</div>
           </div>
         </div>
         <div class="badges-row">
@@ -332,7 +335,7 @@
           <div class="rank silver">2</div>
           <div class="tasker-main">
             <div class="tasker-name">Budget Brush Co.</div>
-            <div class="tasker-meta">89 jobs • 5 years</div>
+            <div class="tasker-meta">89 jobs</div>
           </div>
           <div class="status-badge">Online</div>
         </div>
@@ -351,7 +354,7 @@
           </div>
           <div class="stat">
             <div class="stat-value">85%</div>
-            <div class="stat-label">reliable</div>
+            <div class="stat-label">reliability</div>
           </div>
         </div>
         <div class="badges-row">
@@ -365,7 +368,7 @@
           <div class="rank bronze">3</div>
           <div class="tasker-main">
             <div class="tasker-name">Elite Painters</div>
-            <div class="tasker-meta">234 jobs • 12 years</div>
+            <div class="tasker-meta">234 jobs</div>
           </div>
           <div class="status-badge busy">Busy</div>
         </div>
@@ -384,7 +387,7 @@
           </div>
           <div class="stat">
             <div class="stat-value">96%</div>
-            <div class="stat-label">reliable</div>
+            <div class="stat-label">reliability</div>
           </div>
         </div>
         <div class="badges-row">
@@ -398,7 +401,7 @@
           <div class="rank other">4</div>
           <div class="tasker-main">
             <div class="tasker-name">QuickCoat</div>
-            <div class="tasker-meta">45 jobs • 3 years</div>
+            <div class="tasker-meta">45 jobs</div>
           </div>
           <div class="status-badge">Online</div>
         </div>
@@ -417,7 +420,7 @@
           </div>
           <div class="stat">
             <div class="stat-value">88%</div>
-            <div class="stat-label">reliable</div>
+            <div class="stat-label">reliability</div>
           </div>
         </div>
         <div class="badges-row">
@@ -431,7 +434,7 @@
           <div class="rank other">5</div>
           <div class="tasker-main">
             <div class="tasker-name">Sarah's Brushwork</div>
-            <div class="tasker-meta">67 jobs • 4 years</div>
+            <div class="tasker-meta">67 jobs</div>
           </div>
           <div class="status-badge">Online</div>
         </div>
@@ -450,7 +453,7 @@
           </div>
           <div class="stat">
             <div class="stat-value">94%</div>
-            <div class="stat-label">reliable</div>
+            <div class="stat-label">reliability</div>
           </div>
         </div>
       </div>
