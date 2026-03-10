@@ -167,6 +167,20 @@
       white-space: nowrap;
     }
 
+    .legend{
+      margin: 8px 0 2px;
+      color: rgba(255,255,255,0.50);
+      font-size: 12px;
+      font-weight: 650;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .legend .item{ display:inline-flex; gap: 6px; align-items:center; }
+    .legend .ic{ width: 18px; height: 18px; border-radius: 7px; display:inline-flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); }
+    .legend .ic.fast{ border-color: rgba(0,200,83,0.18); background: rgba(0,200,83,0.06); color: rgba(0,200,83,0.95);}
+
     /* Leaderboard */
     .board {
       border: 1px solid var(--border);
@@ -177,9 +191,9 @@
 
     .board-header {
       display: grid;
-      grid-template-columns: 44px 46px 1.6fr 1.2fr 110px 110px 80px 124px;
-      gap: 12px;
-      padding: 12px 16px;
+      grid-template-columns: 36px 42px 1.55fr 1fr 92px 96px 84px 132px;
+      gap: 10px;
+      padding: 10px 14px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
       background: rgba(255,255,255,0.02);
       color: rgba(255,255,255,0.45);
@@ -192,9 +206,9 @@
 
     .row {
       display: grid;
-      grid-template-columns: 44px 46px 1.6fr 1.2fr 110px 110px 80px 124px;
-      gap: 12px;
-      padding: 12px 16px;
+      grid-template-columns: 36px 42px 1.55fr 1fr 92px 96px 84px 132px;
+      gap: 10px;
+      padding: 10px 14px;
       border-bottom: 1px solid rgba(255,255,255,0.05);
       align-items: center;
       transition: background 0.12s;
@@ -212,8 +226,8 @@
     .rank.top { color: var(--blue); }
 
     .avatar {
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.10);
       overflow: hidden;
@@ -267,24 +281,32 @@
       justify-self: end;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
-    .badge{
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      padding: 6px 8px;
-      border-radius: 999px;
+    .bicons{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .bicon{
+      width: 22px;
+      height: 22px;
+      border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.10);
       background: rgba(255,255,255,0.03);
-      color: rgba(255,255,255,0.60);
-      white-space: nowrap;
+      color: rgba(255,255,255,0.75);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+      cursor: default;
     }
-    .badge.fast{
-      border-color: rgba(0,200,83,0.25);
+    .bicon.fast{
+      border-color: rgba(0,200,83,0.22);
       background: rgba(0,200,83,0.08);
-      color: rgba(0,200,83,0.90);
+      color: rgba(0,200,83,0.95);
     }
 
     .wa {
@@ -478,6 +500,10 @@
       <button class="sort-btn" onclick="setSort('price', this)">Price</button>
     </div>
 
+    <div class="legend" aria-label="Legend">
+      <span class="item"><span class="ic fast">⚡</span> Fast Responder</span>
+    </div>
+
     <div class="section-title">
       <span id="top3Label">Top 3</span>
       <span class="mode" id="modeLabel">By Response</span>
@@ -639,9 +665,9 @@
       // Mobile compact metrics line
       const compact = `⚡ ${resp} • ${rel}% • $${p.hourly_rate}/hr`;
 
-      // Badges (max 1–2)
-      const badges = [];
-      if (p.response_time_minutes <= 5) badges.push('<span class="badge fast" title="Fast Responder">Fast Responder</span>');
+      // Badge icons (max 2–3)
+      const bicons = [];
+      if (p.response_time_minutes <= 5) bicons.push('<span class="bicon fast" title="Fast Responder" aria-label="Fast Responder">⚡</span>');
 
       return `
         <div class="row ${isTop ? 'top3' : ''}">
@@ -657,7 +683,7 @@
           <div class="metric response">${resp}</div>
           <div class="metric reliability">${rel}%</div>
           <div class="price">$${p.hourly_rate}/hr</div>
-          <div class="cta">${badges.join('')}
+          <div class="cta"><span class="bicons">${bicons.join('')}</span>
             <button class="wa" onclick="openModal('${p.provider_id}')">💬 <span>WhatsApp</span></button>
           </div>
         </div>
