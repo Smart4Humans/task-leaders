@@ -3,536 +3,642 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title id="page-title">Category — Task Leaders</title>
+  <title id="page-title">Category — TaskLeaders</title>
   <style>
     :root {
-      --cyan: #00d4ff;
-      --purple: #7b2cbf;
-      --gold: #FFD700;
-      --silver: #C0C0C0;
-      --bronze: #CD7F32;
-      --dark: #0a0a1a;
-      --card: rgba(255,255,255,0.05);
-      --success: #25D366;
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --bg: #0a0a14;
+      --panel: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+      --muted2: rgba(255,255,255,0.4);
     }
+
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      background: var(--bg);
       color: #fff;
       min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
     }
+
+    /* Header — match homepage style */
     header {
-      padding: 16px 20px;
+      padding: 20px 32px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      gap: 14px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
       position: sticky;
       top: 0;
-      background: rgba(10,10,26,0.95);
+      z-index: 50;
       backdrop-filter: blur(10px);
-      z-index: 100;
     }
-    .logo {
-      font-size: 18px;
-      font-weight: 800;
-      background: linear-gradient(90deg, var(--cyan), var(--purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .back {
+      color: rgba(255,255,255,0.6);
       text-decoration: none;
+      font-size: 14px;
+      padding: 6px 10px;
+      border-radius: 6px;
     }
-    .category-title {
-      font-size: 20px;
-      font-weight: 700;
+    .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+      line-height: 1;
+      margin-right: 2px;
+      white-space: nowrap;
     }
-    .tasker-count {
-      font-size: 13px;
-      opacity: 0.6;
-      margin-left: 8px;
-    }
-    main {
-      max-width: 600px;
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+
+    /* Content header */
+    .content-header {
+      max-width: 980px;
       margin: 0 auto;
-      padding: 16px;
-      padding-bottom: 100px;
+      padding: 26px 32px 14px;
     }
-    @media (min-width: 768px) {
-      main { max-width: 700px; }
+    .content-header h1 {
+      margin: 0 0 8px 0;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.6px;
     }
-    
-    /* Activity Indicator */
-    .activity-bar {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      border: 1px solid rgba(255,255,255,0.08);
+    .summary-line {
+      font-size: 15px;
+      color: var(--muted);
       display: flex;
-      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
       align-items: center;
     }
-    .activity-item {
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.02);
+      color: rgba(255,255,255,0.65);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(0,200,83,0.2);
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 32px 56px;
+    }
+
+    /* Sort bar */
+    .sort-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 16px 0 18px;
+      flex-wrap: wrap;
+    }
+    .sort-label {
+      color: rgba(255,255,255,0.55);
+      font-size: 13px;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+    .sort-btn {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.02);
+      color: rgba(255,255,255,0.65);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sort-btn:hover { border-color: rgba(255,255,255,0.22); color: #fff; }
+    .sort-btn.active {
+      background: rgba(0,102,255,0.14);
+      border-color: rgba(0,102,255,0.45);
+      color: #fff;
+      box-shadow: 0 0 18px rgba(0,102,255,0.18);
+    }
+
+    /* Sections */
+    .section-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.6px;
+      color: rgba(255,255,255,0.5);
+      margin: 18px 0 10px;
+    }
+
+    /* Leaderboard */
+    .board {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .board-header {
+      display: grid;
+      grid-template-columns: 44px 46px 1.6fr 1.2fr 110px 110px 80px 124px;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      color: rgba(255,255,255,0.45);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      align-items: center;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 44px 46px 1.6fr 1.2fr 110px 110px 80px 124px;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      align-items: center;
+      transition: background 0.12s;
+    }
+    .row:last-child { border-bottom: none; }
+    .row:hover { background: rgba(255,255,255,0.02); }
+    .row.top3 { background: rgba(0,102,255,0.06); }
+
+    .rank {
+      font-weight: 800;
+      font-size: 14px;
+      color: rgba(255,255,255,0.55);
       text-align: center;
     }
-    .activity-value {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--cyan);
-    }
-    .activity-label {
-      font-size: 11px;
-      opacity: 0.6;
-      margin-top: 4px;
-    }
-    
-    /* Recommended Section */
-    .recommended-section {
-      margin-bottom: 24px;
-    }
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      opacity: 0.8;
-    }
-    .recommended-badge {
-      background: linear-gradient(135deg, var(--gold), #FFA500);
-      color: #000;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: 700;
-    }
-    
-    /* Filters */
-    .filters {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 8px;
-    }
-    .filters::-webkit-scrollbar { display: none; }
-    .filter-btn {
-      padding: 10px 16px;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.05);
-      color: #fff;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      transition: all 0.2s;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .filter-btn:hover, .filter-btn.active {
-      background: var(--cyan);
-      color: #000;
-      border-color: var(--cyan);
-    }
-    
-    /* Provider Cards */
-    .leaderboard {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    
-    .tasker-card {
-      background: var(--card);
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.08);
-      padding: 16px;
-      transition: all 0.2s;
-    }
-    .tasker-card:hover {
-      border-color: var(--cyan);
-      transform: translateY(-2px);
-    }
-    
-    .tasker-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    
-    .rank {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
+    .rank.top { color: var(--blue); }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.10);
+      overflow: hidden;
+      background: rgba(255,255,255,0.06);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
-      font-weight: 800;
       flex-shrink: 0;
     }
-    .rank.gold { 
-      background: linear-gradient(135deg, var(--gold), #FFA500);
-      color: #000;
-    }
-    .rank.silver { 
-      background: linear-gradient(135deg, var(--silver), #808080);
-      color: #000;
-    }
-    .rank.bronze { 
-      background: linear-gradient(135deg, var(--bronze), #8B4513);
+    .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .name {
+      font-weight: 700;
+      font-size: 14px;
       color: #fff;
+      text-decoration: none;
+      display: inline-block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
-    .rank.other { 
-      background: rgba(255,255,255,0.1);
-      color: #fff;
-    }
-    
-    .tasker-main {
-      flex: 1;
-      min-width: 0;
-    }
-    
-    .tasker-name {
-      font-size: 17px;
-      font-weight: 600;
-      margin-bottom: 4px;
+    .name:hover { color: var(--blue); }
+
+    .area {
+      color: rgba(255,255,255,0.45);
+      font-size: 13px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    
-    .tasker-meta {
-      font-size: 12px;
-      opacity: 0.6;
+
+    .metric {
+      font-size: 13px;
+      color: rgba(255,255,255,0.70);
+      font-weight: 650;
+      text-align: left;
+      white-space: nowrap;
     }
-    
-    .status-badge {
-      display: flex;
+    .metric.response { color: rgba(0,200,83,0.85); }
+    .metric.reliability { color: rgba(255,184,0,0.9); }
+
+    .price {
+      font-size: 13px;
+      color: rgba(255,255,255,0.75);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .wa {
+      justify-self: end;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,200,83,0.45);
+      background: rgba(0,200,83,0.14);
+      color: #d7ffe7;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      padding: 6px 12px;
-      border-radius: 20px;
-      background: rgba(74,222,128,0.15);
-      color: #4ade80;
-      flex-shrink: 0;
+      transition: all 0.12s;
     }
-    .status-badge::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      background: #4ade80;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
+    .wa:hover {
+      background: rgba(0,200,83,0.22);
+      border-color: rgba(0,200,83,0.7);
+      transform: translateY(-1px);
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+
+    .empty {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 24px;
+      color: rgba(255,255,255,0.55);
+      background: rgba(255,255,255,0.02);
     }
-    
-    .tasker-stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+    .empty a { color: var(--blue); text-decoration: none; font-weight: 700; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.86);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      width: 100%;
+      max-width: 420px;
+      background: #12121f;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .modal h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .modal-provider {
+      display: flex;
+      align-items: center;
       gap: 12px;
-      padding: 12px 0;
-      border-top: 1px solid rgba(255,255,255,0.08);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 12px;
       margin-bottom: 12px;
     }
-    
-    .stat {
-      text-align: center;
-    }
-    .stat-value {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--cyan);
-    }
-    .stat-label {
-      font-size: 10px;
-      opacity: 0.6;
-      margin-top: 2px;
-      text-transform: uppercase;
-    }
-    .stat.rate .stat-value {
-      color: #4ade80;
-    }
-    .stat.rating .stat-value {
-      color: var(--gold);
-    }
-    
-    .whatsapp-btn {
+    .modal-provider .mini {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.06);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      flex-shrink: 0;
+    }
+    .modal-provider .mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .modal-provider .pname { font-weight: 800; font-size: 14px; }
+    .modal-provider .pmeta { color: rgba(255,255,255,0.55); font-size: 12px; margin-top: 2px; }
+
+    .preview {
+      background: rgba(0,200,83,0.08);
+      border-left: 3px solid rgba(0,200,83,0.9);
+      padding: 12px;
+      border-radius: 0 12px 12px 0;
+      margin-bottom: 12px;
+      color: rgba(255,255,255,0.85);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .consent {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin: 14px 0 16px;
+      cursor: pointer;
+    }
+    .consent input { margin-top: 2px; width: 16px; height: 16px; }
+    .consent span { color: rgba(255,255,255,0.72); font-size: 13px; line-height: 1.35; }
+
+    .modal-btn {
       width: 100%;
-      padding: 14px;
+      padding: 12px;
       border-radius: 12px;
       border: none;
-      background: var(--success);
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
+      background: rgba(0,200,83,0.95);
+      color: #001a08;
+      font-weight: 900;
+      font-size: 14px;
       cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s;
+      margin-bottom: 10px;
     }
-    .whatsapp-btn:hover {
-      background: #128C7E;
-      transform: scale(1.02);
-    }
-    
-    .badges-row {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-    .badge {
-      font-size: 10px;
-      padding: 4px 10px;
+    .modal-cancel {
+      width: 100%;
+      padding: 11px;
       border-radius: 12px;
-      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
     }
-    .badge.speed { background: rgba(0,212,255,0.2); color: var(--cyan); }
-    .badge.pro { background: rgba(168,85,247,0.2); color: #a855f7; }
-    .badge.cheap { background: rgba(74,222,128,0.2); color: #4ade80; }
-    .badge.new { background: rgba(251,191,36,0.2); color: #fbbf24; }
-    
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      opacity: 0.6;
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      header { padding: 16px 20px; }
+      .logo { font-size: 24px; }
+      .content-header { padding: 20px 20px 10px; }
+      .content-header h1 { font-size: 28px; }
+      main { padding: 0 20px 48px; }
+      .board-header, .row {
+        grid-template-columns: 34px 44px 1.4fr 1fr 92px 90px 70px 108px;
+        gap: 10px;
+      }
     }
-    .empty-state h3 {
-      margin-bottom: 12px;
+
+    @media (max-width: 680px) {
+      .board-header { display: none; }
+      .row {
+        grid-template-columns: 30px 44px 1fr auto;
+        gap: 10px;
+        padding: 12px 12px;
+      }
+      .area, .metric, .price { display: none; }
+      .row .compact {
+        display: block;
+        margin-top: 3px;
+        font-size: 12px;
+        color: rgba(255,255,255,0.52);
+        font-weight: 650;
+      }
+      .wa {
+        padding: 10px 10px;
+        border-radius: 12px;
+        min-width: 48px;
+        min-height: 44px;
+      }
+      .wa span { display: none; }
     }
-    
-    /* Desktop improvements */
-    @media (min-width: 768px) {
-      main { padding: 24px; }
-      .filters { flex-wrap: wrap; overflow: visible; }
-      .tasker-card { padding: 20px; }
-      .tasker-name { font-size: 18px; }
-    }
+
+    .compact { display: none; }
   </style>
 </head>
 <body>
   <header>
-    <a href="homepage.html" class="logo">← Task Leaders</a>
-    <div style="text-align: right;">
-      <div class="category-title" id="category-title">Loading...</div>
-      <div class="tasker-count" id="tasker-count">0 Task Leaders</div>
-    </div>
+    <a class="back" href="homepage.html">← Back</a>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
   </header>
 
+  <div class="content-header">
+    <h1 id="headline">Loading…</h1>
+    <div class="summary-line">
+      <span class="pill"><span class="dot"></span><span id="available">0</span> available</span>
+      <span class="pill">⚡ Avg response <span id="avg">--</span></span>
+      <span class="pill"><span id="count">0</span> TaskLeaders</span>
+    </div>
+  </div>
+
   <main>
-    <!-- Activity Indicator -->
-    <div class="activity-bar" id="activity-bar">
-      <div class="activity-item">
-        <div class="activity-value" id="available-count">0</div>
-        <div class="activity-label">Available Now</div>
-      </div>
-      <div class="activity-item">
-        <div class="activity-value" id="avg-response">--</div>
-        <div class="activity-label">Avg Response</div>
-      </div>
-    </div>
-    
-    <!-- Recommended Providers -->
-    <div class="recommended-section" id="recommended-section">
-      <div class="section-header">
-        <span>⭐ Recommended TaskLeaders</span>
-        <span class="recommended-badge">TOP PICKS</span>
-      </div>
-      <div class="leaderboard" id="recommended-list">
-        <!-- Dynamically populated -->
-      </div>
+    <div class="sort-bar">
+      <span class="sort-label">Rank by</span>
+      <button class="sort-btn active" onclick="setSort('response_time', this)">Response</button>
+      <button class="sort-btn" onclick="setSort('reliability', this)">Reliability</button>
+      <button class="sort-btn" onclick="setSort('price', this)">Price</button>
     </div>
 
-    <!-- Sort Filters -->
-    <div class="filters">
-      <button class="filter-btn active" onclick="setSort('default')">🏆 Rank</button>
-      <button class="filter-btn" onclick="setSort('response_time')">⚡ Response</button>
-      <button class="filter-btn" onclick="setSort('reliability')">⭐ Reliability</button>
-      <button class="filter-btn" onclick="setSort('price')">💰 Price</button>
+    <div class="section-title">Top 3 TaskLeaders</div>
+    <div class="board" id="top3">
+      <div class="board-header">
+        <div>#</div><div></div><div>TaskLeader</div><div>Area</div><div>Response</div><div>Reliability</div><div>Price</div><div></div>
+      </div>
+      <div id="top3Rows"></div>
     </div>
 
-    <!-- Provider List -->
-    <div class="leaderboard" id="provider-list">
-      <!-- Dynamically populated -->
+    <div class="section-title">Leaderboard</div>
+    <div class="board" id="board">
+      <div class="board-header">
+        <div>#</div><div></div><div>TaskLeader</div><div>Area</div><div>Response</div><div>Reliability</div><div>Price</div><div></div>
+      </div>
+      <div id="rows"></div>
     </div>
-    
-    <!-- Empty State -->
-    <div class="empty-state" id="empty-state" style="display: none;">
-      <h3>No providers yet</h3>
-      <p>Be the first to join this category!</p>
-      <a href="become-task-leader.html" style="color: var(--cyan);">Apply now →</a>
+
+    <div class="empty" id="empty" style="display:none; margin-top: 14px;">
+      No TaskLeaders in this category yet. <a href="become-task-leader.html">Become the first</a>.
     </div>
   </main>
 
-  <!-- Load Database -->
+  <!-- WhatsApp modal / interstitial -->
+  <div class="modal-overlay" id="waModal">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>Continue to WhatsApp</h3>
+      <div class="modal-provider">
+        <div class="mini" id="mImg">👤</div>
+        <div>
+          <div class="pname" id="mName"></div>
+          <div class="pmeta" id="mMeta"></div>
+        </div>
+      </div>
+      <div class="preview">"Hi! I found you on TaskLeaders and need help with <span id="mCat"></span>."</div>
+      <label class="consent">
+        <input type="checkbox" id="mConsent" />
+        <span>I agree to receive follow-up messages from TaskLeaders related to this inquiry.</span>
+      </label>
+      <button class="modal-btn" onclick="goWhatsApp()">Continue to WhatsApp</button>
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
   <script src="js/db.js"></script>
-  
   <script>
-    // Get category from URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const categoryId = urlParams.get('category') || 'painting';
-    
-    // Current sort
-    let currentSort = 'default';
-    
-    // Initialize page
-    function init() {
-      const category = TaskLeadersDB.categories.find(c => c.id === categoryId);
-      if (category) {
-        document.getElementById('category-title').textContent = `${category.icon} ${category.name}`;
-        document.getElementById('page-title').textContent = `${category.name} — Task Leaders`;
+    const params = new URLSearchParams(location.search);
+    const categoryId = params.get('category') || 'handyman';
+    const category = (TaskLeadersDB.categories.find(c => c.id === categoryId) || { id: categoryId, name: categoryId, icon: '🔧' });
+
+    // Make sure we have enough demo data to judge density (Top 3 + 10+)
+    function ensureDemoProviders(minCount = 13) {
+      const existing = TaskLeadersDB.getProvidersByCategory(categoryId);
+      if (existing.length >= minCount) return;
+
+      const demoNames = [
+        'North Shore', 'Downtown', 'East Van', 'Burnaby', 'Richmond', 'Kits', 'Mount Pleasant', 'Commercial', 'West End', 'Marpole', 'Coquitlam', 'New West', 'Surrey'
+      ];
+
+      const base = Math.max(0, existing.length);
+      const needed = minCount - base;
+
+      for (let i = 0; i < needed; i++) {
+        const n = demoNames[(base + i) % demoNames.length];
+        const id = TaskLeadersDB.generateId();
+        TaskLeadersDB.providers.push({
+          provider_id: id,
+          business_name: `${n} ${category.name}`,
+          contact_name: `${n} Lead`,
+          whatsapp_number: `1604555${String(1000 + base + i).slice(-4)}`,
+          category: categoryId,
+          service_area: `${n}, Vancouver`,
+          hourly_rate: 40 + ((base + i) % 8) * 5,
+          description: `Reliable ${category.name.toLowerCase()} services across ${n}.`,
+          response_time_minutes: 2 + ((base + i) % 10),
+          reliability_score: 4.2 + (((base + i) % 8) * 0.1),
+          response_rate: 86 + ((base + i) % 12),
+          founding_provider_status: (base + i) < 3,
+          approved: true,
+          created_at: new Date(Date.now() - (base + i) * 3600_000).toISOString()
+        });
       }
-      
-      loadProviders();
+      TaskLeadersDB.saveToStorage();
     }
-    
-    // Load and display providers
-    function loadProviders() {
+
+    function formatResponse(minutes) {
+      if (minutes <= 1) return '~1 min';
+      return `~${minutes} min`;
+    }
+
+    function reliabilityPct(score0to5) {
+      // Reliability is displayed as a platform metric (percent)
+      if (!score0to5 || score0to5 <= 0) return 0;
+      return Math.round(score0to5 * 20);
+    }
+
+    let sortBy = 'response_time';
+    let selectedProvider = null;
+
+    function render() {
+      ensureDemoProviders(13);
+
       const providers = TaskLeadersDB.getProvidersByCategory(categoryId);
       const stats = TaskLeadersDB.getCategoryStats(categoryId);
-      
-      // Update stats
-      document.getElementById('tasker-count').textContent = `${providers.length} Task Leader${providers.length !== 1 ? 's' : ''}`;
-      document.getElementById('available-count').textContent = stats.available_now;
-      document.getElementById('avg-response').textContent = stats.avg_response_time > 0 ? `~${stats.avg_response_time}m` : '--';
-      
-      // Show empty state if no providers
-      if (providers.length === 0) {
-        document.getElementById('empty-state').style.display = 'block';
-        document.getElementById('recommended-section').style.display = 'none';
-        document.getElementById('provider-list').style.display = 'none';
+
+      // Header
+      document.getElementById('page-title').textContent = `${category.name} — TaskLeaders`;
+      document.getElementById('headline').textContent = `${category.name} in Vancouver`;
+      document.getElementById('available').textContent = stats.available_now;
+      document.getElementById('avg').textContent = stats.avg_response_time ? `~${stats.avg_response_time} min` : '--';
+      document.getElementById('count').textContent = providers.length;
+
+      if (!providers.length) {
+        document.getElementById('top3').style.display = 'none';
+        document.getElementById('board').style.display = 'none';
+        document.getElementById('empty').style.display = 'block';
         return;
       }
-      
-      // Load recommended providers
-      loadRecommendedProviders();
-      
-      // Load main provider list
-      renderProviderList(providers);
+
+      // Sorted list for main leaderboard
+      const sorted = TaskLeadersDB.sortProviders(providers, sortBy);
+
+      // Top 3
+      const top3 = sorted.slice(0, 3);
+      document.getElementById('top3Rows').innerHTML = top3.map((p, idx) => rowHtml(p, idx + 1, true)).join('');
+
+      // Next 10+ (at least 10)
+      const rest = sorted.slice(3, 13); // 10 rows
+      document.getElementById('rows').innerHTML = rest.map((p, idx) => rowHtml(p, idx + 4, false)).join('');
     }
-    
-    // Load recommended providers
-    function loadRecommendedProviders() {
-      const recommended = TaskLeadersDB.getRecommendedProviders(categoryId, 3);
-      const container = document.getElementById('recommended-list');
-      
-      if (recommended.length === 0) {
-        document.getElementById('recommended-section').style.display = 'none';
-        return;
-      }
-      
-      container.innerHTML = recommended.map((provider, index) => 
-        createProviderCard(provider, index + 1, true)
-      ).join('');
-    }
-    
-    // Render provider list
-    function renderProviderList(providers) {
-      const sorted = TaskLeadersDB.sortProviders(providers, currentSort);
-      const container = document.getElementById('provider-list');
-      
-      container.innerHTML = sorted.map((provider, index) => 
-        createProviderCard(provider, index + 1, false)
-      ).join('');
-    }
-    
-    // Create provider card HTML
-    function createProviderCard(provider, rank, isRecommended) {
-      const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'other';
-      const responseTime = TaskLeadersDB.formatResponseTime(provider.response_time_minutes);
-      const price = TaskLeadersDB.formatPrice(provider.hourly_rate);
-      
-      // Generate badges
-      let badges = '';
-      if (provider.response_time_minutes <= 5) {
-        badges += '<span class="badge speed">⚡ SPEEDSTER</span>';
-      }
-      if (provider.founding_provider_status) {
-        badges += '<span class="badge pro">💎 FOUNDING</span>';
-      }
-      
-      // WhatsApp link with prefilled message
-      const whatsappNumber = provider.whatsapp_number;
-      const categoryName = TaskLeadersDB.categories.find(c => c.id === provider.category)?.name || provider.category;
-      const message = encodeURIComponent(`Hi! I found you on TaskLeaders and need help with ${categoryName}.`);
-      const whatsappLink = `https://wa.me/${whatsappNumber}?text=${message}`;
-      
+
+    function rowHtml(p, rank, isTop) {
+      const resp = formatResponse(p.response_time_minutes);
+      const rel = reliabilityPct(p.reliability_score);
+      const msg = `Hi! I found you on TaskLeaders and need help with ${category.name}.`;
+
+      // Use dicebear for simple credible avatar
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.business_name)}&backgroundColor=0b1020&textColor=ffffff`;
+
+      // Mobile compact metrics line
+      const compact = `⚡ ${resp} • Reliability ${rel}% • $${p.hourly_rate}/hr`;
+
       return `
-        <div class="tasker-card">
-          <div class="tasker-header">
-            <div class="rank ${rankClass}">${rank}</div>
-            <div class="tasker-main">
-              <div class="tasker-name">${escapeHtml(provider.business_name)}</div>
-              <div class="tasker-meta">${provider.service_area}</div>
-            </div>
-            <div class="status-badge">Online</div>
-          </div>
-          <div class="tasker-stats">
-            <div class="stat rate">
-              <div class="stat-value">${price}</div>
-              <div class="stat-label">per hour</div>
-            </div>
-            <div class="stat">
-              <div class="stat-value">${responseTime}</div>
-              <div class="stat-label">response</div>
-            </div>
-            <div class="stat rating">
-              <div class="stat-value">${provider.reliability_score.toFixed(1)}★</div>
-              <div class="stat-label">rating</div>
-            </div>
-            <div class="stat">
-              <div class="stat-value">${provider.response_rate}%</div>
-              <div class="stat-label">response rate</div>
-            </div>
-          </div>
-          ${badges ? `<div class="badges-row">${badges}</div>` : ''}
-          <a href="${whatsappLink}" class="whatsapp-btn" target="_blank">
-            💬 Message on WhatsApp
+        <div class="row ${isTop ? 'top3' : ''}">
+          <div class="rank ${rank <= 3 ? 'top' : ''}">${rank}</div>
+          <a class="avatar" href="profile.html?id=${encodeURIComponent(p.provider_id)}" aria-label="View profile">
+            <img alt="${escapeHtml(p.business_name)}" src="${avatarUrl}" />
           </a>
+          <div>
+            <a class="name" href="profile.html?id=${encodeURIComponent(p.provider_id)}">${escapeHtml(p.business_name)}</a>
+            <div class="compact">${compact}</div>
+          </div>
+          <div class="area">${escapeHtml(p.service_area)}</div>
+          <div class="metric response">${resp}</div>
+          <div class="metric reliability">Reliability ${rel}%</div>
+          <div class="price">$${p.hourly_rate}/hr</div>
+          <button class="wa" onclick="openModal('${p.provider_id}')">💬 <span>WhatsApp</span></button>
         </div>
       `;
     }
-    
-    // Set sort option
-    function setSort(sortBy) {
-      currentSort = sortBy;
-      
-      // Update button states
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      event.target.classList.add('active');
-      
-      // Reload providers with new sort
-      const providers = TaskLeadersDB.getProvidersByCategory(categoryId);
-      renderProviderList(providers);
+
+    function setSort(next, el) {
+      sortBy = next;
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      render();
     }
-    
-    // Escape HTML to prevent XSS
+
+    function openModal(providerId) {
+      const p = TaskLeadersDB.getProviderById(providerId);
+      if (!p) return;
+      selectedProvider = p;
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.business_name)}&backgroundColor=0b1020&textColor=ffffff`;
+      document.getElementById('mImg').innerHTML = `<img alt="" src="${avatarUrl}" />`;
+      document.getElementById('mName').textContent = p.business_name;
+      document.getElementById('mMeta').textContent = `${p.service_area} • $${p.hourly_rate}/hr`;
+      document.getElementById('mCat').textContent = category.name;
+      document.getElementById('mConsent').checked = false;
+      document.getElementById('waModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('waModal').classList.remove('active');
+      selectedProvider = null;
+    }
+
+    function goWhatsApp() {
+      if (!selectedProvider) return;
+      const consent = document.getElementById('mConsent').checked;
+      console.log('Inquiry', { provider_id: selectedProvider.provider_id, category: categoryId, consent, ts: new Date().toISOString() });
+
+      const message = encodeURIComponent(`Hi! I found you on TaskLeaders and need help with ${category.name}.`);
+      const url = `https://wa.me/${selectedProvider.whatsapp_number}?text=${message}`;
+      closeModal();
+      window.open(url, '_blank');
+    }
+
     function escapeHtml(text) {
       const div = document.createElement('div');
-      div.textContent = text;
+      div.textContent = text || '';
       return div.innerHTML;
     }
-    
-    // Initialize on load
-    init();
+
+    document.getElementById('waModal').addEventListener('click', (e) => {
+      if (e.target.id === 'waModal') closeModal();
+    });
+
+    render();
   </script>
 </body>
 </html>

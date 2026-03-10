@@ -2,221 +2,336 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mike's Painting — Task Leaders</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title id="page-title">Profile — TaskLeaders</title>
   <style>
     :root {
-      --cyan: #00d4ff;
-      --purple: #7b2cbf;
-      --gold: #FFD700;
-      --dark: #0a0a1a;
-      --card: rgba(255,255,255,0.05);
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --bg: #0a0a14;
+      --panel: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.6);
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
       color: #fff;
       min-height: 100vh;
     }
+
     header {
-      padding: 16px 24px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
     }
     .back {
       color: rgba(255,255,255,0.6);
       text-decoration: none;
       font-size: 14px;
+      padding: 6px 10px;
+      border-radius: 6px;
     }
+    .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
+    .logo {
+      font-size: 28px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+      white-space: nowrap;
+    }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+
     main {
-      max-width: 600px;
+      max-width: 760px;
       margin: 0 auto;
-      padding: 24px;
+      padding: 28px 32px 64px;
     }
-    .profile-header {
-      text-align: center;
-      margin-bottom: 32px;
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.02);
+      padding: 18px;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 14px;
     }
     .avatar {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--cyan), var(--purple));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 48px;
-      margin: 0 auto 16px;
-    }
-    .name {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .badges {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-    .badge {
-      font-size: 12px;
-      padding: 6px 12px;
+      width: 74px;
+      height: 74px;
       border-radius: 16px;
-      font-weight: 600;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
     }
-    .badge.speed { background: rgba(0,212,255,0.2); color: var(--cyan); }
-    .badge.pro { background: rgba(168,85,247,0.2); color: #a855f7; }
-    .status-online {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: #4ade80;
+    .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .name {
+      font-size: 22px;
+      font-weight: 900;
+      margin: 0 0 4px 0;
+      letter-spacing: -0.3px;
+    }
+    .area {
+      color: rgba(255,255,255,0.55);
       font-size: 14px;
+      font-weight: 650;
     }
-    .status-online::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      background: #4ade80;
-      border-radius: 50%;
-      box-shadow: 0 0 6px #4ade80;
-    }
-    .stats {
+
+    .metrics {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 32px;
+      gap: 10px;
+      margin: 14px 0 16px;
     }
-    .stat {
-      background: var(--card);
-      padding: 20px;
+    .metric {
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
       text-align: center;
     }
-    .stat-value {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--cyan);
+    .metric .v {
+      font-size: 16px;
+      font-weight: 900;
     }
-    .stat-label {
-      font-size: 12px;
-      opacity: 0.6;
+    .metric .l {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
       margin-top: 4px;
     }
-    .section {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 20px;
+    .v.response { color: rgba(0,200,83,0.9); }
+    .v.reliability { color: rgba(255,184,0,0.9); }
+
+    .desc {
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
+      line-height: 1.55;
+      margin: 0 0 16px;
     }
-    .section h3 {
-      margin: 0 0 16px 0;
-      font-size: 16px;
-    }
-    .rate-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .rate-row:last-child { border-bottom: none; }
-    .rate-label { opacity: 0.8; }
-    .rate-value { font-size: 20px; font-weight: 700; }
-    .whatsapp-btn {
-      display: flex;
+
+    .wa {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,200,83,0.55);
+      background: rgba(0,200,83,0.16);
+      color: #d7ffe7;
+      font-weight: 900;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 8px;
+      transition: all 0.12s;
+    }
+    .wa:hover { background: rgba(0,200,83,0.22); transform: translateY(-1px); }
+
+    /* Modal reuse */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.86);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
       width: 100%;
+      max-width: 420px;
+      background: #12121f;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 14px;
       padding: 20px;
-      border-radius: 16px;
+    }
+    .modal h3 { margin: 0 0 12px 0; font-size: 16px; font-weight: 900; }
+    .preview {
+      background: rgba(0,200,83,0.08);
+      border-left: 3px solid rgba(0,200,83,0.9);
+      padding: 12px;
+      border-radius: 0 12px 12px 0;
+      margin-bottom: 12px;
+      color: rgba(255,255,255,0.85);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .consent { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 16px; cursor: pointer; }
+    .consent input { margin-top: 2px; width: 16px; height: 16px; }
+    .consent span { color: rgba(255,255,255,0.72); font-size: 13px; line-height: 1.35; }
+    .modal-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
       border: none;
-      background: #25D366;
-      color: #fff;
-      font-size: 18px;
-      font-weight: 700;
+      background: rgba(0,200,83,0.95);
+      color: #001a08;
+      font-weight: 900;
+      font-size: 14px;
       cursor: pointer;
-      margin-top: 24px;
-      text-decoration: none;
+      margin-bottom: 10px;
     }
-    .whatsapp-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(37,211,102,0.3);
-    }
-    .note {
-      text-align: center;
+    .modal-cancel {
+      width: 100%;
+      padding: 11px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      font-weight: 800;
       font-size: 13px;
-      opacity: 0.6;
-      margin-top: 16px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+      header { padding: 16px 20px; }
+      .logo { font-size: 24px; }
+      main { padding: 20px 20px 56px; }
+    }
+    @media (max-width: 480px) {
+      .metrics { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <header>
-    <a href="category.html" class="back">← Back to Painters</a>
+    <a class="back" href="javascript:history.back()">← Back</a>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
   </header>
 
   <main>
-    <div class="profile-header">
-      <div class="avatar">🎨</div>
-      <div class="name">Mike's Painting</div>
-      <div class="badges">
-        <span class="badge speed">⚡ SPEEDSTER</span>
-        <span class="badge pro">💎 PRO</span>
-      </div>
-      <div class="status-online">Online now — typically responds in 1 min</div>
+    <div class="card" id="card" style="display:none;"></div>
+    <div class="card" id="missing" style="display:none; color: rgba(255,255,255,0.65);">
+      TaskLeader not found.
     </div>
-
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-value">1.2m</div>
-        <div class="stat-label">Avg Response</div>
-      </div>
-      <div class="stat">
-        <div class="stat-value">4.9★</div>
-        <div class="stat-label">Rating (156)</div>
-      </div>
-      <div class="stat">
-        <div class="stat-value">8yr</div>
-        <div class="stat-label">Experience</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>💰 Rates</h3>
-      <div class="rate-row">
-        <span class="rate-label">Interior Painting</span>
-        <span class="rate-value">$45/hr</span>
-      </div>
-      <div class="rate-row">
-        <span class="rate-label">Exterior Painting</span>
-        <span class="rate-value">$55/hr</span>
-      </div>
-      <div class="rate-row">
-        <span class="rate-label">Cabinet Painting</span>
-        <span class="rate-value">$50/hr</span>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>📝 About</h3>
-      <p style="opacity:0.8;line-height:1.6;margin:0;">
-        Professional painter with 8 years experience. Specializing in interior/exterior residential painting. 
-        Clean, fast, and reliable. Available weekdays and some weekends. 
-      </p>
-    </div>
-
-    <a href="https://wa.me/16045551234?text=Hi%20Mike!%20I%20found%20you%20on%20Task%20Leaders%20for%20painting.%20Are%20you%20available?" class="whatsapp-btn">
-      💬 Message Mike on WhatsApp
-    </a>
-
-    <p class="note">
-      You'll be redirected to WhatsApp. Mike typically responds in under 2 minutes.
-    </p>
   </main>
+
+  <div class="modal-overlay" id="waModal">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>Continue to WhatsApp</h3>
+      <div class="preview">"Hi! I found you on TaskLeaders and need help with <span id="mCat"></span>."</div>
+      <label class="consent">
+        <input type="checkbox" id="mConsent" />
+        <span>I agree to receive follow-up messages from TaskLeaders related to this inquiry.</span>
+      </label>
+      <button class="modal-btn" onclick="goWhatsApp()">Continue to WhatsApp</button>
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    let provider = null;
+
+    function formatResponse(minutes) {
+      if (minutes <= 1) return '~1 min';
+      return `~${minutes} min`;
+    }
+    function reliabilityPct(score0to5) {
+      if (!score0to5 || score0to5 <= 0) return 0;
+      return Math.round(score0to5 * 20);
+    }
+
+    function render() {
+      provider = id ? TaskLeadersDB.getProviderById(id) : null;
+      if (!provider) {
+        document.getElementById('missing').style.display = 'block';
+        return;
+      }
+
+      const cat = (TaskLeadersDB.categories.find(c => c.id === provider.category) || { name: provider.category }).name;
+      document.getElementById('page-title').textContent = `${provider.business_name} — TaskLeaders`;
+
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(provider.business_name)}&backgroundColor=0b1020&textColor=ffffff`;
+      const resp = formatResponse(provider.response_time_minutes);
+      const rel = reliabilityPct(provider.reliability_score);
+
+      const card = document.getElementById('card');
+      card.innerHTML = `
+        <div class="top">
+          <div class="avatar"><img alt="" src="${avatarUrl}" /></div>
+          <div>
+            <div class="name">${escapeHtml(provider.business_name)}</div>
+            <div class="area">${escapeHtml(provider.service_area)} • ${cat}</div>
+          </div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="v response">${resp}</div>
+            <div class="l">Response</div>
+          </div>
+          <div class="metric">
+            <div class="v reliability">${rel}%</div>
+            <div class="l">Reliability</div>
+          </div>
+          <div class="metric">
+            <div class="v">$${provider.hourly_rate}/hr</div>
+            <div class="l">Price</div>
+          </div>
+        </div>
+
+        <p class="desc">${escapeHtml(provider.description || '')}</p>
+
+        <button class="wa" onclick="openModal()">💬 WhatsApp</button>
+      `;
+      card.style.display = 'block';
+      document.getElementById('mCat').textContent = cat;
+    }
+
+    function openModal() {
+      document.getElementById('mConsent').checked = false;
+      document.getElementById('waModal').classList.add('active');
+    }
+    function closeModal() {
+      document.getElementById('waModal').classList.remove('active');
+    }
+
+    function goWhatsApp() {
+      const consent = document.getElementById('mConsent').checked;
+      console.log('Inquiry', { provider_id: provider.provider_id, consent, ts: new Date().toISOString() });
+      const cat = (TaskLeadersDB.categories.find(c => c.id === provider.category) || { name: provider.category }).name;
+      const message = encodeURIComponent(`Hi! I found you on TaskLeaders and need help with ${cat}.`);
+      const url = `https://wa.me/${provider.whatsapp_number}?text=${message}`;
+      closeModal();
+      window.open(url, '_blank');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    document.getElementById('waModal').addEventListener('click', (e) => {
+      if (e.target.id === 'waModal') closeModal();
+    });
+
+    render();
+  </script>
 </body>
 </html>
