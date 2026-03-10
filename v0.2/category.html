@@ -3,14 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title id="page-title">Handyman — TaskLeaders</title>
+  <title>Handyman — TaskLeaders</title>
   <style>
     :root {
       --blue: #0066ff;
       --blue-dark: #0052cc;
       --green: #00c853;
       --bg: #0a0a14;
-      --panel: rgba(255,255,255,0.03);
       --border: rgba(255,255,255,0.08);
       --muted: rgba(255,255,255,0.55);
       --whatsapp: #25D366;
@@ -26,10 +25,10 @@
     }
 
     header {
-      padding: 16px 24px;
+      padding: 14px 20px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       background: rgba(255,255,255,0.02);
       border-bottom: 1px solid rgba(255,255,255,0.06);
       position: sticky;
@@ -40,14 +39,14 @@
     .back {
       color: rgba(255,255,255,0.6);
       text-decoration: none;
-      font-size: 14px;
-      padding: 6px 10px;
+      font-size: 13px;
+      padding: 5px 8px;
       border-radius: 6px;
     }
     .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
 
     .logo {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 800;
       text-decoration: none;
       letter-spacing: -0.5px;
@@ -60,27 +59,28 @@
     .content-header {
       max-width: 960px;
       margin: 0 auto;
-      padding: 20px 24px 12px;
+      padding: 16px 20px 10px;
     }
     .content-header h1 {
       margin: 0 0 6px 0;
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 800;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.4px;
     }
+    .content-header h1 span { color: var(--blue); }
     .summary-line {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--muted);
       display: flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
       align-items: center;
     }
     .pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 5px 10px;
+      gap: 5px;
+      padding: 4px 10px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.10);
       background: rgba(255,255,255,0.02);
@@ -99,20 +99,20 @@
     main {
       max-width: 960px;
       margin: 0 auto;
-      padding: 0 24px 40px;
+      padding: 0 20px 32px;
     }
 
     .rank-hint {
-      margin: 8px 0;
+      margin: 6px 0 8px;
       color: rgba(255,255,255,0.5);
-      font-size: 13px;
+      font-size: 12px;
     }
 
     .sort-bar {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
-      margin: 10px 0 12px;
+      margin: 8px 0 10px;
       flex-wrap: wrap;
     }
     .sort-label {
@@ -121,7 +121,7 @@
       font-weight: 600;
     }
     .sort-btn {
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 6px;
       border: 1px solid rgba(255,255,255,0.10);
       background: rgba(255,255,255,0.02);
@@ -139,7 +139,7 @@
     }
 
     .legend {
-      margin: 8px 0 16px;
+      margin: 8px 0 12px;
       color: rgba(255,255,255,0.5);
       font-size: 11px;
       display: flex;
@@ -152,17 +152,18 @@
       border: 1px solid rgba(255,255,255,0.05);
     }
     .legend .item { display: inline-flex; gap: 4px; align-items: center; cursor: help; }
-    .legend .ic { width: 16px; height: 16px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); font-size: 10px; }
-    .legend .ic.fast { border-color: rgba(0,200,83,0.2); background: rgba(0,200,83,0.06); }
-    .legend .ic.verified { border-color: rgba(0,102,255,0.2); background: rgba(0,102,255,0.06); }
-    .legend .ic.top { border-color: rgba(255,184,0,0.2); background: rgba(255,184,0,0.06); }
-    .legend .ic.today { border-color: rgba(255,100,50,0.2); background: rgba(255,100,50,0.06); }
-    .legend .ic.after { border-color: rgba(150,100,255,0.2); background: rgba(150,100,255,0.06); }
+    .legend .ic { width: 18px; height: 18px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+    /* Legend icons match row badge colors exactly */
+    .legend .ic.fast { border: 1px solid rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
+    .legend .ic.verified { border: 1px solid var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
+    .legend .ic.top { border: 1px solid rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
+    .legend .ic.today { border: 1px solid rgba(255,100,50,0.25); background: rgba(255,100,50,0.08); color: rgba(255,100,50,0.95); }
+    .legend .ic.after { border: 1px solid rgba(150,100,255,0.25); background: rgba(150,100,255,0.08); color: rgba(150,100,255,0.95); }
 
     .section-heading {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      margin: 24px 0 10px;
+      margin: 20px 0 8px;
       color: #fff;
       letter-spacing: -0.2px;
     }
@@ -174,26 +175,27 @@
       background: rgba(255,255,255,0.02);
     }
 
+    /* Column headers: # / TaskLeader / Area / Response / Reliab. / Price / (badges) / WhatsApp */
     .board-header {
       display: grid;
-      grid-template-columns: 36px 44px minmax(140px, 1fr) 90px 90px 80px 100px;
-      gap: 8px;
+      grid-template-columns: 40px minmax(160px, 1.5fr) 90px 80px 70px 80px 110px;
+      gap: 10px;
       padding: 10px 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      background: rgba(255,255,255,0.02);
-      color: rgba(255,255,255,0.45);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: rgba(255,255,255,0.5);
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.6px;
       align-items: center;
     }
 
     .row {
       display: grid;
-      grid-template-columns: 36px 44px minmax(140px, 1fr) 90px 90px 80px 100px;
-      gap: 8px;
-      padding: 12px 14px;
+      grid-template-columns: 40px minmax(160px, 1.5fr) 90px 80px 70px 80px 110px;
+      gap: 10px;
+      padding: 10px 14px;
       border-bottom: 1px solid rgba(255,255,255,0.04);
       align-items: center;
       transition: background 0.12s;
@@ -206,14 +208,14 @@
       font-size: 15px;
       color: rgba(255,255,255,0.5);
       text-align: center;
-      line-height: 1;
     }
     .rank.top { color: var(--blue); }
 
+    .taskleader-cell { min-width: 0; overflow: hidden; display: flex; align-items: center; gap: 10px; }
     .avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
       border: 1px solid rgba(255,255,255,0.08);
       overflow: hidden;
       background: rgba(255,255,255,0.05);
@@ -225,10 +227,9 @@
     .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
     .name-col { min-width: 0; overflow: hidden; }
-
     .name {
       font-weight: 600;
-      font-size: 14px;
+      font-size: 13px;
       color: #fff;
       text-decoration: none;
       display: block;
@@ -244,11 +245,10 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-top: 1px;
     }
 
     .metric {
-      font-size: 13px;
+      font-size: 12px;
       color: rgba(255,255,255,0.7);
       font-weight: 600;
       text-align: left;
@@ -259,26 +259,24 @@
     .metric.reliability { color: rgba(255,184,0,0.9); }
 
     .price {
-      font-size: 13px;
-      color: rgba(255,255,255,0.8);
+      font-size: 12px;
+      color: rgba(255,255,255,0.85);
       font-weight: 700;
       white-space: nowrap;
     }
 
-    .badges {
+    /* Badges in dedicated column before WhatsApp */
+    .badge-cell {
       display: flex;
       gap: 4px;
-      justify-content: flex-end;
+      justify-content: flex-start;
       align-items: center;
     }
 
     .bicon {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border-radius: 5px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.04);
-      color: rgba(255,255,255,0.7);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -286,6 +284,13 @@
       cursor: help;
       position: relative;
     }
+    /* Row badge colors match legend exactly */
+    .bicon.fast { border: 1px solid rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
+    .bicon.verified { border: 1px solid var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
+    .bicon.top { border: 1px solid rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
+    .bicon.today { border: 1px solid rgba(255,100,50,0.25); background: rgba(255,100,50,0.08); color: rgba(255,100,50,0.95); }
+    .bicon.after { border: 1px solid rgba(150,100,255,0.25); background: rgba(150,100,255,0.08); color: rgba(150,100,255,0.95); }
+    
     .bicon:hover::after {
       content: attr(data-tooltip);
       position: absolute;
@@ -301,26 +306,18 @@
       z-index: 10;
       margin-bottom: 4px;
     }
-    .bicon.fast { border-color: rgba(0,200,83,0.2); background: rgba(0,200,83,0.06); color: rgba(0,200,83,0.9); }
-    .bicon.verified { border-color: var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
-    .bicon.top { border-color: rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.9); }
-    .bicon.today { border-color: rgba(255,100,50,0.2); background: rgba(255,100,50,0.06); color: rgba(255,100,50,0.9); }
-    .bicon.after { border-color: rgba(150,100,255,0.2); background: rgba(150,100,255,0.06); color: rgba(150,100,255,0.9); }
 
     .wa {
-      padding: 8px 14px;
-      border-radius: 8px;
+      padding: 7px 12px;
+      border-radius: 6px;
       border: 1px solid rgba(37,211,102,0.5);
       background: rgba(37,211,102,0.12);
       color: #d7ffe7;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.12s;
       white-space: nowrap;
+      transition: all 0.12s;
     }
     .wa:hover {
       background: rgba(37,211,102,0.2);
@@ -328,28 +325,21 @@
     }
 
     @media (max-width: 900px) {
-      header { padding: 14px 20px; }
-      .logo { font-size: 22px; }
-      .content-header { padding: 16px 20px 10px; }
-      .content-header h1 { font-size: 24px; }
-      main { padding: 0 20px 32px; }
       .board-header, .row {
-        grid-template-columns: 32px 40px minmax(120px, 1fr) 80px 80px 70px 90px;
-        gap: 6px;
+        grid-template-columns: 36px minmax(140px, 1.5fr) 80px 70px 60px 70px 100px;
+        gap: 8px;
         padding: 10px 12px;
       }
-      .section-heading { font-size: 15px; }
     }
 
     @media (max-width: 680px) {
       .board-header { display: none; }
       .row {
-        grid-template-columns: 28px 36px 1fr auto;
-        gap: 8px;
+        grid-template-columns: 32px 1fr auto;
+        gap: 10px;
         padding: 10px 12px;
       }
-      .metric, .price, .badges { display: none; }
-      .wa { padding: 8px 12px; font-size: 11px; }
+      .area, .metric, .price, .badge-cell { display: none; }
     }
   </style>
 </head>
@@ -360,7 +350,7 @@
   </header>
 
   <div class="content-header">
-    <h1>🔧 <span style="color:var(--blue)">Handyman</span> in Vancouver</h1>
+    <h1>🔧 <span>Handyman</span> in Vancouver</h1>
     <div class="summary-line">
       <span class="pill"><span class="dot"></span>12 available</span>
       <span class="pill">⚡ Avg response ~6 min</span>
@@ -394,7 +384,7 @@
   </main>
 
   <script>
-    // Demo data embedded directly
+    // Demo data - 13 handyman providers
     const demoProviders = [
       { id: 1, name: "East Van Handyman", area: "East Van", response: 2, reliability: 98, price: 55, verified: true, top: true, today: true },
       { id: 2, name: "Burnaby Repairs", area: "Burnaby", response: 4, reliability: 95, price: 48, verified: true, top: false, today: false },
@@ -435,21 +425,38 @@
       return badges.slice(0, 3).join('');
     }
 
+    function renderHeader() {
+      return `
+        <div class="board-header">
+          <div>#</div>
+          <div>TaskLeader</div>
+          <div>Area</div>
+          <div>Response</div>
+          <div>Reliab.</div>
+          <div>Price</div>
+          <div></div>
+        </div>
+      `;
+    }
+
     function renderRow(p, rank) {
       const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=0b1020&textColor=ffffff`;
       return `
         <div class="row">
           <div class="rank ${rank <= 3 ? 'top' : ''}">${rank}</div>
-          <div class="avatar"><img src="${avatarUrl}" alt=""></div>
-          <div class="name-col">
-            <a class="name" href="#">${p.name}</a>
-            <div class="area">${p.area}</div>
+          <div class="taskleader-cell">
+            <div class="avatar"><img src="${avatarUrl}" alt=""></div>
+            <div class="name-col">
+              <a class="name" href="#">${p.name}</a>
+              <div class="area">${p.area}</div>
+            </div>
           </div>
+          <div class="area">${p.area}</div>
           <div class="metric response">${formatResp(p.response)}</div>
           <div class="metric reliability">${p.reliability}%</div>
           <div class="price">$${p.price}/hr</div>
-          <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;">
-            <div class="badges">${renderBadges(p)}</div>
+          <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;">
+            <div class="badge-cell">${renderBadges(p)}</div>
             <button class="wa">WhatsApp</button>
           </div>
         </div>
@@ -459,16 +466,13 @@
     function render() {
       const sorted = sortProviders();
       
-      // Update heading
       document.getElementById('top3Heading').textContent = `Top 3 by ${sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}`;
       
-      // Top 3
       const top3 = sorted.slice(0, 3);
-      document.getElementById('top3').innerHTML = top3.map((p, i) => renderRow(p, i + 1)).join('');
+      document.getElementById('top3').innerHTML = renderHeader() + top3.map((p, i) => renderRow(p, i + 1)).join('');
       
-      // Rest
       const rest = sorted.slice(3);
-      document.getElementById('board').innerHTML = rest.map((p, i) => renderRow(p, i + 4)).join('');
+      document.getElementById('board').innerHTML = renderHeader() + rest.map((p, i) => renderRow(p, i + 4)).join('');
     }
 
     function setSort(mode) {
