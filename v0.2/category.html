@@ -63,7 +63,7 @@
     }
     .content-header h1 {
       margin: 0 0 6px 0;
-      font-size: 24px;
+      font-size: 28px;
       font-weight: 800;
       letter-spacing: -0.4px;
     }
@@ -161,12 +161,14 @@
     .legend .ic.after { border: 1px solid rgba(150,100,255,0.25); background: rgba(150,100,255,0.08); color: rgba(150,100,255,0.95); }
 
     .section-heading {
-      font-size: 15px;
+      font-size: 17px;
       font-weight: 700;
-      margin: 20px 0 8px;
+      margin: 20px 0 10px;
       color: #fff;
       letter-spacing: -0.2px;
     }
+    /* Tighten space between Top 3 and More TaskLeaders sections */
+    #board { margin-top: 4px; }
 
     .board {
       border: 1px solid var(--border);
@@ -430,7 +432,7 @@
     function renderHeader() {
       return `
         <div class="board-header">
-          <div>#</div>
+          <div style="text-align:center;">Rank</div>
           <div>TaskLeader</div>
           <div>Response</div>
           <div>Reliab.</div>
@@ -450,7 +452,7 @@
             <div class="avatar"><img src="${avatarUrl}" alt=""></div>
             <div class="name-col">
               <a class="name" href="#">${p.name}</a>
-              <div class="area">${p.area}</div>
+              <div class="area">Base: ${p.area}</div>
             </div>
           </div>
           <div class="metric response">${formatResp(p.response)}</div>
