@@ -32,7 +32,7 @@
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .logo {
-      font-size: 30px;
+      font-size: 32px;
       font-weight: 800;
       text-decoration: none;
       letter-spacing: -0.5px;
@@ -40,7 +40,7 @@
     .logo .task { color: var(--blue); }
     .logo .leaders { color: #fff; }
     .nav-btn {
-      padding: 12px 24px;
+      padding: 14px 28px;
       border-radius: 8px;
       border: none;
       background: var(--blue);
@@ -53,69 +53,70 @@
     .nav-btn:hover {
       background: var(--blue-dark);
       transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,102,255,0.3);
     }
     
     /* Hero */
     .hero {
       text-align: center;
-      padding: 80px 32px 56px;
-      max-width: 760px;
+      padding: 88px 32px 64px;
+      max-width: 780px;
       margin: 0 auto;
     }
     .hero h1 {
-      font-size: 48px;
+      font-size: 52px;
       font-weight: 800;
       margin: 0 0 20px 0;
-      line-height: 1.15;
-      letter-spacing: -0.8px;
+      line-height: 1.12;
+      letter-spacing: -1px;
     }
     .hero h1 .highlight {
       color: var(--blue);
     }
     .hero .subhead {
-      font-size: 20px;
-      color: rgba(255,255,255,0.75);
-      margin: 0 0 12px 0;
+      font-size: 21px;
+      color: rgba(255,255,255,0.8);
+      margin: 0 0 14px 0;
       font-weight: 500;
     }
     .hero .support {
-      font-size: 19px;
-      color: rgba(255,255,255,0.7);
-      margin: 0 0 40px 0;
-      font-weight: 600;
+      font-size: 18px;
+      color: rgba(255,255,255,0.55);
+      margin: 0 0 44px 0;
+      font-weight: 500;
     }
     
     /* Concierge */
     .concierge {
-      background: linear-gradient(135deg, rgba(0,200,83,0.06) 0%, rgba(0,200,83,0.02) 100%);
-      border: 1px solid rgba(0,200,83,0.12);
-      border-radius: 12px;
-      padding: 20px 28px;
-      margin-bottom: 36px;
+      background: linear-gradient(135deg, rgba(0,200,83,0.08) 0%, rgba(0,102,255,0.04) 100%);
+      border: 1px solid rgba(0,200,83,0.18);
+      border-radius: 14px;
+      padding: 24px 32px;
+      margin-bottom: 40px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 24px;
     }
     .concierge-text h3 {
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 700;
       color: var(--green);
       margin: 0 0 6px 0;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
     .concierge-text p {
-      font-size: 14px;
-      color: rgba(255,255,255,0.6);
+      font-size: 15px;
+      color: rgba(255,255,255,0.65);
       margin: 0;
     }
     .concierge-btn {
-      padding: 12px 22px;
+      padding: 12px 24px;
       border-radius: 8px;
       border: 1px solid var(--green);
-      background: transparent;
+      background: rgba(0,200,83,0.08);
       color: var(--green);
       font-size: 14px;
       font-weight: 600;
@@ -130,17 +131,17 @@
     
     /* Categories */
     .categories {
-      max-width: 900px;
+      max-width: 920px;
       margin: 0 auto;
-      padding: 0 32px 80px;
+      padding: 0 32px 88px;
     }
     .categories h2 {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 1.2px;
+      letter-spacing: 1.5px;
       color: #fff;
-      margin: 0 0 16px 0;
+      margin: 0 0 20px 0;
     }
     .category-grid {
       display: grid;
@@ -148,10 +149,10 @@
       gap: 16px;
     }
     .category-tile {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.1);
       border-radius: 12px;
-      padding: 28px 20px;
+      padding: 32px 20px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s;
@@ -160,19 +161,19 @@
       display: block;
     }
     .category-tile:hover {
-      background: rgba(0,102,255,0.1);
+      background: rgba(0,102,255,0.12);
       border-color: var(--blue);
-      box-shadow: 0 0 20px rgba(0,102,255,0.15);
+      box-shadow: 0 0 24px rgba(0,102,255,0.2);
       transform: translateY(-2px);
     }
     .category-icon {
-      font-size: 32px;
-      margin-bottom: 10px;
+      font-size: 36px;
+      margin-bottom: 12px;
     }
     .category-name {
-      font-size: 18px;
+      font-size: 19px;
       font-weight: 600;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
     }
     .category-count {
       font-size: 14px;
@@ -182,15 +183,15 @@
     /* Footer */
     footer {
       text-align: center;
-      padding: 40px 32px;
+      padding: 44px 32px;
       border-top: 1px solid rgba(255,255,255,0.06);
       background: rgba(255,255,255,0.02);
     }
     footer p {
       font-size: 16px;
-      color: rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.5);
       margin: 0;
-      font-weight: 600;
+      font-weight: 500;
     }
     footer a {
       color: rgba(255,255,255,0.4);
@@ -204,27 +205,28 @@
       .logo { font-size: 26px; }
       .nav-btn { padding: 12px 20px; font-size: 14px; }
       
-      .hero { padding: 48px 20px 32px; }
-      .hero h1 { font-size: 32px; }
+      .hero { padding: 56px 20px 40px; }
+      .hero h1 { font-size: 34px; letter-spacing: -0.5px; }
       .hero .subhead { font-size: 17px; }
-      .hero .support { font-size: 15px; margin-bottom: 28px; }
+      .hero .support { font-size: 15px; margin-bottom: 32px; }
       
       .concierge {
         flex-direction: column;
         text-align: center;
-        padding: 18px 20px;
+        padding: 20px 24px;
         margin-bottom: 32px;
       }
-      .concierge-text h3 { justify-content: center; }
+      .concierge-text h3 { justify-content: center; font-size: 16px; }
+      .concierge-text p { font-size: 14px; }
       
-      .categories { padding: 0 20px 44px; }
-      .categories h2 { font-size: 14px; }
+      .categories { padding: 0 20px 56px; }
+      .categories h2 { font-size: 15px; }
       .category-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
       }
-      .category-tile { padding: 20px 14px; }
-      .category-icon { font-size: 28px; }
+      .category-tile { padding: 24px 16px; }
+      .category-icon { font-size: 30px; }
       .category-name { font-size: 16px; }
       .category-count { font-size: 13px; }
       
