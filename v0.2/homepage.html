@@ -88,43 +88,43 @@
     
     /* Concierge */
     .concierge {
-      background: linear-gradient(135deg, rgba(0,200,83,0.08) 0%, rgba(0,102,255,0.04) 100%);
-      border: 1px solid rgba(0,200,83,0.18);
-      border-radius: 14px;
-      padding: 24px 32px;
-      margin-bottom: 28px;
+      background: linear-gradient(135deg, rgba(0,200,83,0.06) 0%, rgba(0,102,255,0.03) 100%);
+      border: 1px solid rgba(0,200,83,0.15);
+      border-radius: 12px;
+      padding: 18px 28px;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 24px;
+      gap: 20px;
     }
     .concierge-text h3 {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       color: var(--green);
-      margin: 0 0 6px 0;
+      margin: 0 0 4px 0;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
     .concierge-text p {
-      font-size: 16px;
-      color: rgba(255,255,255,0.7);
+      font-size: 15px;
+      color: rgba(255,255,255,0.65);
       margin: 0;
-      max-width: 360px;
       line-height: 1.4;
     }
     .concierge-btn {
-      padding: 12px 24px;
+      padding: 10px 20px;
       border-radius: 8px;
       border: 1px solid var(--green);
-      background: rgba(0,200,83,0.08);
+      background: transparent;
       color: var(--green);
       font-size: 14px;
       font-weight: 600;
       text-decoration: none;
       white-space: nowrap;
       transition: all 0.15s;
+      flex-shrink: 0;
     }
     .concierge-btn:hover {
       background: var(--green);
@@ -216,11 +216,12 @@
       .concierge {
         flex-direction: column;
         text-align: center;
-        padding: 20px 24px;
-        margin-bottom: 32px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        gap: 12px;
       }
       .concierge-text h3 { justify-content: center; font-size: 16px; }
-      .concierge-text p { font-size: 15px; max-width: none; }
+      .concierge-text p { font-size: 14px; }
       
       .categories { padding: 0 20px 56px; }
       .categories h2 { font-size: 15px; }
@@ -251,7 +252,7 @@
     <div class="concierge">
       <div class="concierge-text">
         <h3>👑 VIP Concierge</h3>
-        <p>For real estate agents & property managers who need priority service</p>
+        <p>Priority help for real estate agents and property managers.</p>
       </div>
       <a href="#" class="concierge-btn" onclick="alert('Concierge signup coming soon'); return false;">Request Access</a>
     </div>
