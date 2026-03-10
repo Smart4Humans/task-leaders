@@ -1,229 +1,285 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Task Leaders — Find Service Providers Ranked by Speed</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaskLeaders — Vancouver's fastest way to find local help</title>
   <style>
     :root {
-      --cyan: #00d4ff;
-      --purple: #7b2cbf;
-      --gold: #FFD700;
-      --dark: #0a0a1a;
-      --card: rgba(255,255,255,0.05);
+      --blue: #2563eb;
+      --charcoal: #1f2937;
+      --dark: #0f172a;
+      --card: rgba(255,255,255,0.03);
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
-      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+      color: var(--charcoal);
       min-height: 100vh;
     }
+    
+    /* Header */
     header {
-      padding: 20px 24px;
+      padding: 16px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      background: #fff;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
     }
     .logo {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 800;
-      background: linear-gradient(90deg, var(--cyan), var(--purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .location {
-      font-size: 12px;
-      opacity: 0.7;
-      margin-left: 12px;
-    }
-    nav a {
-      color: #fff;
       text-decoration: none;
-      margin-left: 24px;
-      font-size: 14px;
-      opacity: 0.8;
+      letter-spacing: -0.5px;
     }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: var(--charcoal); }
+    .nav-btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.1);
+      background: #fff;
+      color: var(--charcoal);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+    
+    /* Hero */
     .hero {
       text-align: center;
-      padding: 60px 24px 40px;
-      max-width: 700px;
+      padding: 64px 24px 48px;
+      max-width: 680px;
       margin: 0 auto;
     }
     .hero h1 {
-      font-size: 36px;
-      margin: 0 0 12px 0;
+      font-size: 38px;
+      font-weight: 800;
+      margin: 0 0 16px 0;
+      color: var(--charcoal);
+      line-height: 1.2;
+      letter-spacing: -0.5px;
     }
-    .hero p {
+    .hero .subhead {
       font-size: 18px;
-      opacity: 0.8;
-      margin: 0 0 32px 0;
+      color: #64748b;
+      margin: 0 0 12px 0;
+      font-weight: 500;
     }
+    .hero .support {
+      font-size: 14px;
+      color: #94a3b8;
+      margin: 0 0 40px 0;
+    }
+    
+    /* Concierge */
+    .concierge {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border: 1px solid #fbbf24;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 48px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .concierge-text h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #92400e;
+      margin: 0 0 4px 0;
+    }
+    .concierge-text p {
+      font-size: 13px;
+      color: #a16207;
+      margin: 0;
+    }
+    .concierge-btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: 1px solid #d97706;
+      background: #fff;
+      color: #92400e;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .concierge-btn:hover {
+      background: #92400e;
+      color: #fff;
+    }
+    
+    /* Categories */
     .categories {
-      max-width: 900px;
+      max-width: 720px;
       margin: 0 auto;
-      padding: 0 24px 60px;
+      padding: 0 24px 64px;
     }
     .categories h2 {
-      font-size: 14px;
-      opacity: 0.6;
+      font-size: 12px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin: 0 0 20px 0;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      margin: 0 0 16px 0;
     }
     .category-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
+      gap: 12px;
     }
     .category-tile {
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      padding: 24px;
+      background: #fff;
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 10px;
+      padding: 16px 12px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
       text-decoration: none;
-      color: #fff;
+      color: var(--charcoal);
       display: block;
     }
     .category-tile:hover {
-      transform: translateY(-4px);
-      border-color: var(--cyan);
-      box-shadow: 0 8px 30px rgba(0,212,255,0.15);
+      transform: translateY(-2px);
+      border-color: var(--blue);
+      box-shadow: 0 4px 12px rgba(37,99,235,0.08);
     }
     .category-icon {
-      font-size: 32px;
-      margin-bottom: 12px;
+      font-size: 24px;
+      margin-bottom: 6px;
     }
     .category-name {
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 600;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     .category-count {
-      font-size: 12px;
-      opacity: 0.5;
+      font-size: 11px;
+      color: #94a3b8;
     }
-    .live-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(74,222,128,0.15);
-      color: #4ade80;
-      padding: 10px 20px;
-      border-radius: 24px;
-      font-size: 14px;
-      font-weight: 600;
-      margin-top: 24px;
-      cursor: pointer;
-    }
-    .live-badge::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      background: #4ade80;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
+    
+    /* Footer */
     footer {
       text-align: center;
-      padding: 40px 24px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      opacity: 0.5;
-      font-size: 14px;
+      padding: 32px 24px;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      background: #fff;
     }
-    @media (max-width: 600px) {
-      .category-grid { grid-template-columns: repeat(2, 1fr); }
+    footer p {
+      font-size: 13px;
+      color: #94a3b8;
+      margin: 0;
+    }
+    footer a {
+      color: #94a3b8;
+      text-decoration: none;
+    }
+    
+    /* Mobile */
+    @media (max-width: 640px) {
+      header { padding: 14px 16px; }
+      .logo { font-size: 20px; }
+      .nav-btn { padding: 8px 14px; font-size: 13px; }
+      
+      .hero { padding: 40px 16px 32px; }
       .hero h1 { font-size: 28px; }
+      .hero .subhead { font-size: 16px; }
+      
+      .concierge {
+        flex-direction: column;
+        text-align: center;
+        padding: 18px;
+        margin-bottom: 32px;
+      }
+      
+      .categories { padding: 0 16px 48px; }
+      .category-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .category-tile { padding: 14px 10px; }
+      .category-icon { font-size: 22px; }
+      .category-name { font-size: 12px; }
+    }
+    
+    @media (max-width: 380px) {
+      .category-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 <body>
   <header>
-    <div>
-      <span class="logo">Task Leaders</span>
-      <span class="location">Vancouver</span>
-    </div>
-    <nav>
-      <a href="become-task-leader.html">Become a Task Leader</a>
-    </nav>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+    <a href="become-task-leader.html" class="nav-btn">Become a TaskLeader</a>
   </header>
 
   <section class="hero">
-    <h1>What do you need help with?</h1>
-    <p>Make fast, reliable connections using WhatsApp.</p>
-    <div class="live-badge" onclick="location.href='category.html'">
-      🔥 See who's active right now — <span id="online-count">0</span> Task Leaders online
+    <h1>Vancouver's fastest way to find local help.</h1>
+    <p class="subhead">Rank by Speed, Reliability, or Price — then connect directly on WhatsApp.</p>
+    <p class="support">No commissions. No middlemen. Just direct connections.</p>
+    
+    <div class="concierge">
+      <div class="concierge-text">
+        <h3>🏆 VIP Concierge Service</h3>
+        <p>For real estate agents & property managers</p>
+      </div>
+      <a href="#" class="concierge-btn" onclick="alert('Concierge signup coming soon'); return false;">Learn More</a>
     </div>
   </section>
 
   <section class="categories">
-    <h2>Popular Categories</h2>
+    <h2>Categories</h2>
     <div class="category-grid" id="category-grid">
       <!-- Dynamically populated -->
-    </div>
     </div>
   </section>
 
   <footer>
-    <p>No account needed. Browse → Click → WhatsApp → Done.</p>
-    <p style="margin-top: 10px; font-size: 12px;"><a href="admin.html" style="color: inherit; opacity: 0.5;">Admin</a></p>
+    <p>No account needed. Browse → Click → WhatsApp → Done. · <a href="admin.html">Admin</a></p>
   </footer>
 
-  <!-- Load Database -->
   <script src="js/db.js"></script>
-
   <script>
-    // Initialize homepage
+    const categories = [
+      { id: 'handyman', icon: '🔧', name: 'Handyman' },
+      { id: 'plumbing', icon: '🚿', name: 'Plumbing' },
+      { id: 'electrical', icon: '⚡', name: 'Electrical' },
+      { id: 'painting', icon: '🎨', name: 'Painting' },
+      { id: 'cleaning', icon: '🧹', name: 'Cleaning' },
+      { id: 'furniture-assembly', icon: '📦', name: 'Furniture Assembly' },
+      { id: 'moving', icon: '🚚', name: 'Moving Help' },
+      { id: 'yard-work', icon: '🌿', name: 'Yard Work' },
+      { id: 'hvac', icon: '❄️', name: 'HVAC' }
+    ];
+
     function init() {
-      loadCategories();
-      updateOnlineCount();
-    }
-
-    // Load category grid dynamically
-    function loadCategories() {
       const grid = document.getElementById('category-grid');
-
-      const categories = [
-        { id: 'handyman', icon: '🔧', name: 'Handyman' },
-        { id: 'plumbing', icon: '🚿', name: 'Plumbing' },
-        { id: 'electrical', icon: '⚡', name: 'Electrical' },
-        { id: 'painting', icon: '🎨', name: 'Painting' },
-        { id: 'cleaning', icon: '🧹', name: 'Cleaning' },
-        { id: 'furniture-assembly', icon: '📦', name: 'Furniture Assembly' },
-        { id: 'moving', icon: '🚚', name: 'Moving Help' },
-        { id: 'yard-work', icon: '🌿', name: 'Yard Work' }
-      ];
-
       grid.innerHTML = categories.map(cat => {
         const count = TaskLeadersDB.getProvidersByCategory(cat.id).length;
         return `
           <a href="category.html?category=${cat.id}" class="category-tile">
             <div class="category-icon">${cat.icon}</div>
             <div class="category-name">${cat.name}</div>
-            <div class="category-count">${count} Task Leader${count !== 1 ? 's' : ''}</div>
+            <div class="category-count">${count} TaskLeaders</div>
           </a>
         `;
       }).join('');
     }
 
-    // Update online count
-    function updateOnlineCount() {
-      const approved = TaskLeadersDB.getApprovedProviders();
-      // Estimate 30% are "online" at any time
-      const online = Math.ceil(approved.length * 0.3);
-      document.getElementById('online-count').textContent = online;
-    }
-
-    // Initialize on load
     init();
   </script>
 </body>
