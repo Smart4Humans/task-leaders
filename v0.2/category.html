@@ -106,11 +106,18 @@
     }
 
     /* Sort bar */
+    .rank-hint{
+      margin: 12px 0 10px;
+      color: rgba(255,255,255,0.55);
+      font-size: 14px;
+      font-weight: 650;
+    }
+
     .sort-bar {
       display: flex;
       gap: 10px;
       align-items: center;
-      margin: 16px 0 18px;
+      margin: 12px 0 16px;
       flex-wrap: wrap;
     }
     .sort-label {
@@ -146,6 +153,18 @@
       letter-spacing: 1.6px;
       color: rgba(255,255,255,0.5);
       margin: 18px 0 10px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .section-title .mode {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 1.6px;
+      color: rgba(255,255,255,0.65);
+      text-transform: uppercase;
+      white-space: nowrap;
     }
 
     /* Leaderboard */
@@ -244,20 +263,44 @@
       white-space: nowrap;
     }
 
-    .wa {
+    .cta{
       justify-self: end;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge{
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.03);
+      color: rgba(255,255,255,0.60);
+      white-space: nowrap;
+    }
+    .badge.fast{
+      border-color: rgba(0,200,83,0.25);
+      background: rgba(0,200,83,0.08);
+      color: rgba(0,200,83,0.90);
+    }
+
+    .wa {
       padding: 9px 12px;
       border-radius: 10px;
       border: 1px solid rgba(0,200,83,0.45);
       background: rgba(0,200,83,0.14);
       color: #d7ffe7;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 900;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
       transition: all 0.12s;
+      white-space: nowrap;
     }
     .wa:hover {
       background: rgba(0,200,83,0.22);
@@ -426,6 +469,8 @@
   </div>
 
   <main>
+    <div class="rank-hint">Providers ranked by response speed, reliability, and price.</div>
+
     <div class="sort-bar">
       <span class="sort-label">Rank by</span>
       <button class="sort-btn active" onclick="setSort('response_time', this)">Response</button>
@@ -433,7 +478,10 @@
       <button class="sort-btn" onclick="setSort('price', this)">Price</button>
     </div>
 
-    <div class="section-title">Top 3 TaskLeaders</div>
+    <div class="section-title">
+      <span id="top3Label">Top 3</span>
+      <span class="mode" id="modeLabel">By Response</span>
+    </div>
     <div class="board" id="top3">
       <div class="board-header">
         <div>#</div><div></div><div>TaskLeader</div><div>Area</div><div>Response</div><div>Reliability</div><div>Price</div><div></div>
@@ -441,7 +489,7 @@
       <div id="top3Rows"></div>
     </div>
 
-    <div class="section-title">Leaderboard</div>
+    <div class="section-title"><span>Leaderboard</span><span class="mode">Ranks 4+</span></div>
     <div class="board" id="board">
       <div class="board-header">
         <div>#</div><div></div><div>TaskLeader</div><div>Area</div><div>Response</div><div>Reliability</div><div>Price</div><div></div>
@@ -530,6 +578,19 @@
     let sortBy = 'response_time';
     let selectedProvider = null;
 
+    function areaLabel(area) {
+      const s = (area || '').split(',')[0].trim();
+      if (!s) return 'Vancouver';
+      // keep MVP clean/short
+      return s.length > 16 ? (s.slice(0, 16) + '…') : s;
+    }
+
+    function sortModeLabel() {
+      if (sortBy === 'price') return 'By Price';
+      if (sortBy === 'reliability') return 'By Reliability';
+      return 'By Response';
+    }
+
     function render() {
       ensureDemoProviders(13);
 
@@ -543,6 +604,9 @@
       document.getElementById('avg').textContent = stats.avg_response_time ? `~${stats.avg_response_time} min` : '--';
       document.getElementById('count').textContent = providers.length;
 
+      // Mode label
+      document.getElementById('modeLabel').textContent = sortModeLabel();
+
       if (!providers.length) {
         document.getElementById('top3').style.display = 'none';
         document.getElementById('board').style.display = 'none';
@@ -550,28 +614,34 @@
         return;
       }
 
-      // Sorted list for main leaderboard
+      // Sorted list for active ranking
       const sorted = TaskLeadersDB.sortProviders(providers, sortBy);
 
-      // Top 3
+      // Top 3 (first 3 results in active ranking)
       const top3 = sorted.slice(0, 3);
       document.getElementById('top3Rows').innerHTML = top3.map((p, idx) => rowHtml(p, idx + 1, true)).join('');
 
-      // Next 10+ (at least 10)
-      const rest = sorted.slice(3, 13); // 10 rows
+      // Continue ranking numbers
+      const rest = sorted.slice(3, 13); // at least 10 rows
       document.getElementById('rows').innerHTML = rest.map((p, idx) => rowHtml(p, idx + 4, false)).join('');
     }
 
     function rowHtml(p, rank, isTop) {
       const resp = formatResponse(p.response_time_minutes);
       const rel = reliabilityPct(p.reliability_score);
-      const msg = `Hi! I found you on TaskLeaders and need help with ${category.name}.`;
 
       // Use dicebear for simple credible avatar
       const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.business_name)}&backgroundColor=0b1020&textColor=ffffff`;
 
+      // Standardize MVP area label (short)
+      const area = areaLabel(p.service_area);
+
       // Mobile compact metrics line
-      const compact = `⚡ ${resp} • Reliability ${rel}% • $${p.hourly_rate}/hr`;
+      const compact = `⚡ ${resp} • ${rel}% • $${p.hourly_rate}/hr`;
+
+      // Badges (max 1–2)
+      const badges = [];
+      if (p.response_time_minutes <= 5) badges.push('<span class="badge fast" title="Fast Responder">Fast Responder</span>');
 
       return `
         <div class="row ${isTop ? 'top3' : ''}">
@@ -583,11 +653,13 @@
             <a class="name" href="profile.html?id=${encodeURIComponent(p.provider_id)}">${escapeHtml(p.business_name)}</a>
             <div class="compact">${compact}</div>
           </div>
-          <div class="area">${escapeHtml(p.service_area)}</div>
+          <div class="area">${escapeHtml(area)}</div>
           <div class="metric response">${resp}</div>
-          <div class="metric reliability">Reliability ${rel}%</div>
+          <div class="metric reliability">${rel}%</div>
           <div class="price">$${p.hourly_rate}/hr</div>
-          <button class="wa" onclick="openModal('${p.provider_id}')">💬 <span>WhatsApp</span></button>
+          <div class="cta">${badges.join('')}
+            <button class="wa" onclick="openModal('${p.provider_id}')">💬 <span>WhatsApp</span></button>
+          </div>
         </div>
       `;
     }
@@ -606,7 +678,7 @@
       const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.business_name)}&backgroundColor=0b1020&textColor=ffffff`;
       document.getElementById('mImg').innerHTML = `<img alt="" src="${avatarUrl}" />`;
       document.getElementById('mName').textContent = p.business_name;
-      document.getElementById('mMeta').textContent = `${p.service_area} • $${p.hourly_rate}/hr`;
+      document.getElementById('mMeta').textContent = `${areaLabel(p.service_area)} • $${p.hourly_rate}/hr`;
       document.getElementById('mCat').textContent = category.name;
       document.getElementById('mConsent').checked = false;
       document.getElementById('waModal').classList.add('active');
