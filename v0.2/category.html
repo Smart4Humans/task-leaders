@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title id="page-title">Category — TaskLeaders</title>
+  <title id="page-title">Handyman — TaskLeaders</title>
   <style>
     :root {
       --blue: #0066ff;
@@ -13,7 +13,6 @@
       --panel: rgba(255,255,255,0.03);
       --border: rgba(255,255,255,0.08);
       --muted: rgba(255,255,255,0.55);
-      --muted2: rgba(255,255,255,0.4);
       --whatsapp: #25D366;
     }
 
@@ -26,12 +25,11 @@
       min-height: 100vh;
     }
 
-    /* Header — match homepage style */
     header {
-      padding: 20px 32px;
+      padding: 16px 24px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       background: rgba(255,255,255,0.02);
       border-bottom: 1px solid rgba(255,255,255,0.06);
       position: sticky;
@@ -49,92 +47,87 @@
     .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
 
     .logo {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 800;
       text-decoration: none;
       letter-spacing: -0.5px;
       line-height: 1;
-      margin-right: 2px;
       white-space: nowrap;
     }
     .logo .task { color: var(--blue); }
     .logo .leaders { color: #fff; }
 
-    /* Content header */
     .content-header {
-      max-width: 980px;
+      max-width: 960px;
       margin: 0 auto;
-      padding: 26px 32px 14px;
+      padding: 20px 24px 12px;
     }
     .content-header h1 {
-      margin: 0 0 8px 0;
-      font-size: 34px;
+      margin: 0 0 6px 0;
+      font-size: 28px;
       font-weight: 800;
-      letter-spacing: -0.6px;
+      letter-spacing: -0.5px;
     }
     .summary-line {
-      font-size: 15px;
+      font-size: 14px;
       color: var(--muted);
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
     .pill {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
+      gap: 6px;
+      padding: 5px 10px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.10);
       background: rgba(255,255,255,0.02);
       color: rgba(255,255,255,0.65);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
     }
     .dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       background: var(--green);
       border-radius: 50%;
-      box-shadow: 0 0 10px rgba(0,200,83,0.2);
+      box-shadow: 0 0 8px rgba(0,200,83,0.2);
     }
 
     main {
-      max-width: 980px;
+      max-width: 960px;
       margin: 0 auto;
-      padding: 0 32px 56px;
+      padding: 0 24px 40px;
     }
 
-    /* Sort bar */
-    .rank-hint{
-      margin: 12px 0 10px;
-      color: rgba(255,255,255,0.55);
-      font-size: 14px;
-      font-weight: 650;
+    .rank-hint {
+      margin: 8px 0;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
     }
 
     .sort-bar {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
-      margin: 12px 0 16px;
+      margin: 10px 0 12px;
       flex-wrap: wrap;
     }
     .sort-label {
-      color: rgba(255,255,255,0.55);
-      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
       font-weight: 600;
-      margin-right: 4px;
     }
     .sort-btn {
-      padding: 8px 12px;
-      border-radius: 8px;
+      padding: 6px 12px;
+      border-radius: 6px;
       border: 1px solid rgba(255,255,255,0.10);
       background: rgba(255,255,255,0.02);
       color: rgba(255,255,255,0.65);
-      font-size: 13px;
-      font-weight: 700;
+      font-size: 12px;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.15s;
     }
@@ -143,93 +136,87 @@
       background: rgba(0,102,255,0.14);
       border-color: rgba(0,102,255,0.45);
       color: #fff;
-      box-shadow: 0 0 18px rgba(0,102,255,0.18);
     }
 
-    /* Section headings */
-    .section-heading {
-      font-size: 20px;
-      font-weight: 800;
-      margin: 28px 0 14px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid rgba(0,102,255,0.4);
-      display: inline-block;
-      letter-spacing: -0.3px;
-    }
-
-    .legend{
+    .legend {
       margin: 8px 0 16px;
-      color: rgba(255,255,255,0.50);
-      font-size: 12px;
-      font-weight: 650;
+      color: rgba(255,255,255,0.5);
+      font-size: 11px;
       display: flex;
-      gap: 14px;
+      gap: 12px;
       flex-wrap: wrap;
       align-items: center;
-      padding: 10px 14px;
-      background: rgba(255,255,255,0.03);
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.06);
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.05);
     }
-    .legend .item{ display:inline-flex; gap: 6px; align-items:center; cursor: help; }
-    .legend .ic{ width: 18px; height: 18px; border-radius: 6px; display:inline-flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10); font-size: 11px; }
-    .legend .ic.fast{ border-color: rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); }
-    .legend .ic.verified{ border-color: rgba(0,102,255,0.25); background: rgba(0,102,255,0.08); }
-    .legend .ic.top{ border-color: rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); }
-    .legend .ic.today{ border-color: rgba(255,100,50,0.25); background: rgba(255,100,50,0.08); }
-    .legend .ic.after{ border-color: rgba(150,100,255,0.25); background: rgba(150,100,255,0.08); }
+    .legend .item { display: inline-flex; gap: 4px; align-items: center; cursor: help; }
+    .legend .ic { width: 16px; height: 16px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); font-size: 10px; }
+    .legend .ic.fast { border-color: rgba(0,200,83,0.2); background: rgba(0,200,83,0.06); }
+    .legend .ic.verified { border-color: rgba(0,102,255,0.2); background: rgba(0,102,255,0.06); }
+    .legend .ic.top { border-color: rgba(255,184,0,0.2); background: rgba(255,184,0,0.06); }
+    .legend .ic.today { border-color: rgba(255,100,50,0.2); background: rgba(255,100,50,0.06); }
+    .legend .ic.after { border-color: rgba(150,100,255,0.2); background: rgba(150,100,255,0.06); }
 
-    /* Leaderboard */
+    .section-heading {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 24px 0 10px;
+      color: #fff;
+      letter-spacing: -0.2px;
+    }
+
     .board {
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
       background: rgba(255,255,255,0.02);
     }
 
     .board-header {
       display: grid;
-      grid-template-columns: 32px 38px minmax(120px, 1.4fr) 70px 70px 52px 56px 36px;
-      gap: 6px;
-      padding: 10px 10px;
+      grid-template-columns: 36px 44px minmax(140px, 1fr) 90px 90px 80px 100px;
+      gap: 8px;
+      padding: 10px 14px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
       background: rgba(255,255,255,0.02);
       color: rgba(255,255,255,0.45);
       font-size: 10px;
-      font-weight: 800;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       align-items: center;
     }
 
     .row {
       display: grid;
-      grid-template-columns: 32px 38px minmax(120px, 1.4fr) 70px 70px 52px 56px 36px;
-      gap: 6px;
-      padding: 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      grid-template-columns: 36px 44px minmax(140px, 1fr) 90px 90px 80px 100px;
+      gap: 8px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
       align-items: center;
       transition: background 0.12s;
     }
     .row:last-child { border-bottom: none; }
     .row:hover { background: rgba(255,255,255,0.02); }
-    .row.top3 { background: rgba(0,102,255,0.06); }
 
     .rank {
       font-weight: 800;
-      font-size: 14px;
-      color: rgba(255,255,255,0.55);
+      font-size: 15px;
+      color: rgba(255,255,255,0.5);
       text-align: center;
+      line-height: 1;
     }
     .rank.top { color: var(--blue); }
 
     .avatar {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.08);
       overflow: hidden;
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.05);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -237,14 +224,11 @@
     }
     .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-    .name-col {
-      min-width: 0;
-      overflow: hidden;
-    }
+    .name-col { min-width: 0; overflow: hidden; }
 
     .name {
-      font-weight: 700;
-      font-size: 13px;
+      font-weight: 600;
+      font-size: 14px;
       color: #fff;
       text-decoration: none;
       display: block;
@@ -255,49 +239,50 @@
     .name:hover { color: var(--blue); }
 
     .area {
-      color: rgba(255,255,255,0.45);
-      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      font-size: 11px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin-top: 1px;
     }
 
     .metric {
-      font-size: 12px;
-      color: rgba(255,255,255,0.70);
-      font-weight: 650;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      font-weight: 600;
       text-align: left;
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
     }
-    .metric.response { color: rgba(0,200,83,0.85); }
+    .metric.response { color: rgba(0,200,83,0.9); }
     .metric.reliability { color: rgba(255,184,0,0.9); }
 
     .price {
-      font-size: 12px;
-      color: rgba(255,255,255,0.75);
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
       font-weight: 700;
       white-space: nowrap;
     }
 
     .badges {
       display: flex;
-      gap: 3px;
+      gap: 4px;
       justify-content: flex-end;
       align-items: center;
     }
 
-    .bicon{
-      width: 18px;
-      height: 18px;
+    .bicon {
+      width: 20px;
+      height: 20px;
       border-radius: 5px;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.05);
-      color: rgba(255,255,255,0.75);
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.7);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
+      font-size: 11px;
       cursor: help;
       position: relative;
     }
@@ -316,177 +301,56 @@
       z-index: 10;
       margin-bottom: 4px;
     }
-    .bicon.fast{ border-color: rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
-    .bicon.verified{ border-color: rgba(0,102,255,0.25); background: rgba(0,102,255,0.08); color: rgba(0,102,255,0.95); }
-    .bicon.top{ border-color: rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
-    .bicon.today{ border-color: rgba(255,100,50,0.25); background: rgba(255,100,50,0.08); color: rgba(255,100,50,0.95); }
-    .bicon.after{ border-color: rgba(150,100,255,0.25); background: rgba(150,100,255,0.08); color: rgba(150,100,255,0.95); }
+    .bicon.fast { border-color: rgba(0,200,83,0.2); background: rgba(0,200,83,0.06); color: rgba(0,200,83,0.9); }
+    .bicon.verified { border-color: var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
+    .bicon.top { border-color: rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.9); }
+    .bicon.today { border-color: rgba(255,100,50,0.2); background: rgba(255,100,50,0.06); color: rgba(255,100,50,0.9); }
+    .bicon.after { border-color: rgba(150,100,255,0.2); background: rgba(150,100,255,0.06); color: rgba(150,100,255,0.9); }
 
     .wa {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      background: var(--whatsapp);
-      border-radius: 6px;
-      color: #fff;
-      font-size: 13px;
-      text-decoration: none;
-      transition: transform 0.15s;
-      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(37,211,102,0.5);
+      background: rgba(37,211,102,0.12);
+      color: #d7ffe7;
+      font-size: 12px;
+      font-weight: 700;
       cursor: pointer;
-      padding: 0;
-    }
-    .wa:hover { transform: scale(1.05); }
-
-    .empty {
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      padding: 24px;
-      color: rgba(255,255,255,0.55);
-      background: rgba(255,255,255,0.02);
-    }
-    .empty a { color: var(--blue); text-decoration: none; font-weight: 700; }
-
-    /* Modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.86);
-      z-index: 1000;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      padding: 18px;
+      gap: 6px;
+      transition: all 0.12s;
+      white-space: nowrap;
     }
-    .modal-overlay.active { display: flex; }
-    .modal {
-      width: 100%;
-      max-width: 420px;
-      background: #12121f;
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 14px;
-      padding: 20px;
-    }
-    .modal h3 {
-      margin: 0 0 12px 0;
-      font-size: 16px;
-      font-weight: 800;
-    }
-    .modal-provider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-    .modal-provider .mini {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.06);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .modal-provider .mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .modal-provider .pname { font-weight: 800; font-size: 14px; }
-    .modal-provider .pmeta { color: rgba(255,255,255,0.55); font-size: 12px; margin-top: 2px; }
-
-    .preview {
-      background: rgba(0,200,83,0.08);
-      border-left: 3px solid rgba(0,200,83,0.9);
-      padding: 12px;
-      border-radius: 0 12px 12px 0;
-      margin-bottom: 12px;
-      color: rgba(255,255,255,0.85);
-      font-size: 14px;
-      line-height: 1.45;
+    .wa:hover {
+      background: rgba(37,211,102,0.2);
+      border-color: rgba(37,211,102,0.7);
     }
 
-    .consent {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      margin: 14px 0 16px;
-      cursor: pointer;
-    }
-    .consent input { margin-top: 2px; width: 16px; height: 16px; }
-    .consent span { color: rgba(255,255,255,0.72); font-size: 13px; line-height: 1.35; }
-
-    .modal-btn {
-      width: 100%;
-      padding: 12px;
-      border-radius: 12px;
-      border: none;
-      background: rgba(0,200,83,0.95);
-      color: #001a08;
-      font-weight: 900;
-      font-size: 14px;
-      cursor: pointer;
-      margin-bottom: 10px;
-    }
-    .modal-cancel {
-      width: 100%;
-      padding: 11px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: transparent;
-      color: rgba(255,255,255,0.6);
-      font-weight: 800;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    /* Responsive */
     @media (max-width: 900px) {
-      header { padding: 16px 20px; }
-      .logo { font-size: 24px; }
-      .content-header { padding: 20px 20px 10px; }
-      .content-header h1 { font-size: 28px; }
-      main { padding: 0 20px 48px; }
+      header { padding: 14px 20px; }
+      .logo { font-size: 22px; }
+      .content-header { padding: 16px 20px 10px; }
+      .content-header h1 { font-size: 24px; }
+      main { padding: 0 20px 32px; }
       .board-header, .row {
-        grid-template-columns: 30px 34px minmax(100px, 1.4fr) 60px 60px 44px 48px 32px;
-        gap: 5px;
+        grid-template-columns: 32px 40px minmax(120px, 1fr) 80px 80px 70px 90px;
+        gap: 6px;
+        padding: 10px 12px;
       }
-      .section-heading { font-size: 18px; }
+      .section-heading { font-size: 15px; }
     }
 
     @media (max-width: 680px) {
       .board-header { display: none; }
       .row {
-        grid-template-columns: 28px 34px 1fr 32px;
-        gap: 6px;
-        padding: 10px;
+        grid-template-columns: 28px 36px 1fr auto;
+        gap: 8px;
+        padding: 10px 12px;
       }
-      .area, .metric, .price, .badges { display: none; }
-      .row .compact {
-        display: block;
-        margin-top: 2px;
-        font-size: 11px;
-        color: rgba(255,255,255,0.52);
-        font-weight: 650;
-      }
-      .wa {
-        width: 28px;
-        height: 28px;
-      }
-      .legend {
-        gap: 10px;
-        font-size: 11px;
-        padding: 8px 10px;
-      }
-      .legend .item span:last-child { display: none; }
+      .metric, .price, .badges { display: none; }
+      .wa { padding: 8px 12px; font-size: 11px; }
     }
-
-    .compact { display: none; }
   </style>
 </head>
 <body>
@@ -496,11 +360,11 @@
   </header>
 
   <div class="content-header">
-    <h1 id="headline">Loading…</h1>
+    <h1>🔧 Handyman in Vancouver</h1>
     <div class="summary-line">
-      <span class="pill"><span class="dot"></span><span id="available">0</span> available</span>
-      <span class="pill">⚡ Avg response <span id="avg">--</span></span>
-      <span class="pill"><span id="count">0</span> TaskLeaders</span>
+      <span class="pill"><span class="dot"></span>12 available</span>
+      <span class="pill">⚡ Avg response ~6 min</span>
+      <span class="pill">13 TaskLeaders</span>
     </div>
   </div>
 
@@ -509,247 +373,110 @@
 
     <div class="sort-bar">
       <span class="sort-label">Rank by</span>
-      <button class="sort-btn active" onclick="setSort('response_time', this)">⚡ Response</button>
-      <button class="sort-btn" onclick="setSort('reliability', this)">✓ Reliability</button>
-      <button class="sort-btn" onclick="setSort('price', this)">$ Price</button>
+      <button class="sort-btn active" onclick="setSort('response')">⚡ Response</button>
+      <button class="sort-btn" onclick="setSort('reliability')">✓ Reliability</button>
+      <button class="sort-btn" onclick="setSort('price')">$ Price</button>
     </div>
 
-    <div class="legend" aria-label="Legend">
-      <span class="item" title="Responds in under 5 minutes"><span class="ic fast">⚡</span> <span>Fast</span></span>
-      <span class="item" title="Identity & background verified"><span class="ic verified">✓</span> <span>Verified</span></span>
-      <span class="item" title="Top 10% performance score"><span class="ic top">🏆</span> <span>Top</span></span>
-      <span class="item" title="Available for bookings today"><span class="ic today">☀</span> <span>Today</span></span>
-      <span class="item" title="Available evenings & weekends"><span class="ic after">🌙</span> <span>After Hours</span></span>
+    <div class="legend">
+      <span class="item" title="Responds in under 5 minutes"><span class="ic fast">⚡</span> Fast</span>
+      <span class="item" title="Identity & background verified"><span class="ic verified">✓</span> Verified</span>
+      <span class="item" title="Top 10% performance score"><span class="ic top">🏆</span> Top</span>
+      <span class="item" title="Available for bookings today"><span class="ic today">☀</span> Today</span>
+      <span class="item" title="Available evenings & weekends"><span class="ic after">🌙</span> After Hours</span>
     </div>
 
-    <!-- Top 3 Section -->
     <div class="section-heading" id="top3Heading">Top 3 by Response</div>
-    <div class="board" id="top3">
-      <div class="board-header">
-        <div>#</div><div></div><div>TaskLeader</div><div>Response</div><div>Reliab.</div><div>Price</div><div></div><div></div>
-      </div>
-      <div id="top3Rows"></div>
-    </div>
+    <div class="board" id="top3"></div>
 
-    <!-- More TaskLeaders Section -->
     <div class="section-heading">More TaskLeaders</div>
-    <div class="board" id="board">
-      <div class="board-header">
-        <div>#</div><div></div><div>TaskLeader</div><div>Response</div><div>Reliab.</div><div>Price</div><div></div><div></div>
-      </div>
-      <div id="rows"></div>
-    </div>
-
-    <div class="empty" id="empty" style="display:none; margin-top: 14px;">
-      No TaskLeaders in this category yet. <a href="become-task-leader.html">Become the first</a>.
-    </div>
+    <div class="board" id="board"></div>
   </main>
 
-  <!-- WhatsApp modal / interstitial -->
-  <div class="modal-overlay" id="waModal">
-    <div class="modal" role="dialog" aria-modal="true">
-      <h3>Continue to WhatsApp</h3>
-      <div class="modal-provider">
-        <div class="mini" id="mImg">👤</div>
-        <div>
-          <div class="pname" id="mName"></div>
-          <div class="pmeta" id="mMeta"></div>
-        </div>
-      </div>
-      <div class="preview">"Hi! I found you on TaskLeaders and need help with <span id="mCat"></span>."</div>
-      <label class="consent">
-        <input type="checkbox" id="mConsent" />
-        <span>I agree to receive follow-up messages from TaskLeaders related to this inquiry.</span>
-      </label>
-      <button class="modal-btn" onclick="goWhatsApp()">Continue to WhatsApp</button>
-      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
-    </div>
-  </div>
-
-  <script src="js/db.js"></script>
   <script>
-    const params = new URLSearchParams(location.search);
-    const categoryId = params.get('category') || 'handyman';
-    const category = (TaskLeadersDB.categories.find(c => c.id === categoryId) || { id: categoryId, name: categoryId, icon: '🔧' });
+    // Demo data embedded directly
+    const demoProviders = [
+      { id: 1, name: "East Van Handyman", area: "East Van", response: 2, reliability: 98, price: 55, verified: true, top: true, today: true },
+      { id: 2, name: "Burnaby Repairs", area: "Burnaby", response: 4, reliability: 95, price: 48, verified: true, top: false, today: false },
+      { id: 3, name: "Richmond Fixers", area: "Richmond", response: 6, reliability: 92, price: 45, verified: true, top: false, today: true },
+      { id: 4, name: "New West Pros", area: "New West", response: 8, reliability: 89, price: 42, verified: false, top: false, today: false },
+      { id: 5, name: "Coquitlam Helpers", area: "Coquitlam", response: 12, reliability: 94, price: 50, verified: true, top: false, today: false, after: true },
+      { id: 6, name: "Surrey Solutions", area: "Surrey", response: 15, reliability: 87, price: 40, verified: false, top: false, today: true },
+      { id: 7, name: "Tri-Cities Elite", area: "Tri-Cities", response: 18, reliability: 96, price: 65, verified: true, top: true, today: false, after: true },
+      { id: 8, name: "North Van Experts", area: "North Van", response: 22, reliability: 85, price: 52, verified: false, top: false, today: false },
+      { id: 9, name: "Downtown QuickFix", area: "Downtown", response: 25, reliability: 91, price: 58, verified: true, top: false, today: true },
+      { id: 10, name: "Kits Repair Co", area: "Kits", response: 28, reliability: 88, price: 46, verified: false, top: false, today: false },
+      { id: 11, name: "Mt Pleasant Pros", area: "Mt Pleasant", response: 32, reliability: 93, price: 54, verified: true, top: false, today: false, after: true },
+      { id: 12, name: "West End Handyman", area: "West End", response: 38, reliability: 86, price: 44, verified: false, top: false, today: true },
+      { id: 13, name: "Vancouver All-Star", area: "Downtown", response: 42, reliability: 90, price: 60, verified: true, top: true, today: false }
+    ];
 
-    function ensureDemoProviders(minCount = 13) {
-      const existing = TaskLeadersDB.getProvidersByCategory(categoryId);
-      if (existing.length >= minCount) return;
+    let sortBy = 'response';
 
-      const demoAreas = ['East Van', 'Burnaby', 'Richmond', 'New West', 'Coquitlam', 'Surrey', 'Tri-Cities', 'North Van', 'Downtown', 'Kits', 'Mt Pleasant', 'West End'];
-
-      const base = Math.max(0, existing.length);
-      const needed = minCount - base;
-
-      for (let i = 0; i < needed; i++) {
-        const area = demoAreas[(base + i) % demoAreas.length];
-        const id = TaskLeadersDB.generateId();
-        TaskLeadersDB.providers.push({
-          provider_id: id,
-          business_name: `${area} ${category.name}`,
-          contact_name: `${area} Lead`,
-          whatsapp_number: `1604555${String(1000 + base + i).slice(-4)}`,
-          category: categoryId,
-          service_area: area,
-          hourly_rate: 40 + ((base + i) % 8) * 5,
-          description: `Reliable ${category.name.toLowerCase()} services across ${area}.`,
-          response_time_minutes: 2 + ((base + i) % 10),
-          reliability_score: 4.2 + (((base + i) % 8) * 0.1),
-          response_rate: 86 + ((base + i) % 12),
-          founding_provider_status: (base + i) < 3,
-          approved: true,
-          available_today: (base + i) % 3 === 0,
-          after_hours: (base + i) % 4 === 0,
-          created_at: new Date(Date.now() - (base + i) * 3600_000).toISOString()
-        });
-      }
-      TaskLeadersDB.saveToStorage();
+    function formatResp(min) {
+      return `~${min} min`;
     }
 
-    function formatResponse(minutes) {
-      if (minutes <= 1) return '~1m';
-      return `~${minutes}m`;
+    function sortProviders() {
+      const sorted = [...demoProviders];
+      if (sortBy === 'response') sorted.sort((a, b) => a.response - b.response);
+      else if (sortBy === 'reliability') sorted.sort((a, b) => b.reliability - a.reliability);
+      else if (sortBy === 'price') sorted.sort((a, b) => a.price - b.price);
+      return sorted;
     }
 
-    function reliabilityPct(score0to5) {
-      // Reliability is displayed as a platform metric (percent)
-      if (!score0to5 || score0to5 <= 0) return 0;
-      return Math.round(score0to5 * 20);
-    }
-
-    let sortBy = 'response_time';
-    let selectedProvider = null;
-
-    function areaLabel(area) {
-      // Primary area only - short names
-      const s = (area || '').split(',')[0].trim();
-      if (!s) return 'Vancouver';
-      return s.length > 12 ? s.slice(0, 12) : s;
-    }
-
-    function sortModeLabel() {
-      if (sortBy === 'price') return 'Price';
-      if (sortBy === 'reliability') return 'Reliability';
-      return 'Response';
-    }
-
-    function render() {
-      ensureDemoProviders(13);
-
-      const providers = TaskLeadersDB.getProvidersByCategory(categoryId);
-      const stats = TaskLeadersDB.getCategoryStats(categoryId);
-
-      // Header
-      document.getElementById('page-title').textContent = `${category.name} — TaskLeaders`;
-      document.getElementById('headline').textContent = `${category.name} in Vancouver`;
-      document.getElementById('available').textContent = stats.available_now;
-      document.getElementById('avg').textContent = stats.avg_response_time ? `~${stats.avg_response_time} min` : '--';
-      document.getElementById('count').textContent = providers.length;
-
-      // Section heading
-      document.getElementById('top3Heading').textContent = `Top 3 by ${sortModeLabel()}`;
-
-      if (!providers.length) {
-        document.getElementById('top3').style.display = 'none';
-        document.getElementById('board').style.display = 'none';
-        document.getElementById('empty').style.display = 'block';
-        return;
-      }
-
-      // Sorted list for active ranking
-      const sorted = TaskLeadersDB.sortProviders(providers, sortBy);
-
-      // Top 3 (first 3 results in active ranking)
-      const top3 = sorted.slice(0, 3);
-      document.getElementById('top3Rows').innerHTML = top3.map((p, idx) => rowHtml(p, idx + 1)).join('');
-
-      // Continue ranking numbers
-      const rest = sorted.slice(3, 13);
-      document.getElementById('rows').innerHTML = rest.map((p, idx) => rowHtml(p, idx + 4)).join('');
-    }
-
-    function rowHtml(p, rank) {
-      const resp = formatResponse(p.response_time_minutes);
-      const rel = reliabilityPct(p.reliability_score);
-      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.business_name)}&backgroundColor=0b1020&textColor=ffffff`;
-      const area = areaLabel(p.service_area);
-      const compact = `⚡ ${resp} • ${rel}% • $${p.hourly_rate}/hr`;
-
-      // Badge icons (max 3)
+    function renderBadges(p) {
       const badges = [];
-      if (p.response_time_minutes <= 5) badges.push('<span class="bicon fast" data-tooltip="Fast Responder">⚡</span>');
-      if (p.founding_provider_status) badges.push('<span class="bicon verified" data-tooltip="Verified">✓</span>');
-      if (p.reliability_score >= 4.8) badges.push('<span class="bicon top" data-tooltip="Top Performer">🏆</span>');
-      if (p.available_today) badges.push('<span class="bicon today" data-tooltip="Available Today">☀</span>');
-      if (p.after_hours) badges.push('<span class="bicon after" data-tooltip="After Hours">🌙</span>');
+      if (p.response <= 5) badges.push('<span class="bicon fast" data-tooltip="Fast Responder">⚡</span>');
+      if (p.verified) badges.push('<span class="bicon verified" data-tooltip="Verified">✓</span>');
+      if (p.top) badges.push('<span class="bicon top" data-tooltip="Top Performer">🏆</span>');
+      if (p.today) badges.push('<span class="bicon today" data-tooltip="Available Today">☀</span>');
+      if (p.after) badges.push('<span class="bicon after" data-tooltip="After Hours">🌙</span>');
+      return badges.slice(0, 3).join('');
+    }
 
-      const badgeHtml = badges.slice(0, 3).join('');
-
+    function renderRow(p, rank) {
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=0b1020&textColor=ffffff`;
       return `
         <div class="row">
           <div class="rank ${rank <= 3 ? 'top' : ''}">${rank}</div>
-          <a class="avatar" href="profile.html?id=${encodeURIComponent(p.provider_id)}" aria-label="View profile">
-            <img alt="${escapeHtml(p.business_name)}" src="${avatarUrl}" />
-          </a>
+          <div class="avatar"><img src="${avatarUrl}" alt=""></div>
           <div class="name-col">
-            <a class="name" href="profile.html?id=${encodeURIComponent(p.provider_id)}">${escapeHtml(p.business_name)}</a>
-            <div class="area">${escapeHtml(area)}</div>
-            <div class="compact">${compact}</div>
+            <a class="name" href="#">${p.name}</a>
+            <div class="area">${p.area}</div>
           </div>
-          <div class="metric response">${resp}</div>
-          <div class="metric reliability">${rel}%</div>
-          <div class="price">$${p.hourly_rate}</div>
-          <div class="badges">${badgeHtml}</div>
-          <button class="wa" onclick="openModal('${p.provider_id}')" title="Contact on WhatsApp">💬</button>
+          <div class="metric response">${formatResp(p.response)}</div>
+          <div class="metric reliability">${p.reliability}%</div>
+          <div class="price">$${p.price}/hr</div>
+          <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;">
+            <div class="badges">${renderBadges(p)}</div>
+            <button class="wa">WhatsApp</button>
+          </div>
         </div>
       `;
     }
 
-    function setSort(next, el) {
-      sortBy = next;
-      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-      el.classList.add('active');
+    function render() {
+      const sorted = sortProviders();
+      
+      // Update heading
+      document.getElementById('top3Heading').textContent = `Top 3 by ${sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}`;
+      
+      // Top 3
+      const top3 = sorted.slice(0, 3);
+      document.getElementById('top3').innerHTML = top3.map((p, i) => renderRow(p, i + 1)).join('');
+      
+      // Rest
+      const rest = sorted.slice(3);
+      document.getElementById('board').innerHTML = rest.map((p, i) => renderRow(p, i + 4)).join('');
+    }
+
+    function setSort(mode) {
+      sortBy = mode;
+      document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
       render();
     }
-
-    function openModal(providerId) {
-      const p = TaskLeadersDB.getProviderById(providerId);
-      if (!p) return;
-      selectedProvider = p;
-      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.business_name)}&backgroundColor=0b1020&textColor=ffffff`;
-      document.getElementById('mImg').innerHTML = `<img alt="" src="${avatarUrl}" />`;
-      document.getElementById('mName').textContent = p.business_name;
-      document.getElementById('mMeta').textContent = `${areaLabel(p.service_area)} • $${p.hourly_rate}/hr`;
-      document.getElementById('mCat').textContent = category.name;
-      document.getElementById('mConsent').checked = false;
-      document.getElementById('waModal').classList.add('active');
-    }
-
-    function closeModal() {
-      document.getElementById('waModal').classList.remove('active');
-      selectedProvider = null;
-    }
-
-    function goWhatsApp() {
-      if (!selectedProvider) return;
-      const consent = document.getElementById('mConsent').checked;
-      console.log('Inquiry', { provider_id: selectedProvider.provider_id, category: categoryId, consent, ts: new Date().toISOString() });
-
-      const message = encodeURIComponent(`Hi! I found you on TaskLeaders and need help with ${category.name}.`);
-      const url = `https://wa.me/${selectedProvider.whatsapp_number}?text=${message}`;
-      closeModal();
-      window.open(url, '_blank');
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text || '';
-      return div.innerHTML;
-    }
-
-    document.getElementById('waModal').addEventListener('click', (e) => {
-      if (e.target.id === 'waModal') closeModal();
-    });
 
     render();
   </script>
