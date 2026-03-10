@@ -14,6 +14,7 @@
       --border: rgba(255,255,255,0.08);
       --muted: rgba(255,255,255,0.55);
       --muted2: rgba(255,255,255,0.4);
+      --whatsapp: #25D366;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -145,30 +146,19 @@
       box-shadow: 0 0 18px rgba(0,102,255,0.18);
     }
 
-    /* Sections */
-    .section-title {
-      font-size: 12px;
+    /* Section headings */
+    .section-heading {
+      font-size: 20px;
       font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1.6px;
-      color: rgba(255,255,255,0.5);
-      margin: 18px 0 10px;
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .section-title .mode {
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: 1.6px;
-      color: rgba(255,255,255,0.65);
-      text-transform: uppercase;
-      white-space: nowrap;
+      margin: 28px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid rgba(0,102,255,0.4);
+      display: inline-block;
+      letter-spacing: -0.3px;
     }
 
     .legend{
-      margin: 8px 0 2px;
+      margin: 8px 0 16px;
       color: rgba(255,255,255,0.50);
       font-size: 12px;
       font-weight: 650;
@@ -176,39 +166,47 @@
       gap: 14px;
       flex-wrap: wrap;
       align-items: center;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.06);
     }
-    .legend .item{ display:inline-flex; gap: 6px; align-items:center; }
-    .legend .ic{ width: 18px; height: 18px; border-radius: 7px; display:inline-flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); }
-    .legend .ic.fast{ border-color: rgba(0,200,83,0.18); background: rgba(0,200,83,0.06); color: rgba(0,200,83,0.95);}
+    .legend .item{ display:inline-flex; gap: 6px; align-items:center; cursor: help; }
+    .legend .ic{ width: 18px; height: 18px; border-radius: 6px; display:inline-flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10); font-size: 11px; }
+    .legend .ic.fast{ border-color: rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); }
+    .legend .ic.verified{ border-color: rgba(0,102,255,0.25); background: rgba(0,102,255,0.08); }
+    .legend .ic.top{ border-color: rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); }
+    .legend .ic.today{ border-color: rgba(255,100,50,0.25); background: rgba(255,100,50,0.08); }
+    .legend .ic.after{ border-color: rgba(150,100,255,0.25); background: rgba(150,100,255,0.08); }
 
     /* Leaderboard */
     .board {
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 12px;
       overflow: hidden;
       background: rgba(255,255,255,0.02);
     }
 
     .board-header {
       display: grid;
-      grid-template-columns: 36px 42px 1.55fr 1fr 92px 96px 84px 132px;
-      gap: 10px;
-      padding: 10px 14px;
+      grid-template-columns: 32px 38px minmax(120px, 1.4fr) 70px 70px 52px 56px 36px;
+      gap: 6px;
+      padding: 10px 10px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
       background: rgba(255,255,255,0.02);
       color: rgba(255,255,255,0.45);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 1.2px;
+      letter-spacing: 1px;
       align-items: center;
     }
 
     .row {
       display: grid;
-      grid-template-columns: 36px 42px 1.55fr 1fr 92px 96px 84px 132px;
-      gap: 10px;
-      padding: 10px 14px;
+      grid-template-columns: 32px 38px minmax(120px, 1.4fr) 70px 70px 52px 56px 36px;
+      gap: 6px;
+      padding: 10px;
       border-bottom: 1px solid rgba(255,255,255,0.05);
       align-items: center;
       transition: background 0.12s;
@@ -226,9 +224,9 @@
     .rank.top { color: var(--blue); }
 
     .avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.10);
       overflow: hidden;
       background: rgba(255,255,255,0.06);
@@ -239,96 +237,108 @@
     }
     .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+    .name-col {
+      min-width: 0;
+      overflow: hidden;
+    }
+
     .name {
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13px;
       color: #fff;
       text-decoration: none;
-      display: inline-block;
+      display: block;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 100%;
     }
     .name:hover { color: var(--blue); }
 
     .area {
       color: rgba(255,255,255,0.45);
-      font-size: 13px;
+      font-size: 10px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .metric {
-      font-size: 13px;
+      font-size: 12px;
       color: rgba(255,255,255,0.70);
       font-weight: 650;
       text-align: left;
       white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
     .metric.response { color: rgba(0,200,83,0.85); }
     .metric.reliability { color: rgba(255,184,0,0.9); }
 
     .price {
-      font-size: 13px;
+      font-size: 12px;
       color: rgba(255,255,255,0.75);
       font-weight: 700;
       white-space: nowrap;
     }
 
-    .cta{
-      justify-self: end;
-      display: inline-flex;
+    .badges {
+      display: flex;
+      gap: 3px;
+      justify-content: flex-end;
       align-items: center;
-      gap: 10px;
     }
-    .bicons{
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
+
     .bicon{
-      width: 22px;
-      height: 22px;
-      border-radius: 8px;
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
       border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.03);
+      background: rgba(255,255,255,0.05);
       color: rgba(255,255,255,0.75);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
-      font-weight: 900;
-      line-height: 1;
-      cursor: default;
+      font-size: 10px;
+      cursor: help;
+      position: relative;
     }
-    .bicon.fast{
-      border-color: rgba(0,200,83,0.22);
-      background: rgba(0,200,83,0.08);
-      color: rgba(0,200,83,0.95);
+    .bicon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.9);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      white-space: nowrap;
+      z-index: 10;
+      margin-bottom: 4px;
     }
+    .bicon.fast{ border-color: rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
+    .bicon.verified{ border-color: rgba(0,102,255,0.25); background: rgba(0,102,255,0.08); color: rgba(0,102,255,0.95); }
+    .bicon.top{ border-color: rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
+    .bicon.today{ border-color: rgba(255,100,50,0.25); background: rgba(255,100,50,0.08); color: rgba(255,100,50,0.95); }
+    .bicon.after{ border-color: rgba(150,100,255,0.25); background: rgba(150,100,255,0.08); color: rgba(150,100,255,0.95); }
 
     .wa {
-      padding: 9px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(0,200,83,0.45);
-      background: rgba(0,200,83,0.14);
-      color: #d7ffe7;
-      font-size: 12px;
-      font-weight: 900;
-      cursor: pointer;
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 6px;
-      transition: all 0.12s;
-      white-space: nowrap;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--whatsapp);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      text-decoration: none;
+      transition: transform 0.15s;
+      border: none;
+      cursor: pointer;
+      padding: 0;
     }
-    .wa:hover {
-      background: rgba(0,200,83,0.22);
-      border-color: rgba(0,200,83,0.7);
-      transform: translateY(-1px);
-    }
+    .wa:hover { transform: scale(1.05); }
 
     .empty {
       border: 1px solid rgba(255,255,255,0.08);
@@ -443,33 +453,37 @@
       .content-header h1 { font-size: 28px; }
       main { padding: 0 20px 48px; }
       .board-header, .row {
-        grid-template-columns: 34px 44px 1.4fr 1fr 92px 90px 70px 108px;
-        gap: 10px;
+        grid-template-columns: 30px 34px minmax(100px, 1.4fr) 60px 60px 44px 48px 32px;
+        gap: 5px;
       }
+      .section-heading { font-size: 18px; }
     }
 
     @media (max-width: 680px) {
       .board-header { display: none; }
       .row {
-        grid-template-columns: 30px 44px 1fr auto;
-        gap: 10px;
-        padding: 12px 12px;
+        grid-template-columns: 28px 34px 1fr 32px;
+        gap: 6px;
+        padding: 10px;
       }
-      .area, .metric, .price { display: none; }
+      .area, .metric, .price, .badges { display: none; }
       .row .compact {
         display: block;
-        margin-top: 3px;
-        font-size: 12px;
+        margin-top: 2px;
+        font-size: 11px;
         color: rgba(255,255,255,0.52);
         font-weight: 650;
       }
       .wa {
-        padding: 10px 10px;
-        border-radius: 12px;
-        min-width: 48px;
-        min-height: 44px;
+        width: 28px;
+        height: 28px;
       }
-      .wa span { display: none; }
+      .legend {
+        gap: 10px;
+        font-size: 11px;
+        padding: 8px 10px;
+      }
+      .legend .item span:last-child { display: none; }
     }
 
     .compact { display: none; }
@@ -495,30 +509,33 @@
 
     <div class="sort-bar">
       <span class="sort-label">Rank by</span>
-      <button class="sort-btn active" onclick="setSort('response_time', this)">Response</button>
-      <button class="sort-btn" onclick="setSort('reliability', this)">Reliability</button>
-      <button class="sort-btn" onclick="setSort('price', this)">Price</button>
+      <button class="sort-btn active" onclick="setSort('response_time', this)">⚡ Response</button>
+      <button class="sort-btn" onclick="setSort('reliability', this)">✓ Reliability</button>
+      <button class="sort-btn" onclick="setSort('price', this)">$ Price</button>
     </div>
 
     <div class="legend" aria-label="Legend">
-      <span class="item"><span class="ic fast">⚡</span> Fast Responder</span>
+      <span class="item" title="Responds in under 5 minutes"><span class="ic fast">⚡</span> <span>Fast</span></span>
+      <span class="item" title="Identity & background verified"><span class="ic verified">✓</span> <span>Verified</span></span>
+      <span class="item" title="Top 10% performance score"><span class="ic top">🏆</span> <span>Top</span></span>
+      <span class="item" title="Available for bookings today"><span class="ic today">☀</span> <span>Today</span></span>
+      <span class="item" title="Available evenings & weekends"><span class="ic after">🌙</span> <span>After Hours</span></span>
     </div>
 
-    <div class="section-title">
-      <span id="top3Label">Top 3</span>
-      <span class="mode" id="modeLabel">By Response</span>
-    </div>
+    <!-- Top 3 Section -->
+    <div class="section-heading" id="top3Heading">Top 3 by Response</div>
     <div class="board" id="top3">
       <div class="board-header">
-        <div>#</div><div></div><div>TaskLeader</div><div>Area</div><div>Response</div><div>Reliability</div><div>Price</div><div></div>
+        <div>#</div><div></div><div>TaskLeader</div><div>Response</div><div>Reliab.</div><div>Price</div><div></div><div></div>
       </div>
       <div id="top3Rows"></div>
     </div>
 
-    <div class="section-title"><span>Leaderboard</span><span class="mode">Ranks 4+</span></div>
+    <!-- More TaskLeaders Section -->
+    <div class="section-heading">More TaskLeaders</div>
     <div class="board" id="board">
       <div class="board-header">
-        <div>#</div><div></div><div>TaskLeader</div><div>Area</div><div>Response</div><div>Reliability</div><div>Price</div><div></div>
+        <div>#</div><div></div><div>TaskLeader</div><div>Response</div><div>Reliab.</div><div>Price</div><div></div><div></div>
       </div>
       <div id="rows"></div>
     </div>
@@ -555,35 +572,34 @@
     const categoryId = params.get('category') || 'handyman';
     const category = (TaskLeadersDB.categories.find(c => c.id === categoryId) || { id: categoryId, name: categoryId, icon: '🔧' });
 
-    // Make sure we have enough demo data to judge density (Top 3 + 10+)
     function ensureDemoProviders(minCount = 13) {
       const existing = TaskLeadersDB.getProvidersByCategory(categoryId);
       if (existing.length >= minCount) return;
 
-      const demoNames = [
-        'North Shore', 'Downtown', 'East Van', 'Burnaby', 'Richmond', 'Kits', 'Mount Pleasant', 'Commercial', 'West End', 'Marpole', 'Coquitlam', 'New West', 'Surrey'
-      ];
+      const demoAreas = ['East Van', 'Burnaby', 'Richmond', 'New West', 'Coquitlam', 'Surrey', 'Tri-Cities', 'North Van', 'Downtown', 'Kits', 'Mt Pleasant', 'West End'];
 
       const base = Math.max(0, existing.length);
       const needed = minCount - base;
 
       for (let i = 0; i < needed; i++) {
-        const n = demoNames[(base + i) % demoNames.length];
+        const area = demoAreas[(base + i) % demoAreas.length];
         const id = TaskLeadersDB.generateId();
         TaskLeadersDB.providers.push({
           provider_id: id,
-          business_name: `${n} ${category.name}`,
-          contact_name: `${n} Lead`,
+          business_name: `${area} ${category.name}`,
+          contact_name: `${area} Lead`,
           whatsapp_number: `1604555${String(1000 + base + i).slice(-4)}`,
           category: categoryId,
-          service_area: `${n}, Vancouver`,
+          service_area: area,
           hourly_rate: 40 + ((base + i) % 8) * 5,
-          description: `Reliable ${category.name.toLowerCase()} services across ${n}.`,
+          description: `Reliable ${category.name.toLowerCase()} services across ${area}.`,
           response_time_minutes: 2 + ((base + i) % 10),
           reliability_score: 4.2 + (((base + i) % 8) * 0.1),
           response_rate: 86 + ((base + i) % 12),
           founding_provider_status: (base + i) < 3,
           approved: true,
+          available_today: (base + i) % 3 === 0,
+          after_hours: (base + i) % 4 === 0,
           created_at: new Date(Date.now() - (base + i) * 3600_000).toISOString()
         });
       }
@@ -591,8 +607,8 @@
     }
 
     function formatResponse(minutes) {
-      if (minutes <= 1) return '~1 min';
-      return `~${minutes} min`;
+      if (minutes <= 1) return '~1m';
+      return `~${minutes}m`;
     }
 
     function reliabilityPct(score0to5) {
@@ -605,16 +621,16 @@
     let selectedProvider = null;
 
     function areaLabel(area) {
+      // Primary area only - short names
       const s = (area || '').split(',')[0].trim();
       if (!s) return 'Vancouver';
-      // keep MVP clean/short
-      return s.length > 16 ? (s.slice(0, 16) + '…') : s;
+      return s.length > 12 ? s.slice(0, 12) : s;
     }
 
     function sortModeLabel() {
-      if (sortBy === 'price') return 'By Price';
-      if (sortBy === 'reliability') return 'By Reliability';
-      return 'By Response';
+      if (sortBy === 'price') return 'Price';
+      if (sortBy === 'reliability') return 'Reliability';
+      return 'Response';
     }
 
     function render() {
@@ -630,8 +646,8 @@
       document.getElementById('avg').textContent = stats.avg_response_time ? `~${stats.avg_response_time} min` : '--';
       document.getElementById('count').textContent = providers.length;
 
-      // Mode label
-      document.getElementById('modeLabel').textContent = sortModeLabel();
+      // Section heading
+      document.getElementById('top3Heading').textContent = `Top 3 by ${sortModeLabel()}`;
 
       if (!providers.length) {
         document.getElementById('top3').style.display = 'none';
@@ -645,47 +661,46 @@
 
       // Top 3 (first 3 results in active ranking)
       const top3 = sorted.slice(0, 3);
-      document.getElementById('top3Rows').innerHTML = top3.map((p, idx) => rowHtml(p, idx + 1, true)).join('');
+      document.getElementById('top3Rows').innerHTML = top3.map((p, idx) => rowHtml(p, idx + 1)).join('');
 
       // Continue ranking numbers
-      const rest = sorted.slice(3, 13); // at least 10 rows
-      document.getElementById('rows').innerHTML = rest.map((p, idx) => rowHtml(p, idx + 4, false)).join('');
+      const rest = sorted.slice(3, 13);
+      document.getElementById('rows').innerHTML = rest.map((p, idx) => rowHtml(p, idx + 4)).join('');
     }
 
-    function rowHtml(p, rank, isTop) {
+    function rowHtml(p, rank) {
       const resp = formatResponse(p.response_time_minutes);
       const rel = reliabilityPct(p.reliability_score);
-
-      // Use dicebear for simple credible avatar
       const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.business_name)}&backgroundColor=0b1020&textColor=ffffff`;
-
-      // Standardize MVP area label (short)
       const area = areaLabel(p.service_area);
-
-      // Mobile compact metrics line
       const compact = `⚡ ${resp} • ${rel}% • $${p.hourly_rate}/hr`;
 
-      // Badge icons (max 2–3)
-      const bicons = [];
-      if (p.response_time_minutes <= 5) bicons.push('<span class="bicon fast" title="Fast Responder" aria-label="Fast Responder">⚡</span>');
+      // Badge icons (max 3)
+      const badges = [];
+      if (p.response_time_minutes <= 5) badges.push('<span class="bicon fast" data-tooltip="Fast Responder">⚡</span>');
+      if (p.founding_provider_status) badges.push('<span class="bicon verified" data-tooltip="Verified">✓</span>');
+      if (p.reliability_score >= 4.8) badges.push('<span class="bicon top" data-tooltip="Top Performer">🏆</span>');
+      if (p.available_today) badges.push('<span class="bicon today" data-tooltip="Available Today">☀</span>');
+      if (p.after_hours) badges.push('<span class="bicon after" data-tooltip="After Hours">🌙</span>');
+
+      const badgeHtml = badges.slice(0, 3).join('');
 
       return `
-        <div class="row ${isTop ? 'top3' : ''}">
+        <div class="row">
           <div class="rank ${rank <= 3 ? 'top' : ''}">${rank}</div>
           <a class="avatar" href="profile.html?id=${encodeURIComponent(p.provider_id)}" aria-label="View profile">
             <img alt="${escapeHtml(p.business_name)}" src="${avatarUrl}" />
           </a>
-          <div>
+          <div class="name-col">
             <a class="name" href="profile.html?id=${encodeURIComponent(p.provider_id)}">${escapeHtml(p.business_name)}</a>
+            <div class="area">${escapeHtml(area)}</div>
             <div class="compact">${compact}</div>
           </div>
-          <div class="area">${escapeHtml(area)}</div>
           <div class="metric response">${resp}</div>
           <div class="metric reliability">${rel}%</div>
-          <div class="price">$${p.hourly_rate}/hr</div>
-          <div class="cta"><span class="bicons">${bicons.join('')}</span>
-            <button class="wa" onclick="openModal('${p.provider_id}')">💬 <span>WhatsApp</span></button>
-          </div>
+          <div class="price">$${p.hourly_rate}</div>
+          <div class="badges">${badgeHtml}</div>
+          <button class="wa" onclick="openModal('${p.provider_id}')" title="Contact on WhatsApp">💬</button>
         </div>
       `;
     }
