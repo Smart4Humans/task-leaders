@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaskLeaders MVP — Detailed Flow Map</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --green: #00c853;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.12);
+      --muted: rgba(255,255,255,0.55);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    h1 .task { color: var(--blue); }
+    .subtitle {
+      color: var(--muted);
+      font-size: 16px;
+      margin-bottom: 48px;
+    }
+    
+    .flow-grid {
+      display: grid;
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+    
+    .flow-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .flow-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .flow-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .customer .flow-icon { background: rgba(0,102,255,0.15); }
+    .prospect .flow-icon { background: rgba(0,200,83,0.15); }
+    .returning .flow-icon { background: rgba(255,193,7,0.15); }
+    .flow-card-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .flow-card-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    
+    .flow-steps {
+      padding: 24px;
+    }
+    .step {
+      display: flex;
+      gap: 16px;
+      position: relative;
+    }
+    .step:not(:last-child) {
+      padding-bottom: 24px;
+    }
+    .step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: 19px;
+      top: 44px;
+      width: 2px;
+      height: calc(100% - 44px);
+      background: var(--border);
+    }
+    .step-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+    .customer .step-number { background: rgba(0,102,255,0.2); color: var(--blue); }
+    .prospect .step-number { background: rgba(0,200,83,0.2); color: var(--green); }
+    .returning .step-number { background: rgba(255,193,7,0.2); color: #ffc107; }
+    .step-content {
+      flex: 1;
+      padding-top: 8px;
+    }
+    .step-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .step-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .step-tag {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .tag-public { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+    .tag-action { background: var(--blue); color: #fff; }
+    .tag-whatsapp { background: #25d366; color: #000; }
+    .tag-process { background: rgba(255,255,255,0.06); color: var(--muted); border: 1px dashed var(--border); }
+    .tag-setup { background: rgba(0,200,83,0.15); color: var(--green); }
+    
+    .page-matrix {
+      margin-top: 48px;
+      padding: 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .matrix-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th {
+      text-align: left;
+      padding: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 16px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    .page-name {
+      font-weight: 600;
+      color: #fff;
+    }
+    .page-role {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .audience-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .audience-customer { background: rgba(0,102,255,0.15); color: var(--blue); }
+    .audience-prospect { background: rgba(0,200,83,0.15); color: var(--green); }
+    .audience-returning { background: rgba(255,193,7,0.15); color: #ffc107; }
+    .audience-all { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+    
+    @media (max-width: 768px) {
+      table {
+        font-size: 13px;
+      }
+      th, td {
+        padding: 10px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span class="task">Task</span>Leaders Detailed Flow Map</h1>
+    <p class="subtitle">Complete user journeys with step-by-step breakdown</p>
+    
+    <div class="flow-grid">
+      <!-- Customer Flow -->
+      <div class="flow-card customer">
+        <div class="flow-card-header">
+          <div class="flow-icon">👤</div>
+          <div>
+            <div class="flow-card-title">Customer Journey</div>
+            <div class="flow-card-subtitle">Discover → Compare → Connect</div>
+          </div>
+        </div>
+        <div class="flow-steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">Homepage</div>
+              <div class="step-desc">Entry point. Choose service category or search. Links to Become a TaskLeader for providers.</div>
+              <span class="step-tag tag-public">Public Page</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">Category Page</div>
+              <div class="step-desc">Ranked list of TaskLeaders for selected service. Shows Response Time, Reliability, Price signals.</div>
+              <span class="step-tag tag-public">Public Page</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">TaskLeader Public Profile</div>
+              <div class="step-desc">Full profile with photo, services, pricing, trust signals, reviews. Primary conversion page.</div>
+              <span class="step-tag tag-public">Public Page</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <div class="step-title">Connect</div>
+              <div class="step-desc">Primary CTA. Initiates direct contact flow.</div>
+              <span class="step-tag tag-action">Action</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+              <div class="step-title">WhatsApp</div>
+              <div class="step-desc">Direct chat with TaskLeader. No platform intermediation.</div>
+              <span class="step-tag tag-whatsapp">External</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Prospective TaskLeader Flow -->
+      <div class="flow-card prospect">
+        <div class="flow-card-header">
+          <div class="flow-icon">⭐</div>
+          <div>
+            <div class="flow-card-title">Prospective TaskLeader Journey</div>
+            <div class="flow-card-subtitle">Apply → Interview → Onboard → Go Live</div>
+          </div>
+        </div>
+        <div class="flow-steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">Homepage or Direct Outreach</div>
+              <div class="step-desc">Entry via marketing, referral, or organic discovery.</div>
+              <span class="step-tag tag-public">Entry Point</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">Become a TaskLeader</div>
+              <div class="step-desc">Application page. Collects name, business (optional), email, WhatsApp, service category.</div>
+              <span class="step-tag tag-action">Application</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">Application Submitted</div>
+              <div class="step-desc">Confirmation screen. Sets expectation: founder call within 24 hours.</div>
+              <span class="step-tag tag-process">Process</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <div class="step-title">Founder WhatsApp Video Call</div>
+              <div class="step-desc">5–10 minute screening. Assess reliability, professionalism, fit.</div>
+              <span class="step-tag tag-whatsapp">Screening</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+              <div class="step-title">Approval Decision</div>
+              <div class="step-desc">Manual founder approval. Approved candidates receive magic link to profile setup.</div>
+              <span class="step-tag tag-process">Decision</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">6</div>
+            <div class="step-content">
+              <div class="step-title">TaskLeader Profile Setup</div>
+              <div class="step-desc">Post-approval only. Edit photo, services, pricing, description, availability. Not publicly navigable.</div>
+              <span class="step-tag tag-setup">Setup Page</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">7</div>
+            <div class="step-content">
+              <div class="step-title">Profile Goes Live</div>
+              <div class="step-desc">Appears in category rankings. Customer connections enabled via WhatsApp.</div>
+              <span class="step-tag tag-action">Live</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Returning TaskLeader Flow -->
+      <div class="flow-card returning">
+        <div class="flow-card-header">
+          <div class="flow-icon">↩️</div>
+          <div>
+            <div class="flow-card-title">Returning TaskLeader Journey</div>
+            <div class="flow-card-subtitle">Sign In → Authenticate → Edit</div>
+          </div>
+        </div>
+        <div class="flow-steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">TaskLeader Sign In</div>
+              <div class="step-desc">Email input for approved TaskLeaders only. Rejected applicants cannot proceed.</div>
+              <span class="step-tag tag-public">Auth Page</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">Email Magic Link</div>
+              <div class="step-desc">Passwordless authentication. Link sent to registered email.</div>
+              <span class="step-tag tag-process">Auth Flow</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">Profile Setup (Edit Mode)</div>
+              <div class="step-desc">Same page as onboarding, pre-filled with existing data. Edit and save changes.</div>
+              <span class="step-tag tag-setup">Setup Page</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Page Matrix -->
+    <div class="page-matrix">
+      <div class="matrix-title">Page Role Reference</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Page</th>
+            <th>Role</th>
+            <th>Audience</th>
+            <th>Key Function</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="page-name">Homepage</span></td>
+            <td><span class="page-role">Entry & Navigation</span></td>
+            <td><span class="audience-tag audience-all">All</span></td>
+            <td>Category selection, provider recruitment</td>
+          </tr>
+          <tr>
+            <td><span class="page-name">Category Page</span></td>
+            <td><span class="page-role">Discovery & Comparison</span></td>
+            <td><span class="audience-tag audience-customer">Customers</span></td>
+            <td>Ranked TaskLeader listings</td>
+          </tr>
+          <tr>
+            <td><span class="page-name">TaskLeader Public Profile</span></td>
+            <td><span class="page-role">Trust & Conversion</span></td>
+            <td><span class="audience-tag audience-customer">Customers</span></td>
+            <td>Full profile, Connect CTA</td>
+          </tr>
+          <tr>
+            <td><span class="page-name">Become a TaskLeader</span></td>
+            <td><span class="page-role">Recruitment</span></td>
+            <td><span class="audience-tag audience-prospect">Prospects</span></td>
+            <td>Application submission</td>
+          </tr>
+          <tr>
+            <td><span class="page-name">TaskLeader Profile Setup</span></td>
+            <td><span class="page-role">Onboarding & Editing</span></td>
+            <td><span class="audience-tag audience-prospect">Approved Only</span></td>
+            <td>Profile creation/editing (not public)</td>
+          </tr>
+          <tr>
+            <td><span class="page-name">TaskLeader Sign In</span></td>
+            <td><span class="page-role">Authentication</span></td>
+            <td><span class="audience-tag audience-returning">Returning</span></td>
+            <td>Magic link auth for approved providers</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaskLeaders MVP — User Flow Map</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --green: #00c853;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.12);
+      --muted: rgba(255,255,255,0.55);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    h1 .task { color: var(--blue); }
+    .subtitle {
+      color: var(--muted);
+      font-size: 16px;
+      margin-bottom: 48px;
+    }
+    
+    .flow-section {
+      margin-bottom: 56px;
+    }
+    .flow-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .flow-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .customer .flow-icon { background: rgba(0,102,255,0.15); }
+    .prospect .flow-icon { background: rgba(0,200,83,0.15); }
+    .returning .flow-icon { background: rgba(255,193,7,0.15); }
+    .flow-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .flow-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    
+    .flow-diagram {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .node {
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .node.page {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+    }
+    .node.action {
+      background: var(--blue);
+      color: #fff;
+    }
+    .node.whatsapp {
+      background: #25d366;
+      color: #000;
+    }
+    .node.decision {
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed var(--border);
+      color: var(--muted);
+    }
+    .node.setup {
+      background: rgba(0,200,83,0.15);
+      border: 1px solid rgba(0,200,83,0.3);
+      color: var(--green);
+    }
+    .arrow {
+      color: var(--muted);
+      font-size: 18px;
+    }
+    
+    .legend {
+      margin-top: 48px;
+      padding: 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .legend-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .legend-box {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+    
+    .notes {
+      margin-top: 32px;
+      padding: 20px;
+      background: rgba(255,255,255,0.03);
+      border-left: 3px solid var(--blue);
+      border-radius: 0 10px 10px 0;
+    }
+    .notes-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .notes ul {
+      list-style: none;
+      font-size: 14px;
+      color: rgba(255,255,255,0.8);
+    }
+    .notes li {
+      padding: 6px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+    .notes li::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: var(--blue);
+    }
+    
+    @media (max-width: 768px) {
+      .flow-diagram {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .arrow {
+        transform: rotate(90deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span class="task">Task</span>Leaders MVP Flow Map</h1>
+    <p class="subtitle">User journeys and page roles — March 2026</p>
+    
+    <!-- Customer Flow -->
+    <div class="flow-section customer">
+      <div class="flow-header">
+        <div class="flow-icon">👤</div>
+        <div>
+          <div class="flow-title">Customer Flow</div>
+          <div class="flow-subtitle">Find and connect with local service providers</div>
+        </div>
+      </div>
+      <div class="flow-diagram">
+        <div class="node page">Homepage</div>
+        <div class="arrow">→</div>
+        <div class="node page">Category Page</div>
+        <div class="arrow">→</div>
+        <div class="node page">TaskLeader Profile</div>
+        <div class="arrow">→</div>
+        <div class="node action">Connect</div>
+        <div class="arrow">→</div>
+        <div class="node whatsapp">WhatsApp</div>
+      </div>
+    </div>
+    
+    <!-- Prospective TaskLeader Flow -->
+    <div class="flow-section prospect">
+      <div class="flow-header">
+        <div class="flow-icon">⭐</div>
+        <div>
+          <div class="flow-title">Prospective TaskLeader Flow</div>
+          <div class="flow-subtitle">Apply to join as a service provider</div>
+        </div>
+      </div>
+      <div class="flow-diagram">
+        <div class="node page">Homepage / Outreach</div>
+        <div class="arrow">→</div>
+        <div class="node action">Become a TaskLeader</div>
+        <div class="arrow">→</div>
+        <div class="node decision">Application Submitted</div>
+        <div class="arrow">→</div>
+        <div class="node page">Founder WhatsApp Call</div>
+        <div class="arrow">→</div>
+        <div class="node decision">Approval</div>
+        <div class="arrow">→</div>
+        <div class="node setup">Profile Setup</div>
+        <div class="arrow">→</div>
+        <div class="node action">Profile Live</div>
+      </div>
+    </div>
+    
+    <!-- Returning TaskLeader Flow -->
+    <div class="flow-section returning">
+      <div class="flow-header">
+        <div class="flow-icon">↩️</div>
+        <div>
+          <div class="flow-title">Returning TaskLeader Flow</div>
+          <div class="flow-subtitle">Edit existing profile</div>
+        </div>
+      </div>
+      <div class="flow-diagram">
+        <div class="node page">TaskLeader Sign In</div>
+        <div class="arrow">→</div>
+        <div class="node decision">Email Magic Link</div>
+        <div class="arrow">→</div>
+        <div class="node setup">Profile Setup (Edit)</div>
+      </div>
+    </div>
+    
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-title">Legend</div>
+      <div class="legend-items">
+        <div class="legend-item">
+          <div class="legend-box" style="background: rgba(255,255,255,0.08); border: 1px solid var(--border);"></div>
+          <span>Public Page</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-box" style="background: var(--blue);"></div>
+          <span>Action / CTA</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-box" style="background: #25d366;"></div>
+          <span>WhatsApp Touchpoint</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-box" style="background: rgba(0,200,83,0.15); border: 1px solid rgba(0,200,83,0.3);"></div>
+          <span>Post-Approval Setup</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-box" style="background: rgba(255,255,255,0.04); border: 1px dashed var(--border);"></div>
+          <span>Process Step</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Key Rules -->
+    <div class="notes">
+      <div class="notes-title">Page Role Rules</div>
+      <ul>
+        <li>Homepage links to Categories and Become a TaskLeader</li>
+        <li>Category Page links to TaskLeader Public Profile</li>
+        <li>TaskLeader Public Profile connects to WhatsApp</li>
+        <li>Become a TaskLeader is the public recruitment / application page</li>
+        <li>TaskLeader Profile Setup is post-approval only (not public-nav)</li>
+        <li>TaskLeader Sign In is for returning approved TaskLeaders only</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
