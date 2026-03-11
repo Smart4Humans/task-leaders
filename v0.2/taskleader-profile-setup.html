@@ -421,6 +421,43 @@
       text-decoration: none;
       cursor: pointer;
     }
+    .email-access-notice {
+      background: rgba(0,102,255,0.08);
+      border: 1px solid rgba(0,102,255,0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 24px 0;
+      text-align: left;
+    }
+    .email-access-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 8px;
+    }
+    .email-access-notice p {
+      font-size: 14px;
+      margin: 0;
+      line-height: 1.5;
+    }
+    .mode-indicator {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+    .mode-indicator.create {
+      background: rgba(0,200,83,0.15);
+      color: var(--green);
+    }
+    .mode-indicator.edit {
+      background: rgba(0,102,255,0.15);
+      color: var(--blue);
+    }
     @media (min-width: 768px) {
       main { padding: 40px 32px; }
       .hero h1 { font-size: 28px; }
@@ -437,7 +474,8 @@
   <main>
     <div id="setup-form">
       <div class="hero">
-        <h1>Create your <span class="blue">Public Profile</span>.<br>This is how customers will find and connect with you.</h1>
+        <span id="modeIndicator" class="mode-indicator create">Create Profile</span>
+        <h1 id="heroTitle">Create your <span class="blue">Public Profile</span>.<br>This is how customers will find and connect with you.</h1>
       </div>
 
       <form id="profile-form" onsubmit="handleSubmit(event)">
@@ -821,6 +859,12 @@
       <div class="success-icon">✅</div>
       <h2>Profile Submitted!</h2>
       <p>Your TaskLeader profile has been submitted. We'll review and activate it within 24-48 hours. You'll receive a confirmation via WhatsApp.</p>
+      
+      <div class="email-access-notice">
+        <div class="email-access-title">📧 Update your profile</div>
+        <p>We've sent a secure link to your email. Use it anytime to update your profile information.</p>
+      </div>
+      
       <a href="homepage.html" class="btn-secondary">Back to Home</a>
     </div>
   </main>
@@ -898,6 +942,40 @@
       document.getElementById('success-message').classList.add('show');
     }
 
+    // Mode detection: create vs edit
+    // MVP: UI structure prepared for edit mode, backend auth to be implemented
+    function detectMode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const mode = urlParams.get('mode');
+      const token = urlParams.get('token');
+      
+      if (mode === 'edit' && token) {
+        // Edit mode: update UI for existing profile editing
+        document.body.dataset.mode = 'edit';
+        
+        const modeIndicator = document.getElementById('modeIndicator');
+        modeIndicator.textContent = 'Edit Profile';
+        modeIndicator.classList.remove('create');
+        modeIndicator.classList.add('edit');
+        
+        document.getElementById('heroTitle').innerHTML = 
+          'Update your <span class="blue">Public Profile</span>.<br>Keep your information current.';
+        
+        document.getElementById('submitBtn').textContent = 'Save Changes';
+        document.querySelector('.submit-note').textContent = 
+          'Your updated profile will be reviewed within 24 hours.';
+        
+        // MVP: Pre-fill would happen here when backend is connected
+        // For now, form remains empty (honest MVP state)
+        console.log('Edit mode detected - token:', token);
+        console.log('MVP: Backend integration needed for pre-filled data');
+      } else {
+        // Create mode (default)
+        document.body.dataset.mode = 'create';
+      }
+    }
+
+    detectMode();
     init();
   </script>
 </body>

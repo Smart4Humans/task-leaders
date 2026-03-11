@@ -3,406 +3,72 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <meta name="theme-color" content="#0a0a1a" />
-  <title>Become a Task Leader — Task Leaders</title>
+  <meta name="theme-color" content="#0a0a14" />
+  <meta http-equiv="refresh" content="0; url=taskleader-profile-setup.html" />
+  <title>Redirecting — TaskLeaders</title>
   <style>
     :root {
-      --cyan: #00d4ff;
-      --purple: #7b2cbf;
-      --gold: #FFD700;
-      --success: #25D366;
-      --dark: #0a0a1a;
-      --card: rgba(255,255,255,0.05);
+      --blue: #0066ff;
+      --bg: #0a0a14;
+      --muted: rgba(255,255,255,0.55);
     }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-      background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+      background: var(--bg);
       color: #fff;
       min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
-    header {
-      padding: 16px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      position: sticky;
-      top: 0;
-      background: rgba(10,10,26,0.95);
-      backdrop-filter: blur(10px);
-      z-index: 100;
-    }
-    .back {
-      color: rgba(255,255,255,0.6);
-      text-decoration: none;
-      font-size: 16px;
       display: flex;
       align-items: center;
-      gap: 8px;
-    }
-    main {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-      padding-bottom: 100px;
-    }
-    .hero {
+      justify-content: center;
       text-align: center;
-      margin-bottom: 32px;
+      padding: 20px;
     }
-    .hero h1 {
+    .redirect-container {
+      max-width: 400px;
+    }
+    .logo {
       font-size: 28px;
-      margin-bottom: 12px;
-      background: linear-gradient(90deg, var(--cyan), var(--purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+      margin-bottom: 24px;
+      letter-spacing: -0.5px;
     }
-    .hero p {
-      opacity: 0.7;
-      line-height: 1.6;
-    }
-    .benefits {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 32px;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .benefits h3 {
-      margin: 0 0 16px 0;
-      font-size: 16px;
-    }
-    .benefits ul {
-      margin: 0;
-      padding-left: 20px;
-      opacity: 0.85;
-      line-height: 1.8;
-    }
-    .form-section {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 24px;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .form-section h2 {
-      margin: 0 0 24px 0;
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+    h1 {
       font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 12px;
     }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    .form-group label {
-      display: block;
-      font-size: 14px;
-      font-weight: 500;
-      margin-bottom: 8px;
-      opacity: 0.9;
-    }
-    .form-group label .required {
-      color: #ff6b6b;
-    }
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.05);
-      color: #fff;
-      font-size: 16px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      border-color: var(--cyan);
-    }
-    .form-group input::placeholder,
-    .form-group textarea::placeholder {
-      color: rgba(255,255,255,0.4);
-    }
-    .form-group select {
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 16px center;
-    }
-    .form-group select option {
-      background: var(--dark);
-      color: #fff;
-    }
-    .form-group textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-    .submit-btn {
-      width: 100%;
-      padding: 18px;
-      border-radius: 14px;
-      border: none;
-      background: var(--success);
-      color: #fff;
-      font-size: 17px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: all 0.2s;
-    }
-    .submit-btn:hover {
-      background: #128C7E;
-    }
-    .submit-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    /* Success State */
-    .success-message {
-      display: none;
-      text-align: center;
-      padding: 40px 20px;
-    }
-    .success-message.show {
-      display: block;
-    }
-    .success-icon {
-      font-size: 64px;
-      margin-bottom: 20px;
-    }
-    .success-message h2 {
-      font-size: 24px;
-      margin-bottom: 16px;
-    }
-    .success-message p {
-      opacity: 0.8;
-      line-height: 1.6;
+    p {
+      color: var(--muted);
+      line-height: 1.5;
       margin-bottom: 24px;
     }
-    .success-message .btn-secondary {
+    .btn {
       display: inline-block;
       padding: 14px 28px;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: transparent;
+      background: var(--blue);
       color: #fff;
       font-size: 15px;
+      font-weight: 600;
       text-decoration: none;
-      cursor: pointer;
     }
-    
-    /* Error Message */
-    .error-message {
-      color: #ff6b6b;
-      font-size: 13px;
-      margin-top: 6px;
-      display: none;
-    }
-    .error-message.show {
-      display: block;
-    }
-    .form-group.has-error input,
-    .form-group.has-error select,
-    .form-group.has-error textarea {
-      border-color: #ff6b6b;
-    }
-    
-    @media (min-width: 768px) {
-      main { padding: 32px; }
-      .hero h1 { font-size: 32px; }
-    }
+    .btn:hover { background: #0052cc; }
   </style>
 </head>
 <body>
-  <header>
-    <a href="homepage.html" class="back">← Back to Task Leaders</a>
-  </header>
-
-  <main>
-    <!-- Application Form -->
-    <div id="application-form">
-      <div class="hero">
-        <h1>Become a Task Leader</h1>
-        <p>Join Vancouver's fastest-growing service provider community. Get qualified leads delivered directly to your WhatsApp.</p>
-      </div>
-
-      <div class="benefits">
-        <h3>🎉 Founding Provider Benefits</h3>
-        <ul>
-          <li><strong>2 months FREE</strong> — No subscription fees</li>
-          <li><strong>Keep 100%</strong> of your earnings</li>
-          <li><strong>Founding badge</strong> — Permanent status</li>
-          <li><strong>Priority placement</strong> — Top of search results</li>
-        </ul>
-      </div>
-
-      <div class="form-section">
-        <h2>Apply Now</h2>
-        <form id="provider-form" onsubmit="handleSubmit(event)">
-          <div class="form-group">
-            <label>Contact Name <span class="required">*</span></label>
-            <input type="text" id="contactName" placeholder="Your full name" required />
-            <div class="error-message" id="error-contactName">Please enter your name</div>
-          </div>
-
-          <div class="form-group">
-            <label>Business Name <span class="required">*</span></label>
-            <input type="text" id="businessName" placeholder="Your business name" required />
-            <div class="error-message" id="error-businessName">Please enter your business name</div>
-          </div>
-
-          <div class="form-group">
-            <label>WhatsApp Number <span class="required">*</span></label>
-            <input type="tel" id="whatsappNumber" placeholder="+1 (604) 555-1234" required />
-            <div class="error-message" id="error-whatsappNumber">Please enter a valid WhatsApp number</div>
-          </div>
-
-          <div class="form-group">
-            <label>Service Category <span class="required">*</span></label>
-            <select id="category" required>
-              <option value="">Select a category</option>
-              <option value="plumbing">Plumbing</option>
-              <option value="electrical">Electrical</option>
-              <option value="painting">Painting</option>
-              <option value="cleaning">Cleaning</option>
-              <option value="handyman">Handyman</option>
-              <option value="furniture-assembly">Furniture Assembly</option>
-              <option value="moving">Moving Help</option>
-              <option value="yard-work">Yard Work</option>
-            </select>
-            <div class="error-message" id="error-category">Please select a category</div>
-          </div>
-
-          <div class="form-group">
-            <label>Service Area <span class="required">*</span></label>
-            <input type="text" id="serviceArea" placeholder="e.g., Vancouver, Burnaby, Richmond" required />
-            <div class="error-message" id="error-serviceArea">Please enter your service area</div>
-          </div>
-
-          <div class="form-group">
-            <label>Hourly Rate ($) <span class="required">*</span></label>
-            <input type="number" id="hourlyRate" placeholder="e.g., 75" min="15" required />
-            <div class="error-message" id="error-hourlyRate">Please enter your hourly rate (minimum $15)</div>
-          </div>
-
-          <div class="form-group">
-            <label>Short Description <span class="required">*</span></label>
-            <textarea id="description" placeholder="Tell customers about your experience and services..." maxlength="200" required></textarea>
-            <div class="error-message" id="error-description">Please enter a description (max 200 characters)</div>
-          </div>
-
-          <button type="submit" class="submit-btn" id="submitBtn">
-            Submit Application
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <!-- Success Message -->
-    <div class="success-message" id="success-message">
-      <div class="success-icon">✅</div>
-      <h2>Application Received!</h2>
-      <p>Thank you for applying to become a Task Leader. We will contact you via WhatsApp within 24 hours for verification.</p>
-      <a href="homepage.html" class="btn-secondary">Back to Home</a>
-    </div>
-  </main>
-
-  <!-- Load Database -->
-  <script src="js/db.js"></script>
-  
+  <div class="redirect-container">
+    <div class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></div>
+    <h1>We've simplified our signup</h1>
+    <p>You're being redirected to our new streamlined profile creation process.</p>
+    <a href="taskleader-profile-setup.html" class="btn">Create your Public Profile →</a>
+  </div>
   <script>
-    function handleSubmit(event) {
-      event.preventDefault();
-      
-      // Clear previous errors
-      document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
-      document.querySelectorAll('.form-group').forEach(el => el.classList.remove('has-error'));
-      
-      // Get form values
-      const formData = {
-        contact_name: document.getElementById('contactName').value.trim(),
-        business_name: document.getElementById('businessName').value.trim(),
-        whatsapp_number: document.getElementById('whatsappNumber').value.trim(),
-        category: document.getElementById('category').value,
-        service_area: document.getElementById('serviceArea').value.trim(),
-        hourly_rate: document.getElementById('hourlyRate').value,
-        description: document.getElementById('description').value.trim(),
-        founding_provider_status: true, // All new signups are founding providers during MVP
-        response_time_minutes: 5, // Default until proven
-        reliability_score: 0, // No reviews yet
-        response_rate: 95 // Default
-      };
-      
-      // Validate
-      let hasError = false;
-      
-      if (!formData.contact_name) {
-        showError('contactName');
-        hasError = true;
-      }
-      
-      if (!formData.business_name) {
-        showError('businessName');
-        hasError = true;
-      }
-      
-      if (!formData.whatsapp_number || formData.whatsapp_number.length < 10) {
-        showError('whatsappNumber');
-        hasError = true;
-      }
-      
-      if (!formData.category) {
-        showError('category');
-        hasError = true;
-      }
-      
-      if (!formData.service_area) {
-        showError('serviceArea');
-        hasError = true;
-      }
-      
-      if (!formData.hourly_rate || parseFloat(formData.hourly_rate) < 15) {
-        showError('hourlyRate');
-        hasError = true;
-      }
-      
-      if (!formData.description) {
-        showError('description');
-        hasError = true;
-      }
-      
-      if (hasError) return;
-      
-      // Disable submit button
-      const submitBtn = document.getElementById('submitBtn');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Submitting...';
-      
-      // Save provider (approved = false, requires admin approval)
-      try {
-        const provider = TaskLeadersDB.addProvider(formData);
-        console.log('Provider application saved:', provider);
-        
-        // Show success message
-        document.getElementById('application-form').style.display = 'none';
-        document.getElementById('success-message').classList.add('show');
-        
-      } catch (error) {
-        console.error('Error saving provider:', error);
-        alert('Something went wrong. Please try again.');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Application';
-      }
-    }
-    
-    function showError(fieldId) {
-      const errorEl = document.getElementById('error-' + fieldId);
-      const inputEl = document.getElementById(fieldId);
-      if (errorEl) errorEl.classList.add('show');
-      if (inputEl) inputEl.closest('.form-group').classList.add('has-error');
-    }
+    // Fallback redirect if meta refresh doesn't work
+    window.location.replace('taskleader-profile-setup.html');
   </script>
 </body>
 </html>
