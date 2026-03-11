@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="theme-color" content="#0a0a14" />
+  <title>TaskLeader Profile Setup — TaskLeaders</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --gold: #ffb800;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+      --success: #25D366;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Header */
+    header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 5px 8px;
+      border-radius: 6px;
+    }
+    .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+    
+    /* Progress Bar */
+    .progress-bar {
+      padding: 16px 20px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+    }
+    .progress-steps {
+      display: flex;
+      justify-content: space-between;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .step.active { color: var(--blue); }
+    .step.completed { color: var(--green); }
+    .step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .step.active .step-number { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .step.completed .step-number { background: var(--green); border-color: var(--green); color: #fff; }
+    
+    /* Main Container */
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px 20px 100px;
+    }
+    
+    /* Hero */
+    .hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .hero h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .hero p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    
+    /* Form Sections */
+    .form-section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(0,102,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0;
+    }
+    .section-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 4px 0 0 0;
+    }
+    
+    /* Form Groups */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .form-group label .required {
+      color: #ff6b6b;
+      margin-left: 2px;
+    }
+    .form-group label .optional {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 12px;
+      margin-left: 4px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--blue);
+      background: rgba(255,255,255,0.05);
+    }
+    .form-group input::placeholder {
+      color: rgba(255,255,255,0.35);
+    }
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    .form-group select option {
+      background: #1a1a2e;
+      color: #fff;
+    }
+    
+    /* Checkbox Groups */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .checkbox-item:hover {
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.04);
+    }
+    .checkbox-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+    .checkbox-item label {
+      flex: 1;
+      margin: 0;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .checkbox-item .rate-input {
+      width: 80px;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+    
+    /* Select All Shortcut */
+    .select-all {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--blue);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .select-all:hover { text-decoration: underline; }
+    
+    /* City Grid */
+    .city-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    @media (min-width: 480px) {
+      .city-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    
+    /* Primary Category Select */
+    .primary-select {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    
+    /* Payment Section */
+    .card-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 12px;
+    }
+    
+    /* Review Section */
+    .review-card {
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .review-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .review-value {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    
+    /* Submit Button */
+    .submit-section {
+      margin-top: 32px;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      border-radius: 14px;
+      border: none;
+      background: var(--success);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .submit-btn:hover { background: #128C7E; }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .submit-note {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+    
+    /* Success State */
+    .success-message {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .success-message.show { display: block; }
+    .success-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+    .success-message h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    .success-message p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .btn-secondary {
+      display: inline-block;
+      padding: 14px 28px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: #fff;
+      font-size: 15px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    
+    /* Error States */
+    .error-message {
+      color: #ff6b6b;
+      font-size: 12px;
+      margin-top: 6px;
+      display: none;
+    }
+    .error-message.show { display: block; }
+    .form-group.has-error input,
+    .form-group.has-error select {
+      border-color: #ff6b6b;
+    }
+    
+    @media (min-width: 768px) {
+      main { padding: 32px; }
+      .hero h1 { font-size: 28px; }
+      .form-section { padding: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="homepage.html" class="back">←</a>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+  </header>
+
+  <main>
+    <!-- Setup Form -->
+    <div id="setup-form">
+      <div class="hero">
+        <h1>Set Up Your Profile</h1>
+        <p>Create your TaskLeader Public Profile. This information helps customers find and trust you.</p>
+      </div>
+
+      <form id="profile-form" onsubmit="handleSubmit(event)">
+        
+        <!-- Section 1: Identity -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">👤</div>
+            <div>
+              <h2 class="section-title">Identity</h2>
+              <p class="section-subtitle">How customers will know you</p>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name <span class="required">*</span></label>
+              <input type="text" id="firstName" placeholder="John" required />
+              <div class="error-message" id="error-firstName">Required</div>
+            </div>
+            <div class="form-group">
+              <label>Last Name <span class="required">*</span></label>
+              <input type="text" id="lastName" placeholder="Smith" required />
+              <div class="error-message" id="error-lastName">Required</div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Business Name <span class="optional">(optional)</span></label>
+            <input type="text" id="businessName" placeholder="Smith's Home Services" />
+            <div class="error-message" id="error-businessName"></div>
+          </div>
+          
+          <div class="form-group">
+            <label>Email <span class="required">*</span></label>
+            <input type="email" id="email" placeholder="john@example.com" required />
+            <div class="error-message" id="error-email">Valid email required</div>
+          </div>
+        </div>
+
+        <!-- Section 2: Location -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">📍</div>
+            <div>
+              <h2 class="section-title">Location</h2>
+              <p class="section-subtitle">Where you're based</p>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Address Line 1 <span class="required">*</span></label>
+            <input type="text" id="address1" placeholder="123 Main Street" required />
+          </div>
+          
+          <div class="form-group">
+            <label>Address Line 2 <span class="optional">(optional)</span></label>
+            <input type="text" id="address2" placeholder="Apt 4B" />
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Base Location <span class="required">*</span></label>
+              <select id="baseCity" required>
+                <option value="">Select city</option>
+                <option value="Vancouver">Vancouver</option>
+                <option value="Surrey">Surrey</option>
+                <option value="Burnaby">Burnaby</option>
+                <option value="Richmond">Richmond</option>
+                <option value="Coquitlam">Coquitlam</option>
+                <option value="New Westminster">New Westminster</option>
+                <option value="North Vancouver">North Vancouver</option>
+                <option value="Port Coquitlam">Port Coquitlam</option>
+                <option value="Maple Ridge">Maple Ridge</option>
+                <option value="Langley">Langley</option>
+                <option value="White Rock">White Rock</option>
+                <option value="Port Moody">Port Moody</option>
+                <option value="Pitt Meadows">Pitt Meadows</option>
+                <option value="Delta">Delta</option>
+                <option value="Abbotsford">Abbotsford</option>
+                <option value="Chilliwack">Chilliwack</option>
+                <option value="Mission">Mission</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Province <span class="required">*</span></label>
+              <select id="province" required>
+                <option value="BC" selected>British Columbia</option>
+                <option value="AB">Alberta</option>
+                <option value="ON">Ontario</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Contact -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">📞</div>
+            <div>
+              <h2 class="section-title">Contact</h2>
+              <p class="section-subtitle">How customers reach you</p>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Phone Number <span class="required">*</span></label>
+            <input type="tel" id="phone" placeholder="(604) 555-1234" required />
+          </div>
+          
+          <div class="form-group">
+            <label>WhatsApp Number <span class="required">*</span></label>
+            <input type="tel" id="whatsapp" placeholder="(604) 555-1234" required />
+            <div class="error-message" id="error-whatsapp">This is how customers will connect with you</div>
+          </div>
+        </div>
+
+        <!-- Section 4: Coverage -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">🗺️</div>
+            <div>
+              <h2 class="section-title">Coverage</h2>
+              <p class="section-subtitle">Where you serve customers</p>
+            </div>
+          </div>
+          
+          <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Your base location is automatically included. Select additional cities you serve:</p>
+          
+          <div class="select-all" onclick="toggleAllCities()">
+            <input type="checkbox" id="selectAllCities" style="width: 16px; height: 16px;" />
+            <label for="selectAllCities" style="margin: 0; cursor: pointer;">Select all 17 cities</label>
+          </div>
+          
+          <div class="city-grid" id="cityGrid">
+            <!-- Cities populated by JS -->
+          </div>
+        </div>
+
+        <!-- Section 5: Services -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">🔧</div>
+            <div>
+              <h2 class="section-title">Services</h2>
+              <p class="section-subtitle">What you do and your rates</p>
+            </div>
+          </div>
+          
+          <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Select all categories you offer, then set your hourly rate for each:</p>
+          
+          <div class="checkbox-group" id="categoryList">
+            <!-- Categories populated by JS -->
+          </div>
+          
+          <div class="primary-select">
+            <div class="form-group">
+              <label>Primary Category <span class="required">*</span></label>
+              <select id="primaryCategory" required>
+                <option value="">Select your main service</option>
+              </select>
+              <p style="font-size: 12px; color: var(--muted); margin-top: 6px;">This appears first on your public profile</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 6: Payment -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">💳</div>
+            <div>
+              <h2 class="section-title">Payment</h2>
+              <p class="section-subtitle">Subscription billing</p>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Name on Card <span class="required">*</span></label>
+            <input type="text" id="cardName" placeholder="John Smith" required />
+          </div>
+          
+          <div class="form-group">
+            <label>Card Number <span class="required">*</span></label>
+            <input type="text" id="cardNumber" placeholder="4242 4242 4242 4242" maxlength="19" required />
+          </div>
+          
+          <div class="card-row">
+            <div class="form-group">
+              <label>Expiry <span class="required">*</span></label>
+              <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" required />
+            </div>
+            <div class="form-group">
+              <label>CVC <span class="required">*</span></label>
+              <input type="text" id="cardCvc" placeholder="123" maxlength="4" required />
+            </div>
+          </div>
+          
+          <p style="font-size: 12px; color: var(--muted); margin-top: 12px;">🔒 Your payment information is secure. You won't be charged until your profile is approved.</p>
+        </div>
+
+        <!-- Submit -->
+        <div class="submit-section">
+          <button type="submit" class="submit-btn" id="submitBtn">
+            Submit Application
+          </button>
+          <p class="submit-note">We'll review your application and notify you within 24-48 hours.</p>
+        </div>
+      </form>
+    </div>
+
+    <!-- Success Message -->
+    <div class="success-message" id="success-message">
+      <div class="success-icon">✅</div>
+      <h2>Application Submitted!</h2>
+      <p>Thank you for applying to become a TaskLeader. We'll review your profile and contact you via WhatsApp within 24-48 hours.</p>
+      <a href="homepage.html" class="btn-secondary">Back to Home</a>
+    </div>
+  </main>
+
+  <script>
+    // Approved cities list
+    const approvedCities = [
+      'Vancouver', 'Surrey', 'Burnaby', 'Richmond', 'Coquitlam', 'New Westminster',
+      'North Vancouver', 'Port Coquitlam', 'Maple Ridge', 'Langley', 'White Rock',
+      'Port Moody', 'Pitt Meadows', 'Delta', 'Abbotsford', 'Chilliwack', 'Mission'
+    ];
+
+    // Service categories
+    const serviceCategories = [
+      { id: 'handyman', name: 'Handyman', icon: '🔧' },
+      { id: 'plumbing', name: 'Plumbing', icon: '🚿' },
+      { id: 'electrical', name: 'Electrical', icon: '⚡' },
+      { id: 'painting', name: 'Painting', icon: '🎨' },
+      { id: 'cleaning', name: 'Cleaning', icon: '🧹' },
+      { id: 'furniture-assembly', name: 'Furniture Assembly', icon: '📦' },
+      { id: 'moving', name: 'Moving Help', icon: '🚚' },
+      { id: 'yard-work', name: 'Yard Work', icon: '🌿' },
+      { id: 'hvac', name: 'HVAC', icon: '❄️' }
+    ];
+
+    // Initialize form
+    function init() {
+      populateCities();
+      populateCategories();
+      setupEventListeners();
+    }
+
+    // Populate city grid
+    function populateCities() {
+      const grid = document.getElementById('cityGrid');
+      grid.innerHTML = approvedCities.map(city => `
+        <label class="checkbox-item">
+          <input type="checkbox" name="serviceCities" value="${city}" />
+          <span>${city}</span>
+        </label>
+      `).join('');
+    }
+
+    // Populate categories with rate inputs
+    function populateCategories() {
+      const list = document.getElementById('categoryList');
+      list.innerHTML = serviceCategories.map(cat => `
+        <label class="checkbox-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+            <input type="checkbox" name="categories" value="${cat.id}" data-name="${cat.name}" onchange="updatePrimaryCategoryOptions()" />
+            <span style="flex: 1;">${cat.icon} ${cat.name}</span>
+          </div>
+          <div class="rate-field" style="display: none; width: 100%; padding-left: 32px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--muted); font-size: 13px;">Rate:</span>
+              <span style="color: var(--muted);">$</span>
+              <input type="number" class="rate-input" data-category="${cat.id}" placeholder="50" min="20" max="200" style="width: 80px; padding: 8px;" />
+              <span style="color: var(--muted); font-size: 13px;">/hour</span>
+            </div>
+          </div>
+        </label>
+      `).join('');
+
+      // Show/hide rate fields based on checkbox
+      document.querySelectorAll('input[name="categories"]').forEach(cb => {
+        cb.addEventListener('change', function() {
+          const rateField = this.closest('.checkbox-item').querySelector('.rate-field');
+          rateField.style.display = this.checked ? 'block' : 'none';
+          if (this.checked) {
+            rateField.querySelector('input').focus();
+          }
+        });
+      });
+    }
+
+    // Update primary category dropdown based on selections
+    function updatePrimaryCategoryOptions() {
+      const selected = Array.from(document.querySelectorAll('input[name="categories"]:checked'));
+      const primarySelect = document.getElementById('primaryCategory');
+      const currentValue = primarySelect.value;
+      
+      primarySelect.innerHTML = '<option value="">Select your main service</option>' +
+        selected.map(cb => {
+          const name = cb.dataset.name;
+          const id = cb.value;
+          return `<option value="${id}" ${id === currentValue ? 'selected' : ''}>${name}</option>`;
+        }).join('');
+    }
+
+    // Toggle all cities
+    function toggleAllCities() {
+      const selectAll = document.getElementById('selectAllCities');
+      const checkboxes = document.querySelectorAll('input[name="serviceCities"]');
+      checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Card number formatting
+      document.getElementById('cardNumber').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+        e.target.value = value;
+      });
+
+      // Expiry formatting
+      document.getElementById('cardExpiry').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+          value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+        e.target.value = value;
+      });
+    }
+
+    // Handle form submission
+    function handleSubmit(event) {
+      event.preventDefault();
+      
+      // Clear errors
+      document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
+      document.querySelectorAll('.form-group').forEach(el => el.classList.remove('has-error'));
+      
+      // Collect form data
+      const formData = {
+        // Identity
+        first_name: document.getElementById('firstName').value.trim(),
+        last_name: document.getElementById('lastName').value.trim(),
+        business_name: document.getElementById('businessName').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        
+        // Location
+        address_1: document.getElementById('address1').value.trim(),
+        address_2: document.getElementById('address2').value.trim(),
+        base_city: document.getElementById('baseCity').value,
+        province: document.getElementById('province').value,
+        
+        // Contact
+        phone: document.getElementById('phone').value.trim(),
+        whatsapp: document.getElementById('whatsapp').value.trim(),
+        
+        // Coverage
+        service_cities: Array.from(document.querySelectorAll('input[name="serviceCities"]:checked')).map(cb => cb.value),
+        
+        // Services
+        categories: Array.from(document.querySelectorAll('input[name="categories"]:checked')).map(cb => ({
+          id: cb.value,
+          name: cb.dataset.name,
+          rate: document.querySelector(`.rate-input[data-category="${cb.value}"]`)?.value || '50'
+        })),
+        primary_category: document.getElementById('primaryCategory').value,
+        
+        // Payment (collected but not processed in MVP)
+        payment: {
+          name: document.getElementById('cardName').value.trim(),
+          last4: document.getElementById('cardNumber').value.slice(-4)
+        }
+      };
+      
+      // Validation
+      let hasError = false;
+      
+      if (!formData.first_name) { showError('firstName'); hasError = true; }
+      if (!formData.last_name) { showError('lastName'); hasError = true; }
+      if (!formData.email || !formData.email.includes('@')) { showError('email'); hasError = true; }
+      if (!formData.address_1) { showError('address1'); hasError = true; }
+      if (!formData.base_city) { showError('baseCity'); hasError = true; }
+      if (!formData.whatsapp) { showError('whatsapp'); hasError = true; }
+      if (formData.categories.length === 0) {
+        alert('Please select at least one service category');
+        hasError = true;
+      }
+      if (!formData.primary_category) {
+        alert('Please select a primary category');
+        hasError = true;
+      }
+      
+      if (hasError) return;
+      
+      // Show success
+      document.getElementById('setup-form').style.display = 'none';
+      document.getElementById('success-message').classList.add('show');
+      
+      // Log data (would send to server in production)
+      console.log('TaskLeader Profile Setup Data:', formData);
+    }
+    
+    function showError(fieldId) {
+      const input = document.getElementById(fieldId);
+      if (input) input.closest('.form-group').classList.add('has-error');
+    }
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>
