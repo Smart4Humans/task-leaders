@@ -4,71 +4,405 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <meta name="theme-color" content="#0a0a14" />
-  <meta http-equiv="refresh" content="0; url=taskleader-profile-setup.html" />
-  <title>Redirecting — TaskLeaders</title>
+  <title>Become an OG TaskLeader — TaskLeaders</title>
   <style>
     :root {
       --blue: #0066ff;
+      --green: #00c853;
       --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
       --muted: rgba(255,255,255,0.55);
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
       background: var(--bg);
       color: #fff;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 20px;
+      -webkit-font-smoothing: antialiased;
     }
-    .redirect-container {
-      max-width: 400px;
+    header {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
     }
     .logo {
-      font-size: 28px;
+      font-size: 22px;
       font-weight: 800;
-      margin-bottom: 24px;
+      text-decoration: none;
       letter-spacing: -0.5px;
     }
     .logo .task { color: var(--blue); }
     .logo .leaders { color: #fff; }
-    h1 {
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 12px;
+    .nav-home {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 6px;
     }
-    p {
+    .nav-home:hover { background: rgba(255,255,255,0.04); color: #fff; }
+    
+    main {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+    
+    .hero {
+      margin-bottom: 40px;
+    }
+    h1 {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin: 0 0 12px 0;
+      letter-spacing: -0.5px;
+    }
+    h1 .line1 {
+      display: block;
+    }
+    h1 .line2 {
+      display: block;
+    }
+    h1 .task {
+      color: var(--blue);
+    }
+    .subhead {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.4;
+      margin: 0;
+    }
+    .invitation {
+      font-size: 15px;
       color: var(--muted);
       line-height: 1.5;
+      margin: 8px 0 0 0;
+    }
+    .urgency {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .urgency .white {
+      color: #fff;
+    }
+    .urgency .blue {
+      color: var(--blue);
+    }
+    
+    .perks {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .perk {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+    }
+    .perk:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .perk:first-child {
+      padding-top: 0;
+    }
+    .perk-check {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(0,200,83,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--green);
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .perk strong {
+      color: #fff;
+      font-weight: 600;
+    }
+    
+    .apply-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    .apply-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .apply-sub {
+      font-size: 14px;
+      color: var(--muted);
       margin-bottom: 24px;
     }
-    .btn {
-      display: inline-block;
-      padding: 14px 28px;
-      border-radius: 12px;
-      background: var(--blue);
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.03);
       color: #fff;
       font-size: 15px;
-      font-weight: 600;
-      text-decoration: none;
+      outline: none;
+      transition: all 0.2s;
     }
-    .btn:hover { background: #0052cc; }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--blue);
+      background: rgba(255,255,255,0.05);
+    }
+    .form-group input::placeholder {
+      color: rgba(255,255,255,0.35);
+    }
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover {
+      background: #0052cc;
+      transform: translateY(-1px);
+    }
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .next-step {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .next-step-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--green);
+      margin-bottom: 4px;
+    }
+    .next-step-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    
+    .success-state {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success-state.show {
+      display: block;
+    }
+    .success-icon {
+      font-size: 56px;
+      margin-bottom: 20px;
+    }
+    .success-state h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .success-state p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .success-highlight {
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.25);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 20px 0;
+      color: var(--green);
+      font-weight: 600;
+    }
+    
+    @media (min-width: 640px) {
+      main { padding: 64px 32px 100px; }
+      h1 { font-size: 44px; }
+      .subhead { font-size: 22px; }
+      .urgency { font-size: 22px; }
+    }
   </style>
 </head>
 <body>
-  <div class="redirect-container">
-    <div class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></div>
-    <h1>We've simplified our signup</h1>
-    <p>You're being redirected to our new streamlined profile creation process.</p>
-    <a href="taskleader-profile-setup.html" class="btn">Create your Public Profile →</a>
-  </div>
+  <header>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+    <a href="homepage.html" class="nav-home">← Back</a>
+  </header>
+
+  <main>
+    <!-- Application Form -->
+    <div id="apply-form">
+      <div class="hero">
+        <h1><span class="line1">Become an</span><span class="line2">OG <span class="task">Task</span>Leader</span></h1>
+        <p class="subhead">We bring the leads, you bring the work.</p>
+        <p class="invitation">Join Vancouver's newest network of fast, reliable local service providers.</p>
+        <p class="urgency"><span class="white">Now recruiting the first</span> <span class="blue">50</span></p>
+      </div>
+      
+      <div class="perks">
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>Be first, get seen first</span>
+        </div>
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>Connect directly with clients</span>
+        </div>
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>Keep 100% of your rate</span>
+        </div>
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>2 months free</span>
+        </div>
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>Priority given to fast, reliable local pros</span>
+        </div>
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>Book your 5–10 min founder call now 👇</span>
+        </div>
+      </div>
+      
+      <div class="apply-section">
+        <div class="apply-title">Apply now</div>
+        <div class="apply-sub">Quick application. Decision within 24 hours.</div>
+        
+        <form onsubmit="handleApply(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name</label>
+              <input type="text" id="firstName" placeholder="John" required />
+            </div>
+            <div class="form-group">
+              <label>Last Name</label>
+              <input type="text" id="lastName" placeholder="Smith" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Business Name <span style="text-transform: none; font-weight: 400; color: var(--muted);">(optional)</span></label>
+            <input type="text" id="businessName" placeholder="Your Business Name" />
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="you@example.com" required />
+          </div>
+          
+          <div class="form-group">
+            <label>WhatsApp Number</label>
+            <input type="tel" id="whatsapp" placeholder="(604) 555-1234" required />
+          </div>
+          
+          <div class="form-group">
+            <label>Primary Service</label>
+            <select id="service" required>
+              <option value="">Select your service</option>
+              <option value="handyman">Handyman</option>
+              <option value="plumbing">Plumbing</option>
+              <option value="electrical">Electrical</option>
+              <option value="painting">Painting</option>
+              <option value="cleaning">Cleaning</option>
+              <option value="furniture">Furniture Assembly</option>
+              <option value="moving">Moving Help</option>
+              <option value="yard">Yard Work</option>
+              <option value="hvac">HVAC</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="submit-btn" id="submitBtn">Apply</button>
+        </form>
+        
+        <div class="next-step">
+          <div class="next-step-title">What happens next?</div>
+          <div class="next-step-text">Quick founder call → Profile setup → Go live</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Success State -->
+    <div class="success-state" id="success-state">
+      <div class="success-icon">📱</div>
+      <h2>Application received</h2>
+      <p>We'll reach out via WhatsApp within 24 hours to schedule your founder call.</p>
+      <div class="success-highlight">Check your email for confirmation</div>
+      <p style="font-size: 13px; color: var(--muted);">Now recruiting the first 50.</p>
+    </div>
+  </main>
+
   <script>
-    // Fallback redirect if meta refresh doesn't work
-    window.location.replace('taskleader-profile-setup.html');
+    function handleApply(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      
+      setTimeout(() => {
+        document.getElementById('apply-form').style.display = 'none';
+        document.getElementById('success-state').classList.add('show');
+      }, 1200);
+    }
   </script>
 </body>
 </html>
