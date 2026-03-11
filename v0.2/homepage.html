@@ -55,6 +55,20 @@
       transform: translateY(-1px);
       box-shadow: 0 4px 16px rgba(0,102,255,0.3);
     }
+    .nav-secondary {
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .nav-secondary:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.05);
+    }
     
     /* Hero */
     .hero {
@@ -207,6 +221,7 @@
       header { padding: 16px 20px; }
       .logo { font-size: 26px; }
       .nav-btn { padding: 12px 20px; font-size: 14px; }
+      .nav-secondary { font-size: 13px; padding: 8px 12px; }
       
       .hero { padding: 56px 20px 40px; }
       .hero h1 { font-size: 34px; letter-spacing: -0.5px; }
@@ -241,11 +256,14 @@
 <body>
   <header>
     <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
-    <a href="become-task-leader.html" class="nav-btn">Become a TaskLeader</a>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <a href="taskleader-signin.html" class="nav-secondary">TaskLeader Sign In</a>
+      <a href="become-task-leader.html" class="nav-btn">Become a TaskLeader</a>
+    </div>
   </header>
 
   <section class="hero">
-    <h1>Vancouver's <span class="highlight">fastest</span> way to find local help.</h1>
+    <h1>Vancouver's <span class="highlight">fastest</span> way to find <span class="highlight">reliable</span> local help.</h1>
     <p class="subhead">Rank by Speed, Reliability, or Price — then connect directly on WhatsApp.</p>
     <p class="support">No commissions. No middlemen. Just direct connections.</p>
     
@@ -271,6 +289,8 @@
 
   <script src="js/db.js"></script>
   <script>
+    // Real Estate / Property Manager target market categories
+    // Categories only display when at least one approved, active TaskLeader exists
     const categories = [
       { id: 'handyman', icon: '🔧', name: 'Handyman' },
       { id: 'plumbing', icon: '🚿', name: 'Plumbing' },
@@ -279,19 +299,35 @@
       { id: 'cleaning', icon: '🧹', name: 'Cleaning' },
       { id: 'furniture-assembly', icon: '📦', name: 'Furniture Assembly' },
       { id: 'moving', icon: '🚚', name: 'Moving Help' },
-      { id: 'yard-work', icon: '🌿', name: 'Yard Work' },
-      { id: 'hvac', icon: '❄️', name: 'HVAC' }
+      { id: 'yard-work', icon: '🌿', name: 'Yard Work' }
     ];
 
     function init() {
       const grid = document.getElementById('category-grid');
-      grid.innerHTML = categories.map(cat => {
+      // RULE: Only show categories with at least one approved, active TaskLeader
+      const visibleCategories = categories.filter(cat => {
+        const count = TaskLeadersDB.getProvidersByCategory(cat.id).length;
+        return count > 0;
+      });
+      
+      // Fallback: if no categories have providers, show message instead of empty grid
+      if (visibleCategories.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">
+            <p style="font-size: 16px; margin-bottom: 8px;">TaskLeaders coming soon to your area.</p>
+            <p style="font-size: 14px;">Check back shortly as we onboard local providers.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      grid.innerHTML = visibleCategories.map(cat => {
         const count = TaskLeadersDB.getProvidersByCategory(cat.id).length;
         return `
           <a href="category.html?category=${cat.id}" class="category-tile">
             <div class="category-icon">${cat.icon}</div>
             <div class="category-name">${cat.name}</div>
-            <div class="category-count">${count} TaskLeaders</div>
+            <div class="category-count">${count} TaskLeader${count !== 1 ? 's' : ''}</div>
           </a>
         `;
       }).join('');
