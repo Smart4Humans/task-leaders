@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VIP Concierge — TaskLeaders</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --gold: #ffb800;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Header */
+    header {
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .logo {
+      font-size: 32px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+    .nav-home {
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .nav-home:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.05);
+    }
+    
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 80px 32px 48px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin: 0 0 16px 0;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+    }
+    .hero h1 .trusted {
+      color: var(--blue);
+    }
+    .hero .subhead {
+      font-size: 22px;
+      color: #fff;
+      margin: 0 0 12px 0;
+      font-weight: 600;
+    }
+    .hero .sub-subhead {
+      font-size: 17px;
+      color: var(--muted);
+      margin: 0;
+      font-weight: 500;
+    }
+    
+    /* Benefits */
+    .benefits {
+      max-width: 480px;
+      margin: 0 auto 48px;
+      padding: 0 32px;
+    }
+    .benefit-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .benefit-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 16px;
+      color: rgba(255,255,255,0.85);
+    }
+    .benefit-item:last-child {
+      border-bottom: none;
+    }
+    .benefit-check {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(0,200,83,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--green);
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    
+    /* Form */
+    .form-section {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+    }
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+    }
+    .form-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: rgba(255,255,255,0.7);
+    }
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--blue);
+      background: rgba(255,255,255,0.05);
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(255,255,255,0.35);
+    }
+    .form-group textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+      min-height: 100px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover {
+      background: var(--blue-dark);
+      transform: translateY(-1px);
+    }
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* Success State */
+    .success-state {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success-state.show {
+      display: block;
+    }
+    .success-icon {
+      font-size: 56px;
+      margin-bottom: 20px;
+    }
+    .success-state h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .success-state p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    
+    /* Mobile */
+    @media (max-width: 720px) {
+      header { padding: 16px 20px; }
+      .logo { font-size: 26px; }
+      
+      .hero { padding: 56px 20px 40px; }
+      .hero h1 { font-size: 34px; }
+      .hero .subhead { font-size: 19px; }
+      .hero .sub-subhead { font-size: 15px; }
+      
+      .benefits { padding: 0 20px; margin-bottom: 40px; }
+      .benefit-item { font-size: 15px; }
+      
+      .form-section { padding: 0 20px 60px; }
+      .form-card { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+    <a href="homepage.html" class="nav-home">← Back</a>
+  </header>
+
+  <section class="hero">
+    <h1>Need <span class="trusted">trusted</span> local help without the hassle?</h1>
+    <p class="subhead">Get exclusive access to our concierge service.</p>
+    <p class="sub-subhead">Currently free for Realtors and Property Managers.</p>
+  </section>
+
+  <section class="benefits">
+    <ul class="benefit-list">
+      <li class="benefit-item">
+        <span class="benefit-check">✓</span>
+        <span>Priority access</span>
+      </li>
+      <li class="benefit-item">
+        <span class="benefit-check">✓</span>
+        <span>Prompt response and follow-up</span>
+      </li>
+      <li class="benefit-item">
+        <span class="benefit-check">✓</span>
+        <span>Personalized support</span>
+      </li>
+    </ul>
+  </section>
+
+  <section class="form-section">
+    <div class="form-card" id="form-card">
+      <div class="form-title">Request VIP Access</div>
+      <form onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="fullName" placeholder="Your full name" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>WhatsApp</label>
+          <input type="tel" id="whatsapp" placeholder="(604) 555-1234" required />
+        </div>
+        <div class="form-group">
+          <label>How can we help you?</label>
+          <textarea id="message" placeholder="Tell us about your property needs..."></textarea>
+        </div>
+        <button type="submit" class="submit-btn" id="submitBtn">Submit</button>
+      </form>
+    </div>
+    
+    <div class="success-state" id="success-state">
+      <div class="success-icon">👑</div>
+      <h2>Request received</h2>
+      <p>We'll reach out via WhatsApp within 24 hours to activate your VIP concierge access.</p>
+      <p style="font-size: 13px; color: var(--muted);">Welcome to the inner circle.</p>
+    </div>
+  </section>
+
+  <script>
+    function handleSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      
+      setTimeout(() => {
+        document.getElementById('form-card').style.display = 'none';
+        document.getElementById('success-state').classList.add('show');
+      }, 1200);
+    }
+  </script>
+</body>
+</html>

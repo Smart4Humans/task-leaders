@@ -218,38 +218,40 @@
     
     /* Mobile */
     @media (max-width: 720px) {
-      header { padding: 16px 20px; }
-      .logo { font-size: 26px; }
-      .nav-btn { padding: 12px 20px; font-size: 14px; }
-      .nav-secondary { font-size: 13px; padding: 8px 12px; }
+      header { padding: 14px 16px; }
+      .logo { font-size: 22px; }
+      .nav-btn { padding: 10px 16px; font-size: 13px; }
+      .nav-secondary { font-size: 12px; padding: 6px 10px; }
       
-      .hero { padding: 56px 20px 40px; }
-      .hero h1 { font-size: 34px; letter-spacing: -0.5px; }
-      .hero .subhead { font-size: 17px; }
-      .hero .support { font-size: 16px; margin-bottom: 28px; }
+      .hero { padding: 48px 20px 32px; }
+      .hero h1 { font-size: 32px; letter-spacing: -0.3px; line-height: 1.15; }
+      .hero .subhead { font-size: 16px; }
+      .hero .support { font-size: 15px; margin-bottom: 24px; }
       
       .concierge {
         flex-direction: column;
         text-align: center;
         padding: 16px 20px;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
         gap: 12px;
       }
-      .concierge-text h3 { justify-content: center; font-size: 16px; }
-      .concierge-text p { font-size: 15px; }
+      .concierge-text h3 { justify-content: center; font-size: 15px; }
+      .concierge-text p { font-size: 14px; }
+      .concierge-btn { padding: 10px 18px; font-size: 13px; }
       
-      .categories { padding: 0 20px 56px; }
-      .categories h2 { font-size: 15px; }
+      .categories { padding: 0 16px 48px; }
+      .categories h2 { font-size: 14px; letter-spacing: 1.5px; }
       .category-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 10px;
       }
-      .category-tile { padding: 24px 16px; }
-      .category-icon { font-size: 30px; }
-      .category-name { font-size: 16px; }
-      .category-count { font-size: 13px; }
+      .category-tile { padding: 20px 12px; }
+      .category-icon { font-size: 28px; margin-bottom: 8px; }
+      .category-name { font-size: 15px; }
+      .category-count { font-size: 12px; }
       
-      footer p { font-size: 14px; }
+      footer { padding: 32px 20px; }
+      footer p { font-size: 13px; }
     }
   </style>
 </head>
@@ -272,7 +274,7 @@
         <h3>👑 VIP Concierge</h3>
         <p>Priority help for Realtors & Property Managers.</p>
       </div>
-      <a href="#" class="concierge-btn" onclick="alert('Concierge signup coming soon'); return false;">Request Access</a>
+      <a href="vip-concierge.html" class="concierge-btn">Request Access</a>
     </div>
   </section>
 
