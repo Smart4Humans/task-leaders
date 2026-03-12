@@ -232,4 +232,32 @@ When in doubt:
 
 ---
 
+## Part 5 — Critical File Path Safeguard (Added 2026-03-12)
+
+### Active front-end working directory for current MVP page work
+```
+/Users/toddbrunel/.openclaw/workspace/task-leaders-deploy/v0.2/
+```
+Use this for Homepage, Category Page, and TaskLeader Public Profile edits.
+
+### Stale baseline — DO NOT USE for current page work
+```
+/Users/toddbrunel/.openclaw/workspace/projects/taskleaders/v0.2/
+```
+This directory contains an older baseline that does not reflect current approved MVP state.
+
+### Source-of-truth docs location
+```
+/Users/toddbrunel/.openclaw/workspace/task-leaders-deploy/
+```
+WORKING_BRIEF, FUNCTIONALITY_RULES, PROJECT_STATE_SUMMARY, and this HANDOFF document live here.
+
+### ByteRover scope reminder
+ByteRover at workspace root is useful for decision memory and continuity, but it is not a guaranteed snapshot of exact front-end file state. Always verify target file paths before editing.
+
+### Pre-edit verification rule
+Before any page work: confirm the target file path matches `task-leaders-deploy/v0.2/`, not `projects/taskleaders/v0.2/`.
+
+---
+
 *End of document.*
