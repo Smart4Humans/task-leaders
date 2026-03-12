@@ -157,8 +157,7 @@
     .legend .ic.fast { border: 1px solid rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
     .legend .ic.verified { border: 1px solid var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
     .legend .ic.top { border: 1px solid rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
-    .legend .ic.today { border: 1px solid rgba(255,100,50,0.25); background: rgba(255,100,50,0.08); color: rgba(255,100,50,0.95); }
-    .legend .ic.after { border: 1px solid rgba(150,100,255,0.25); background: rgba(150,100,255,0.08); color: rgba(150,100,255,0.95); }
+
 
     .section-heading {
       font-size: 17px;
@@ -291,8 +290,7 @@
     .bicon.fast { border: 1px solid rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
     .bicon.verified { border: 1px solid var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
     .bicon.top { border: 1px solid rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
-    .bicon.today { border: 1px solid rgba(255,100,50,0.25); background: rgba(255,100,50,0.08); color: rgba(255,100,50,0.95); }
-    .bicon.after { border: 1px solid rgba(150,100,255,0.25); background: rgba(150,100,255,0.08); color: rgba(150,100,255,0.95); }
+
     
     .bicon:hover::after {
       content: attr(data-tooltip);
@@ -336,14 +334,163 @@
       }
     }
 
+    /* Mobile: Ranked Cards Layout */
     @media (max-width: 680px) {
       .board-header { display: none; }
+      
+      /* Hide desktop row structure on mobile */
       .row {
-        grid-template-columns: 36px 1fr auto;
-        gap: 10px;
-        padding: 10px 14px;
+        display: none !important;
       }
-      .area, .metric, .price, .badge-cell { display: none; }
+      
+      /* Mobile card container */
+      .board {
+        border: none;
+        background: transparent;
+      }
+      
+      /* Mobile card styling */
+      .taskleader-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      /* Rank badge - top left corner */
+      .taskleader-card::before {
+        content: attr(data-rank);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 800;
+        background: rgba(255,255,255,0.08);
+        border-bottom-right-radius: 12px;
+        z-index: 2;
+      }
+      
+      .taskleader-card[data-rank="1"]::before {
+        background: rgba(255,184,0,0.9);
+        color: #000;
+      }
+      
+      .taskleader-card[data-rank="2"]::before {
+        background: rgba(192,192,192,0.9);
+        color: #000;
+      }
+      
+      .taskleader-card[data-rank="3"]::before {
+        background: rgba(205,127,50,0.9);
+        color: #fff;
+      }
+      
+      /* Card content wrapper */
+      .card-content {
+        padding: 16px 16px 12px 52px;
+      }
+      
+      /* Category pill */
+      .card-category {
+        display: inline-block;
+        font-size: 11px;
+        padding: 3px 8px;
+        background: rgba(0,102,255,0.15);
+        color: var(--blue);
+        border-radius: 10px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      
+      /* Name and area */
+      .card-name {
+        font-size: 17px;
+        font-weight: 700;
+        color: #fff;
+        text-decoration: none;
+        display: block;
+        margin-bottom: 4px;
+      }
+      
+      .card-area {
+        font-size: 13px;
+        color: rgba(255,255,255,0.5);
+        margin-bottom: 12px;
+      }
+      
+      /* Stats row: Response | Reliability | Price */
+      .card-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 12px;
+        background: rgba(0,0,0,0.2);
+        border-radius: 8px;
+        margin-bottom: 12px;
+      }
+      
+      .card-stat {
+        text-align: center;
+      }
+      
+      .card-stat-value {
+        font-size: 16px;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 4px;
+      }
+      
+      .card-stat-label {
+        font-size: 10px;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .card-stat.response .card-stat-value { color: rgba(0,200,83,0.9); }
+      .card-stat.reliability .card-stat-value { color: rgba(255,184,0,0.9); }
+      .card-stat.price .card-stat-value { color: #fff; }
+      
+      /* Badges row */
+      .card-badges {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+        padding: 0 16px;
+      }
+      
+      /* Profile CTA */
+      .card-cta {
+        display: block;
+        width: 100%;
+        padding: 14px;
+        background: rgba(0,102,255,0.12);
+        border-top: 1px solid rgba(0,102,255,0.2);
+        color: #fff;
+        text-align: center;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+        transition: background 0.15s;
+      }
+      
+      .card-cta:hover {
+        background: rgba(0,102,255,0.2);
+      }
+    }
+    
+    /* Desktop: hide mobile cards, show desktop rows */
+    @media (min-width: 681px) {
+      .taskleader-card { display: none !important; }
+      .row { display: grid !important; }
     }
   </style>
 </head>
@@ -375,8 +522,6 @@
       <span class="item" title="Responds in under 5 minutes"><span class="ic fast">⚡</span> Fast</span>
       <span class="item" title="Identity & background verified"><span class="ic verified">✓</span> Verified</span>
       <span class="item" title="Top 10% performance score"><span class="ic top">🏆</span> Top</span>
-      <span class="item" title="Available for bookings today"><span class="ic today">☀</span> Today</span>
-      <span class="item" title="Available evenings & weekends"><span class="ic after">🌙</span> After Hours</span>
     </div>
 
     <div class="section-heading" id="top3Heading">Top 3 by Response</div>
@@ -423,8 +568,6 @@
       if (p.response <= 5) badges.push('<span class="bicon fast" data-tooltip="Fast Responder">⚡</span>');
       if (p.verified) badges.push('<span class="bicon verified" data-tooltip="Verified">✓</span>');
       if (p.top) badges.push('<span class="bicon top" data-tooltip="Top Performer">🏆</span>');
-      if (p.today) badges.push('<span class="bicon today" data-tooltip="Available Today">☀</span>');
-      if (p.after) badges.push('<span class="bicon after" data-tooltip="After Hours">🌙</span>');
       return badges.slice(0, 3).join('');
     }
 
@@ -450,7 +593,7 @@
           <div class="taskleader-cell">
             <div class="avatar"><img src="${avatarUrl}" alt=""></div>
             <div class="name-col">
-              <a class="name" href="#">${p.name}</a>
+              <a class="name" href="profile.html?id=${p.id}">${p.name}</a>
               <div class="area">Base: ${p.area}</div>
             </div>
           </div>
@@ -458,21 +601,58 @@
           <div class="metric reliability">${p.reliability}%</div>
           <div class="price">$${p.price}/hr</div>
           <div class="badge-cell">${renderBadges(p)}</div>
-          <button class="wa">WhatsApp</button>
+          <button class="wa" onclick="location.href='profile.html?id=${p.id}'">Connect</button>
+        </div>
+      `;
+    }
+
+    function renderMobileCard(p, rank, categoryName) {
+      return `
+        <div class="taskleader-card" data-rank="${rank}">
+          <div class="card-content">
+            <span class="card-category">${categoryName}</span>
+            <a class="card-name" href="profile.html?id=${p.id}">${p.name}</a>
+            <div class="card-area">📍 ${p.area}</div>
+          </div>
+          <div class="card-stats">
+            <div class="card-stat response">
+              <span class="card-stat-value">${formatResp(p.response)}</span>
+              <span class="card-stat-label">Response</span>
+            </div>
+            <div class="card-stat reliability">
+              <span class="card-stat-value">${p.reliability}%</span>
+              <span class="card-stat-label">Reliability</span>
+            </div>
+            <div class="card-stat price">
+              <span class="card-stat-value">$${p.price}/hr</span>
+              <span class="card-stat-label">Price</span>
+            </div>
+          </div>
+          <div class="card-badges">${renderBadges(p)}</div>
+          <a class="card-cta" href="profile.html?id=${p.id}">View Profile →</a>
         </div>
       `;
     }
 
     function render() {
       const sorted = sortProviders();
+      const categoryName = document.querySelector('h1 span')?.textContent || 'Handyman';
       
       document.getElementById('top3Heading').textContent = `Top 3 by ${sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}`;
       
       const top3 = sorted.slice(0, 3);
-      document.getElementById('top3').innerHTML = renderHeader() + top3.map((p, i) => renderRow(p, i + 1)).join('');
-      
       const rest = sorted.slice(3);
-      document.getElementById('board').innerHTML = renderHeader() + rest.map((p, i) => renderRow(p, i + 4)).join('');
+      
+      // Desktop: horizontal table
+      const top3Desktop = renderHeader() + top3.map((p, i) => renderRow(p, i + 1)).join('');
+      const boardDesktop = renderHeader() + rest.map((p, i) => renderRow(p, i + 4)).join('');
+      
+      // Mobile: ranked cards
+      const top3Mobile = top3.map((p, i) => renderMobileCard(p, i + 1, categoryName)).join('');
+      const boardMobile = rest.map((p, i) => renderMobileCard(p, i + 4, categoryName)).join('');
+      
+      document.getElementById('top3').innerHTML = top3Desktop + top3Mobile;
+      document.getElementById('board').innerHTML = boardDesktop + boardMobile;
     }
 
     function setSort(mode) {
