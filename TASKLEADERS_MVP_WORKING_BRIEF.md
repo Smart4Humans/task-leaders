@@ -529,4 +529,94 @@ Anything that adds complexity without improving trust or connection speed should
 
 ---
 
+## Multi-City Scalability Architecture (Added 2026-03-12)
+
+### Principle
+TaskLeaders must be architected for multi-city expansion from day one. City/location is a first-class product layer, not hardcoded static copy.
+
+### Current MVP (Vancouver-Only) — What to Implement Now
+
+| Element | Current Implementation | Future-Ready Structure |
+|---------|------------------------|------------------------|
+| **Header location** | "Vancouver" in grey beside logo | Keep as dynamic variable, not hardcoded text |
+| **Page titles** | "TaskLeaders — Vancouver's fastest..." | Structure as "TaskLeaders — {city} | {tagline}" |
+| **Category pages** | Implicitly Vancouver | URL pattern: `/category.html?city=vancouver&cat=handyman` |
+| **Provider records** | Area field ("East Van", "Burnaby") | Add explicit `city` field to data model |
+| **Concierge routing** | Single VIP Concierge page | Structure for city-aware routing later |
+
+### What to Structure Now for Future Multi-City
+
+1. **Data Model**
+   ```javascript
+   // Provider record structure (MVP v0.2+)
+   {
+     id: 1,
+     name: "East Van Handyman",
+     city: "vancouver",        // NEW: explicit city field
+     area: "East Van",         // neighborhood within city
+     category: "handyman",
+     // ... other fields
+   }
+   ```
+
+2. **URL Patterns**
+   - Current: `category.html?cat=handyman`
+   - Future-ready: `category.html?city=vancouver&cat=handyman`
+   - Future: `/vancouver/handyman` (clean URLs)
+
+3. **Header Component**
+   ```html
+   <!-- Current -->
+   <span class="logo">TaskLeaders</span>
+   <span class="location">Vancouver</span>
+   
+   <!-- Future: clickable city selector -->
+   <span class="logo">TaskLeaders</span>
+   <button class="location-selector">Vancouver ▼</button>
+   ```
+
+4. **Page Title Template**
+   ```javascript
+   const pageTitle = `TaskLeaders — ${cityName}'s fastest way to find local help`;
+   ```
+
+### What NOT to Hardcode
+
+- ❌ City name in page titles as static text
+- ❌ City-specific copy without variable substitution
+- ❌ Vancouver-only provider queries
+- ❌ Single-city concierge assumption
+
+### Future Multi-City Features (Post-MVP)
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| City selector dropdown | Header location becomes clickable | Post-MVP |
+| City-specific landing pages | `/vancouver`, `/calgary`, `/toronto` | Post-MVP |
+| City-aware search | Providers filtered by selected city | Post-MVP |
+| City-aware concierge | VIP requests routed to city-specific founder | Post-MVP |
+| Multi-city provider onboarding | Application asks for primary city | Post-MVP |
+| City expansion playbook | Documented process for launching new cities | Post-MVP |
+
+### Implementation Rule for MVP
+
+**Structure for multi-city, implement for Vancouver.**
+
+Every city reference should be:
+- Stored as a variable, not inline text
+- Passed through a single source of truth
+- Easy to change from "Vancouver" to a dynamic value
+
+Example:
+```javascript
+// config.js (MVP)
+const CURRENT_CITY = 'vancouver';
+const CURRENT_CITY_DISPLAY = 'Vancouver';
+
+// Usage
+<h1>TaskLeaders — {CURRENT_CITY_DISPLAY}</h1>
+```
+
+---
+
 *End of current MVP working brief.*

@@ -1,4 +1,8 @@
+> Note: This document is the original baseline vision as of March 9, 2026.
+> The current MVP source of truth is TASKLEADERS_MVP_WORKING_BRIEF.md.
+
 # TaskLeaders — Product Specification
+
 
 **Version:** 1.1  
 **Last Updated:** March 9, 2026  

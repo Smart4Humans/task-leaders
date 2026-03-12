@@ -410,7 +410,18 @@
         margin-bottom: 8px;
       }
       
-      /* Name and area */
+      /* Name and area (now grouped with avatar) */
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .card-title {
+        min-width: 0;
+      }
+
       .card-name {
         font-size: 17px;
         font-weight: 700;
@@ -418,12 +429,14 @@
         text-decoration: none;
         display: block;
         margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       
       .card-area {
         font-size: 13px;
         color: rgba(255,255,255,0.5);
-        margin-bottom: 12px;
       }
       
       /* Stats row: Response | Reliability | Price */
@@ -607,12 +620,19 @@
     }
 
     function renderMobileCard(p, rank, categoryName) {
+      // Match desktop avatar source logic (Dicebear initials)
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=0b1020&textColor=ffffff`;
       return `
         <div class="taskleader-card" data-rank="${rank}">
           <div class="card-content">
             <span class="card-category">${categoryName}</span>
-            <a class="card-name" href="profile.html?id=${p.id}">${p.name}</a>
-            <div class="card-area">📍 ${p.area}</div>
+            <div class="card-header">
+              <div class="avatar"><img src="${avatarUrl}" alt=""></div>
+              <div class="card-title">
+                <a class="card-name" href="profile.html?id=${p.id}">${p.name}</a>
+                <div class="card-area">📍 ${p.area}</div>
+              </div>
+            </div>
           </div>
           <div class="card-stats">
             <div class="card-stat response">

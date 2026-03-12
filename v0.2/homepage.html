@@ -291,48 +291,61 @@
 
   <script src="js/db.js"></script>
   <script>
-    // Real Estate / Property Manager target market categories
-    // Categories only display when at least one approved, active TaskLeader exists
-    const categories = [
-      { id: 'handyman', icon: '🔧', name: 'Handyman' },
-      { id: 'plumbing', icon: '🚿', name: 'Plumbing' },
-      { id: 'electrical', icon: '⚡', name: 'Electrical' },
-      { id: 'painting', icon: '🎨', name: 'Painting' },
-      { id: 'cleaning', icon: '🧹', name: 'Cleaning' },
-      { id: 'furniture-assembly', icon: '📦', name: 'Furniture Assembly' },
-      { id: 'moving', icon: '🚚', name: 'Moving Help' },
-      { id: 'yard-work', icon: '🌿', name: 'Yard Work' }
-    ];
+    // Phase 1 wiring: homepage reads real category supply from Supabase Edge Function
+    // Canonical URL convention: homepage.html?city=vancouver
 
-    function init() {
+    // IMPORTANT: set this to your Supabase project functions base.
+    // Example: https://<PROJECT_REF>.supabase.co/functions/v1
+    const TASKLEADERS_FUNCTIONS_BASE = window.TASKLEADERS_FUNCTIONS_BASE || 'https://<PROJECT_REF>.supabase.co/functions/v1';
+
+    function getCityFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get('city') || 'vancouver').trim().toLowerCase();
+    }
+
+    function renderEmptyState(grid) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">
+          <p style="font-size: 16px; margin-bottom: 8px;">TaskLeaders coming soon to your area.</p>
+          <p style="font-size: 14px;">Check back shortly as we onboard local providers.</p>
+        </div>
+      `;
+    }
+
+    async function init() {
       const grid = document.getElementById('category-grid');
-      // RULE: Only show categories with at least one approved, active TaskLeader
-      const visibleCategories = categories.filter(cat => {
-        const count = TaskLeadersDB.getProvidersByCategory(cat.id).length;
-        return count > 0;
-      });
-      
-      // Fallback: if no categories have providers, show message instead of empty grid
-      if (visibleCategories.length === 0) {
-        grid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">
-            <p style="font-size: 16px; margin-bottom: 8px;">TaskLeaders coming soon to your area.</p>
-            <p style="font-size: 14px;">Check back shortly as we onboard local providers.</p>
-          </div>
-        `;
-        return;
+      const city = getCityFromURL();
+
+      try {
+        const res = await fetch(`${TASKLEADERS_FUNCTIONS_BASE}/public-homepage?city=${encodeURIComponent(city)}`);
+        const payload = await res.json();
+
+        if (!payload || payload.ok !== true) {
+          // If API returns a structured error, fall back to empty state (do not redesign)
+          renderEmptyState(grid);
+          return;
+        }
+
+        const categories = payload.data?.categories || [];
+        if (!Array.isArray(categories) || categories.length === 0) {
+          renderEmptyState(grid);
+          return;
+        }
+
+        grid.innerHTML = categories.map(cat => {
+          const count = Number(cat.count || 0);
+          return `
+            <a href="${cat.href || `category.html?city=${encodeURIComponent(city)}&category=${encodeURIComponent(cat.id)}`}" class="category-tile">
+              <div class="category-icon">${cat.icon || ''}</div>
+              <div class="category-name">${cat.name || cat.id}</div>
+              <div class="category-count">${count} TaskLeader${count !== 1 ? 's' : ''}</div>
+            </a>
+          `;
+        }).join('');
+      } catch (e) {
+        // Network/parse errors: safest fallback
+        renderEmptyState(grid);
       }
-      
-      grid.innerHTML = visibleCategories.map(cat => {
-        const count = TaskLeadersDB.getProvidersByCategory(cat.id).length;
-        return `
-          <a href="category.html?category=${cat.id}" class="category-tile">
-            <div class="category-icon">${cat.icon}</div>
-            <div class="category-name">${cat.name}</div>
-            <div class="category-count">${count} TaskLeader${count !== 1 ? 's' : ''}</div>
-          </a>
-        `;
-      }).join('');
     }
 
     init();

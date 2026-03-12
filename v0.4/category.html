@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title id="page-title">Category — TaskLeaders</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #0a0a1a;
+      color: #fff;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    
+    /* Header */
+    header {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .back-link {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+    }
+    .back-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    .category-title {
+      font-size: 16px;
+      font-weight: 600;
+      flex: 1;
+    }
+    
+    /* Main */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    
+    /* Summary */
+    .summary {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .summary span { display: flex; align-items: center; gap: 5px; }
+    .dot { width: 6px; height: 6px; background: #4ade80; border-radius: 50%; }
+    
+    /* Sort */
+    .sort-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .sort-btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sort-btn:hover { border-color: rgba(255,255,255,0.2); }
+    .sort-btn.active {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border-color: rgba(255,255,255,0.2);
+    }
+    
+    /* Section Title */
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+    
+    /* Provider List */
+    .provider-list {
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    
+    /* Provider Row */
+    .provider-row {
+      display: grid;
+      grid-template-columns: 28px 44px 1fr 70px 70px 60px 90px;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      align-items: center;
+      font-size: 13px;
+      transition: background 0.1s;
+    }
+    .provider-row:last-child { border-bottom: none; }
+    .provider-row:hover { background: rgba(255,255,255,0.02); }
+    .provider-row.recommended { background: rgba(0,212,255,0.04); }
+    
+    .rank {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.3);
+      text-align: center;
+    }
+    .rank.top { color: #00d4ff; }
+    
+    .provider-img {
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      overflow: hidden;
+    }
+    .provider-img img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .provider-info { min-width: 0; }
+    .provider-name {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      color: #fff;
+      text-decoration: none;
+    }
+    .provider-name:hover { color: #00d4ff; }
+    .provider-area {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .metric {
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      text-align: center;
+    }
+    .metric.response { color: #4ade80; }
+    .metric.reliability { color: #fbbf24; }
+    
+    .whatsapp-btn {
+      padding: 7px 10px;
+      border-radius: 5px;
+      border: none;
+      background: #25D366;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: background 0.15s;
+    }
+    .whatsapp-btn:hover { background: #128C7E; }
+    
+    /* Empty */
+    .empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: rgba(255,255,255,0.4);
+    }
+    .empty a { color: #00d4ff; }
+    
+    /* WhatsApp Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: #12121f;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      max-width: 380px;
+      width: 100%;
+      padding: 24px;
+    }
+    .modal h3 {
+      margin: 0 0 16px 0;
+      font-size: 17px;
+    }
+    .modal-provider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+    }
+    .modal-img {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .modal-name {
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .modal-category {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+    }
+    .message-preview {
+      background: rgba(37,211,102,0.08);
+      border-left: 3px solid #25D366;
+      padding: 12px;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.5;
+    }
+    .consent-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+    .consent-box input {
+      margin-top: 2px;
+      width: 16px;
+      height: 16px;
+    }
+    .consent-box span {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.4;
+    }
+    .modal-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 6px;
+      border: none;
+      background: #25D366;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    .modal-btn:disabled {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.4);
+      cursor: not-allowed;
+    }
+    .modal-cancel {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    /* Mobile */
+    @media (max-width: 640px) {
+      .provider-row {
+        grid-template-columns: 24px 40px 1fr auto;
+        gap: 10px;
+        padding: 14px 12px;
+      }
+      .provider-img { width: 36px; height: 36px; font-size: 16px; }
+      .metric { display: none; }
+      .provider-info {
+        grid-column: 3;
+      }
+      .whatsapp-btn {
+        grid-column: 4;
+        padding: 8px;
+        min-width: 44px;
+        min-height: 44px;
+      }
+      .whatsapp-btn span { display: none; }
+      /* Show metrics inline on mobile */
+      .provider-area::after {
+        content: attr(data-metrics);
+        display: block;
+        margin-top: 3px;
+        font-size: 11px;
+        color: rgba(255,255,255,0.45);
+      }
+    }
+    
+    /* Desktop */
+    @media (min-width: 768px) {
+      header { padding: 16px 24px; }
+      main { padding: 20px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="homepage.html" class="back-link">← Back</a>
+    <span class="category-title" id="category-title">Loading...</span>
+  </header>
+
+  <main>
+    <div class="summary">
+      <span><span class="dot"></span> <span id="available-count">0</span> available</span>
+      <span>⚡ <span id="avg-response">--</span> avg response</span>
+      <span id="total-count">0 TaskLeaders</span>
+    </div>
+
+    <div class="sort-bar">
+      <button class="sort-btn active" onclick="setSort('default')">Rank</button>
+      <button class="sort-btn" onclick="setSort('response_time')">Response</button>
+      <button class="sort-btn" onclick="setSort('reliability')">Reliability</button>
+      <button class="sort-btn" onclick="setSort('price')">Price</button>
+    </div>
+
+    <div class="section-title">⭐ Recommended</div>
+    <div class="provider-list" id="recommended-list">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="section-title">All TaskLeaders</div>
+    <div class="provider-list" id="provider-list">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="empty" id="empty-state" style="display: none;">
+      <p>No providers in this category yet.</p>
+      <p><a href="become-task-leader.html">Be the first to apply</a></p>
+    </div>
+  </main>
+
+  <!-- WhatsApp Modal -->
+  <div class="modal-overlay" id="whatsapp-modal">
+    <div class="modal">
+      <h3>Contact Provider</h3>
+      <div class="modal-provider">
+        <div class="modal-img" id="modal-img">👤</div>
+        <div>
+          <div class="modal-name" id="modal-name"></div>
+          <div class="modal-category" id="modal-category"></div>
+        </div>
+      </div>
+      <div class="message-preview">
+        "Hi! I found you on TaskLeaders and need help with <span id="modal-cat-name"></span>."
+      </div>
+      <label class="consent-box">
+        <input type="checkbox" id="consent-check">
+        <span>I agree to receive follow-up messages from TaskLeaders related to this inquiry.</span>
+      </label>
+      <button class="modal-btn" id="continue-btn" onclick="proceedToWhatsApp()">Continue to WhatsApp</button>
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryId = urlParams.get('category') || 'painting';
+    let currentSort = 'default';
+    let selectedProvider = null;
+
+    // Extended sample data for demo
+    const extendedProviders = [
+      { business_name: "Mike's Painting", contact_name: "Mike Johnson", whatsapp_number: "16045551234", category: "painting", service_area: "Vancouver", hourly_rate: 55, response_time_minutes: 2, reliability_score: 4.9, response_rate: 98, approved: true },
+      { business_name: "Quick Coat Pro", contact_name: "Sarah Chen", whatsapp_number: "16045555678", category: "painting", service_area: "Burnaby", hourly_rate: 48, response_time_minutes: 4, reliability_score: 4.7, response_rate: 96, approved: true },
+      { business_name: "Budget Brush Co", contact_name: "David Kim", whatsapp_number: "16045559012", category: "painting", service_area: "Richmond", hourly_rate: 42, response_time_minutes: 8, reliability_score: 4.5, response_rate: 92, approved: true },
+      { business_name: "Elite Painters", contact_name: "James Wilson", whatsapp_number: "16045553456", category: "painting", service_area: "North Van", hourly_rate: 68, response_time_minutes: 3, reliability_score: 4.8, response_rate: 97, approved: true },
+      { business_name: "Fast Finish", contact_name: "Maria Garcia", whatsapp_number: "16045557890", category: "painting", service_area: "Vancouver", hourly_rate: 52, response_time_minutes: 5, reliability_score: 4.6, response_rate: 94, approved: true },
+      { business_name: "Precision Paint", contact_name: "Tom Lee", whatsapp_number: "16045552345", category: "painting", service_area: "Burnaby", hourly_rate: 58, response_time_minutes: 6, reliability_score: 4.7, response_rate: 95, approved: true },
+      { business_name: "Color Masters", contact_name: "Lisa Wong", whatsapp_number: "16045556789", category: "painting", service_area: "Richmond", hourly_rate: 60, response_time_minutes: 4, reliability_score: 4.8, response_rate: 96, approved: true },
+      { business_name: "Pro Painters", contact_name: "Alex Brown", whatsapp_number: "16045551239", category: "painting", service_area: "Vancouver", hourly_rate: 65, response_time_minutes: 3, reliability_score: 4.9, response_rate: 98, approved: true },
+      { business_name: "Smooth Coats", contact_name: "Emma Davis", whatsapp_number: "16045554567", category: "painting", service_area: "North Van", hourly_rate: 50, response_time_minutes: 7, reliability_score: 4.5, response_rate: 93, approved: true },
+      { business_name: "Prime Painting", contact_name: "Chris Taylor", whatsapp_number: "16045558901", category: "painting", service_area: "Burnaby", hourly_rate: 54, response_time_minutes: 5, reliability_score: 4.6, response_rate: 94, approved: true },
+      { business_name: "Fresh Walls", contact_name: "Pat Miller", whatsapp_number: "16045552341", category: "painting", service_area: "Vancouver", hourly_rate: 47, response_time_minutes: 9, reliability_score: 4.4, response_rate: 91, approved: true },
+      { business_name: "Top Coat", contact_name: "Sam Green", whatsapp_number: "16045556712", category: "painting", service_area: "Richmond", hourly_rate: 56, response_time_minutes: 4, reliability_score: 4.7, response_rate: 95, approved: true }
+    ];
+
+    function init() {
+      // Add extended providers if needed for demo
+      const existing = TaskLeadersDB.getProvidersByCategory(categoryId);
+      if (existing.length < 5) {
+        extendedProviders.forEach(p => {
+          if (!TaskLeadersDB.providers.find(ep => ep.whatsapp_number === p.whatsapp_number)) {
+            p.provider_id = 'prov_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            p.founding_provider_status = false;
+            p.created_at = new Date().toISOString();
+            TaskLeadersDB.providers.push(p);
+          }
+        });
+        TaskLeadersDB.saveToStorage();
+      }
+
+      const category = TaskLeadersDB.categories.find(c => c.id === categoryId);
+      if (category) {
+        document.getElementById('category-title').textContent = `${category.icon} ${category.name}`;
+        document.title = `${category.name} — TaskLeaders`;
+      }
+      loadProviders();
+    }
+
+    function loadProviders() {
+      const providers = TaskLeadersDB.getProvidersByCategory(categoryId);
+      const stats = TaskLeadersDB.getCategoryStats(categoryId);
+
+      document.getElementById('total-count').textContent = `${providers.length} TaskLeader${providers.length !== 1 ? 's' : ''}`;
+      document.getElementById('available-count').textContent = stats.available_now;
+      document.getElementById('avg-response').textContent = stats.avg_response_time > 0 ? `~${stats.avg_response_time}m` : '--';
+
+      if (providers.length === 0) {
+        document.getElementById('recommended-list').style.display = 'none';
+        document.getElementById('provider-list').style.display = 'none';
+        document.getElementById('empty-state').style.display = 'block';
+        return;
+      }
+
+      // Get recommended (top 3)
+      const recommended = TaskLeadersDB.getRecommendedProviders(categoryId, 3);
+      renderList('recommended-list', recommended, true);
+
+      // Get all sorted
+      const sorted = TaskLeadersDB.sortProviders(providers, currentSort);
+      renderList('provider-list', sorted, false);
+    }
+
+    function renderList(elementId, providers, isRecommended) {
+      const list = document.getElementById(elementId);
+      const categoryName = TaskLeadersDB.categories.find(c => c.id === categoryId)?.name || categoryId;
+
+      list.innerHTML = providers.map((p, index) => {
+        const rank = isRecommended ? index + 1 : TaskLeadersDB.getProvidersByCategory(categoryId).indexOf(p) + 1;
+        const rankClass = rank <= 3 ? 'top' : '';
+        const responseTime = TaskLeadersDB.formatResponseTime(p.response_time_minutes);
+        const reliability = Math.round(p.reliability_score * 20);
+        const mobileMetrics = `⚡ ${responseTime} • ${reliability}% • $${p.hourly_rate}`;
+
+        return `
+          <div class="provider-row ${isRecommended ? 'recommended' : ''}">
+            <span class="rank ${rankClass}">${rank}</span>
+            <div class="provider-img">👤</div>
+            <div class="provider-info">
+              <a href="profile.html?id=${p.provider_id}" class="provider-name">${escapeHtml(p.business_name)}</a>
+              <div class="provider-area" data-metrics="${mobileMetrics}">${escapeHtml(p.service_area)}</div>
+            </div>
+            <span class="metric response">${responseTime}</span>
+            <span class="metric reliability">${reliability}%</span>
+            <span class="metric">$${p.hourly_rate}</span>
+            <button class="whatsapp-btn" onclick="openWhatsAppModal('${p.provider_id}', '${categoryName}')">
+              💬 <span>WhatsApp</span>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setSort(sortBy) {
+      currentSort = sortBy;
+      document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      loadProviders();
+    }
+
+    function openWhatsAppModal(providerId, categoryName) {
+      const provider = TaskLeadersDB.getProviderById(providerId);
+      if (!provider) return;
+
+      selectedProvider = provider;
+      document.getElementById('modal-name').textContent = provider.business_name;
+      document.getElementById('modal-category').textContent = provider.service_area;
+      document.getElementById('modal-cat-name').textContent = categoryName;
+      document.getElementById('consent-check').checked = false;
+      document.getElementById('whatsapp-modal').classList.add('active');
+    }
+
+    function proceedToWhatsApp() {
+      if (!selectedProvider) return;
+
+      const hasConsent = document.getElementById('consent-check').checked;
+      console.log('Inquiry:', { provider: selectedProvider.provider_id, consent: hasConsent });
+
+      const categoryName = TaskLeadersDB.categories.find(c => c.id === selectedProvider.category)?.name || selectedProvider.category;
+      const message = encodeURIComponent(`Hi! I found you on TaskLeaders and need help with ${categoryName}.`);
+      const whatsappUrl = `https://wa.me/${selectedProvider.whatsapp_number}?text=${message}`;
+
+      closeModal();
+      window.open(whatsappUrl, '_blank');
+    }
+
+    function closeModal() {
+      document.getElementById('whatsapp-modal').classList.remove('active');
+      selectedProvider = null;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    document.getElementById('whatsapp-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    init();
+  </script>
+</body>
+</html>

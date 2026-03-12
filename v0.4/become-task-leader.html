@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Become a Task Leader — TaskLeaders</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #0a0a1a;
+      color: #fff;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .back-link {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+    }
+    
+    main {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 28px 16px 48px;
+    }
+    
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+    }
+    .subtitle {
+      color: rgba(255,255,255,0.55);
+      font-size: 15px;
+      margin-bottom: 24px;
+    }
+    
+    .benefits {
+      background: rgba(0,212,255,0.05);
+      border: 1px solid rgba(0,212,255,0.12);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 28px;
+    }
+    .benefits-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #00d4ff;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .benefits-list {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+    }
+    .benefits-list li { margin-bottom: 6px; }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .form-group label .required { color: #ff6b6b; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #00d4ff;
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(255,255,255,0.3);
+    }
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    .form-group select option {
+      background: #0a0a1a;
+      color: #fff;
+    }
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 6px;
+      border: none;
+      background: #00d4ff;
+      color: #000;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .submit-btn:disabled {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.3);
+      cursor: not-allowed;
+    }
+    
+    .success {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success.active { display: block; }
+    .success-icon {
+      font-size: 52px;
+      margin-bottom: 16px;
+    }
+    .success h2 {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+    .success p {
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 24px;
+    }
+    .home-btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      color: #fff;
+      font-size: 14px;
+      text-decoration: none;
+    }
+    
+    @media (min-width: 768px) {
+      main { padding: 32px 24px 64px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="homepage.html" class="back-link">← Back</a>
+  </header>
+
+  <main>
+    <div id="form-state">
+      <h1>Become a Task Leader</h1>
+      <p class="subtitle">Apply to join Vancouver's curated service provider community.</p>
+
+      <div class="benefits">
+        <div class="benefits-title">Founding Provider Benefits</div>
+        <ul class="benefits-list">
+          <li><strong>2 months FREE</strong> — No subscription fees</li>
+          <li><strong>Keep 100%</strong> of your earnings</li>
+          <li><strong>Founding badge</strong> — Permanent status</li>
+          <li><strong>Priority placement</strong> — Top of search results</li>
+        </ul>
+      </div>
+
+      <form id="apply-form" onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label>Contact Name <span class="required">*</span></label>
+          <input type="text" id="contactName" placeholder="Your full name" required>
+        </div>
+
+        <div class="form-group">
+          <label>Business Name <span class="required">*</span></label>
+          <input type="text" id="businessName" placeholder="Your business name" required>
+        </div>
+
+        <div class="form-group">
+          <label>WhatsApp Number <span class="required">*</span></label>
+          <input type="tel" id="whatsappNumber" placeholder="+1 (604) 555-1234" required>
+        </div>
+
+        <div class="form-group">
+          <label>Service Category <span class="required">*</span></label>
+          <select id="category" required>
+            <option value="">Select a category</option>
+            <option value="plumbing">Plumbing</option>
+            <option value="electrical">Electrical</option>
+            <option value="painting">Painting</option>
+            <option value="cleaning">Cleaning</option>
+            <option value="handyman">Handyman</option>
+            <option value="furniture-assembly">Furniture Assembly</option>
+            <option value="moving">Moving Help</option>
+            <option value="yard-work">Yard Work</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Service Area <span class="required">*</span></label>
+          <input type="text" id="serviceArea" placeholder="e.g., Vancouver, Burnaby, Richmond" required>
+        </div>
+
+        <div class="form-group">
+          <label>Hourly Rate ($) <span class="required">*</span></label>
+          <input type="number" id="hourlyRate" placeholder="75" min="15" required>
+        </div>
+
+        <div class="form-group">
+          <label>Short Description <span class="required">*</span></label>
+          <textarea id="description" placeholder="Tell us about your experience and services..." required></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Submit Application</button>
+      </form>
+    </div>
+
+    <div class="success" id="success-state">
+      <div class="success-icon">✅</div>
+      <h2>Application Received!</h2>
+      <p>Thank you for applying. We will contact you via WhatsApp within 24 hours for verification.</p>
+      <a href="homepage.html" class="home-btn">Back to Home</a>
+    </div>
+  </main>
+
+  <script src="js/db.js"></script>
+  <script>
+    function handleSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      TaskLeadersDB.addProvider({
+        contact_name: document.getElementById('contactName').value.trim(),
+        business_name: document.getElementById('businessName').value.trim(),
+        whatsapp_number: document.getElementById('whatsappNumber').value.trim(),
+        category: document.getElementById('category').value,
+        service_area: document.getElementById('serviceArea').value.trim(),
+        hourly_rate: document.getElementById('hourlyRate').value,
+        description: document.getElementById('description').value.trim(),
+        founding_provider_status: true,
+        response_time_minutes: 5,
+        reliability_score: 0,
+        response_rate: 95
+      });
+
+      document.getElementById('form-state').style.display = 'none';
+      document.getElementById('success-state').classList.add('active');
+    }
+  </script>
+</body>
+</html>
