@@ -709,6 +709,27 @@
     // Read-layer state
     let connectStatus = 'gated';
     let connectMessage = 'Direct connect is not enabled yet.';
+    let providerWhatsApp = null;
+
+    // Consent gating — single global versioned key
+    const CONSENT_VERSION = '2026-03-13';
+    const CONSENT_KEY = 'taskleaders_connect_consent_v' + CONSENT_VERSION;
+
+    function hasStoredConsent() {
+      try {
+        return localStorage.getItem(CONSENT_KEY) === '1';
+      } catch (_e) {
+        return false;
+      }
+    }
+
+    function storeConsent() {
+      try {
+        localStorage.setItem(CONSENT_KEY, '1');
+      } catch (_e) {
+        // swallow
+      }
+    }
 
     // Lead event logging (best-effort; never block UX)
     function getOrCreateSessionId() {
@@ -864,6 +885,7 @@
       const connect = payload?.data?.connect;
       connectStatus = connect?.status || 'gated';
       connectMessage = connect?.message || connectMessage;
+      providerWhatsApp = connect?.handoff?.whatsapp_e164 || null;
 
       // Nav links: keep back arrow consistent with Category page routing
       const back = document.querySelector('a.back');
@@ -908,11 +930,19 @@
 
     function openModal() {
       setLegalReturnLinks();
+
+      // Check for prior consent and pre-check checkbox if exists
+      const hadPriorConsent = hasStoredConsent();
+      document.getElementById('consentRequired').checked = hadPriorConsent;
+
       document.getElementById('modal').classList.add('active');
       document.getElementById('nameInput').focus();
 
-      // Lead event: connect modal opened (handoff context optional)
-      logLeadEventBestEffort({ event_type: 'connect_modal_opened' });
+      // Lead event: connect modal opened
+      logLeadEventBestEffort({
+        event_type: 'connect_modal_opened',
+        had_prior_consent: hadPriorConsent
+      });
     }
 
     function closeModal() {
@@ -932,13 +962,13 @@
     function connectNow() {
       const phone = document.getElementById('phoneInput').value.trim();
       const consent = document.getElementById('consentRequired').checked;
+      const hadPriorConsent = hasStoredConsent();
 
-      // Lead event: connect submit attempted (handoff context required here)
+      // Lead event: connect submit attempted
       logLeadEventBestEffort({
         event_type: 'connect_submit_attempted',
         consent_checked: Boolean(consent),
-        handoff_channel: 'whatsapp',
-        handoff_mode: 'gated'
+        had_prior_consent: hadPriorConsent
       });
 
       if (!phone || phone.length < 10) {
@@ -951,14 +981,33 @@
         return;
       }
 
-      // MVP safety rule: no direct WhatsApp handoff until consent / Terms / Privacy checkpoint is finalized.
-      if (connectStatus !== 'enabled') {
-        showError(connectMessage || 'Direct connect is not enabled yet.');
+      if (!providerWhatsApp) {
+        showError('Unable to connect. Please try again later.');
         return;
       }
 
-      // Future: if/when enabled, this is where we would open WhatsApp using a server-provided deeplink.
-      showError('Connect is not enabled yet.');
+      // First-time consent: store it
+      const isFirstTime = !hadPriorConsent;
+      if (isFirstTime) {
+        storeConsent();
+      }
+
+      // Lead event: consent accepted
+      logLeadEventBestEffort({
+        event_type: 'connect_consent_accepted',
+        first_time: isFirstTime
+      });
+
+      // Lead event: WhatsApp redirect initiated
+      logLeadEventBestEffort({
+        event_type: 'connect_whatsapp_redirect',
+        provider_slug: currentProviderSlug
+      });
+
+      // Redirect to WhatsApp
+      const message = 'Hi, I found you on TaskLeaders.';
+      const waUrl = 'https://wa.me/' + providerWhatsApp.replace(/\D/g, '') + '?text=' + encodeURIComponent(message);
+      window.location.href = waUrl;
     }
 
     // Expose modal handlers (used by inline onclick attributes)
