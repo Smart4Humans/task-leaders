@@ -164,6 +164,21 @@
   </main>
   <script>
     function safeBack() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const ret = params.get('return');
+        if (ret) {
+          const decoded = decodeURIComponent(ret);
+          // Basic safety: only allow same-origin returns
+          if (decoded.startsWith(window.location.origin)) {
+            window.location.href = decoded;
+            return;
+          }
+        }
+      } catch (_e) {
+        // ignore
+      }
+
       if (window.history && window.history.length > 1) {
         window.history.back();
       } else {
