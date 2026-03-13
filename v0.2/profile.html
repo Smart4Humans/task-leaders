@@ -893,7 +893,9 @@
     // Modal controls
     function setLegalReturnLinks() {
       try {
-        const returnParam = encodeURIComponent(window.location.href);
+        const returnUrl = new URL(window.location.href);
+        returnUrl.searchParams.set('reopenConnect', '1');
+        const returnParam = encodeURIComponent(returnUrl.toString());
         document.querySelectorAll('.legal-links a').forEach(a => {
           const href = a.getAttribute('href') || '';
           if (href.startsWith('terms.html')) a.setAttribute('href', `terms.html?return=${returnParam}`);
@@ -969,7 +971,24 @@
       if (e.target === this) closeModal();
     });
 
-    async function init() {
+    function reopenConnectIfRequested() {
+      const flag = getParam('reopenConnect', '');
+      if (flag !== '1') return;
+
+      // Reopen after the page is ready, then clean only the flag from the URL.
+      setTimeout(() => {
+        openModal();
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('reopenConnect');
+          window.history.replaceState({}, '', url.toString());
+        } catch (_e) {
+          // ignore
+        }
+      }, 0);
+    }
+
+    async function init() {"}
       currentCitySlug = getParam('city', 'vancouver').toLowerCase();
       currentCategorySlug = getParam('category', 'painting').toLowerCase();
       currentProviderSlug = getParam('provider', '').toLowerCase();
@@ -1011,6 +1030,7 @@
         }
 
         bindProfile(payload);
+        reopenConnectIfRequested();
       } catch (e) {
         connectStatus = 'gated';
         connectMessage = 'This profile is not available yet.';
