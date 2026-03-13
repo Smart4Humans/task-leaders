@@ -42,6 +42,7 @@
       color: #fff;
     }
     .logo .task { color: var(--blue); }
+    .nav-back,
     .nav-home {
       color: rgba(255,255,255,0.7);
       text-decoration: none;
@@ -51,6 +52,10 @@
       border: 1px solid rgba(255,255,255,0.10);
       background: rgba(255,255,255,0.02);
     }
+    .nav-back {
+      cursor: pointer;
+    }
+    .nav-back:hover,
     .nav-home:hover { background: rgba(255,255,255,0.05); color: #fff; }
 
     main {
@@ -93,8 +98,11 @@
 </head>
 <body>
   <header>
-    <a href="homepage.html" class="logo"><span class="task">Task</span>Leaders</a>
-    <a href="homepage.html" class="nav-home">← Back to Home</a>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <button type="button" class="nav-back" onclick="safeBack()">← Back</button>
+      <a href="homepage.html" class="logo"><span class="task">Task</span>Leaders</a>
+    </div>
+    <a href="homepage.html" class="nav-home">Back to Home</a>
   </header>
 
   <main>
@@ -163,5 +171,14 @@
       </p>
     </div>
   </main>
+  <script>
+    function safeBack() {
+      if (window.history && window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = 'homepage.html';
+      }
+    }
+  </script>
 </body>
 </html>
