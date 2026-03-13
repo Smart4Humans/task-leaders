@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Handyman — TaskLeaders</title>
+  <title>TaskLeaders — Category</title>
   <style>
     :root {
       --blue: #0066ff;
@@ -410,7 +410,18 @@
         margin-bottom: 8px;
       }
       
-      /* Name and area */
+      /* Name and area (now grouped with avatar) */
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .card-title {
+        min-width: 0;
+      }
+
       .card-name {
         font-size: 17px;
         font-weight: 700;
@@ -418,12 +429,14 @@
         text-decoration: none;
         display: block;
         margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       
       .card-area {
         font-size: 13px;
         color: rgba(255,255,255,0.5);
-        margin-bottom: 12px;
       }
       
       /* Stats row: Response | Reliability | Price */
@@ -501,10 +514,10 @@
   </header>
 
   <div class="content-header">
-    <h1>🔧 <span>Handyman</span> in Vancouver</h1>
+    <h1 id="categoryTitle">🔧 <span>Handyman</span> in Vancouver</h1>
     <div class="summary-line">
-      <span class="pill">⚡ Avg response ~6 min</span>
-      <span class="pill">13 TaskLeaders</span>
+      <span class="pill" id="avgResponsePill">⚡ Avg response —</span>
+      <span class="pill" id="providerCountPill">— TaskLeaders</span>
     </div>
   </div>
 
@@ -513,9 +526,9 @@
 
     <div class="sort-bar">
       <span class="sort-label">Rank by</span>
-      <button class="sort-btn active" onclick="setSort('response')">⚡ Response</button>
-      <button class="sort-btn" onclick="setSort('reliability')">✓ Reliability</button>
-      <button class="sort-btn" onclick="setSort('price')">$ Price</button>
+      <button class="sort-btn active" onclick="setSort('response', event)">⚡ Response</button>
+      <button class="sort-btn" onclick="setSort('reliability', event)">✓ Reliability</button>
+      <button class="sort-btn" onclick="setSort('price', event)">$ Price</button>
     </div>
 
     <div class="legend">
@@ -531,41 +544,119 @@
     <div class="board" id="board"></div>
   </main>
 
+  <script src="js/config.js"></script>
   <script>
-    // Demo data - 13 handyman providers
-    const demoProviders = [
-      { id: 1, name: "East Van Handyman", area: "East Van", response: 2, reliability: 98, price: 55, verified: true, top: true, today: true },
-      { id: 2, name: "Burnaby Repairs", area: "Burnaby", response: 4, reliability: 95, price: 48, verified: true, top: false, today: false },
-      { id: 3, name: "Richmond Fixers", area: "Richmond", response: 6, reliability: 92, price: 45, verified: true, top: false, today: true },
-      { id: 4, name: "New West Pros", area: "New West", response: 8, reliability: 89, price: 42, verified: false, top: false, today: false },
-      { id: 5, name: "Coquitlam Helpers", area: "Coquitlam", response: 12, reliability: 94, price: 50, verified: true, top: false, today: false, after: true },
-      { id: 6, name: "Surrey Solutions", area: "Surrey", response: 15, reliability: 87, price: 40, verified: false, top: false, today: true },
-      { id: 7, name: "Tri-Cities Elite", area: "Tri-Cities", response: 18, reliability: 96, price: 65, verified: true, top: true, today: false, after: true },
-      { id: 8, name: "North Van Experts", area: "North Van", response: 22, reliability: 85, price: 52, verified: false, top: false, today: false },
-      { id: 9, name: "Downtown QuickFix", area: "Downtown", response: 25, reliability: 91, price: 58, verified: true, top: false, today: true },
-      { id: 10, name: "Kits Repair Co", area: "Kits", response: 28, reliability: 88, price: 46, verified: false, top: false, today: false },
-      { id: 11, name: "Mt Pleasant Pros", area: "Mt Pleasant", response: 32, reliability: 93, price: 54, verified: true, top: false, today: false, after: true },
-      { id: 12, name: "West End Handyman", area: "West End", response: 38, reliability: 86, price: 44, verified: false, top: false, today: true },
-      { id: 13, name: "Vancouver All-Star", area: "Downtown", response: 42, reliability: 90, price: 60, verified: true, top: true, today: false }
-    ];
+    // Category page — Phase 1 wiring: fetch real providers from Supabase Edge Function
+    // Canonical URL convention: category.html?city=vancouver&category=handyman
 
     let sortBy = 'response';
 
+    // Read-layer state (sourced from URL first, then API)
+    let currentCitySlug = 'vancouver';
+    let currentCityName = 'Vancouver';
+
+    let currentCategorySlug = 'handyman';
+    let currentCategoryName = 'Handyman';
+    let currentCategoryIcon = '🔧';
+
+    // UI model providers (mapped from API)
+    let providers = [];
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function isFunctionsBaseConfigured(base) {
+      if (!base) return false;
+      if (typeof base !== 'string') return false;
+      const trimmed = base.trim();
+      if (!trimmed) return false;
+      if (trimmed.includes('<PROJECT_REF>')) return false;
+      if (!/^https?:\/\//i.test(trimmed)) return false;
+      return true;
+    }
+
+    function titleCaseFromSlug(slug) {
+      const s = String(slug || '').trim();
+      if (!s) return '';
+      return s
+        .split(/[-_\s]+/g)
+        .filter(Boolean)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+
+    function getCityFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get('city') || 'vancouver').trim().toLowerCase();
+    }
+
+    function getCategoryFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get('category') || 'handyman').trim().toLowerCase();
+    }
+
+    function setHeaderCopy() {
+      // Update <h1> while preserving the required structure: emoji + <span>Category</span>
+      const h1 = document.getElementById('categoryTitle');
+      if (h1) {
+        h1.innerHTML = `${escapeHtml(currentCategoryIcon || '🔧')} <span>${escapeHtml(currentCategoryName || '')}</span> in ${escapeHtml(currentCityName || '')}`;
+      }
+
+      // Document title
+      if (currentCategoryName && currentCityName) {
+        document.title = `${currentCategoryName} in ${currentCityName} — TaskLeaders`;
+      }
+
+      // Keep navigation scoped to current city
+      const back = document.querySelector('a.back');
+      const logo = document.querySelector('a.logo');
+      const homeHref = `homepage.html?city=${encodeURIComponent(currentCitySlug)}`;
+      if (back) back.setAttribute('href', homeHref);
+      if (logo) logo.setAttribute('href', homeHref);
+
+      // Summary pills
+      const avgEl = document.getElementById('avgResponsePill');
+      const countEl = document.getElementById('providerCountPill');
+
+      const responses = providers.map((p) => p.response).filter((v) => Number.isFinite(v));
+      const avg = responses.length ? Math.round(responses.reduce((a, b) => a + b, 0) / responses.length) : null;
+
+      if (avgEl) avgEl.textContent = `⚡ Avg response ${avg ? `~${avg} min` : '—'}`;
+      if (countEl) countEl.textContent = `${providers.length || '—'} TaskLeaders`;
+    }
+
     function formatResp(min) {
+      if (!Number.isFinite(min)) return '—';
       return `~${min} min`;
     }
 
+    function formatReliability(pct) {
+      if (!Number.isFinite(pct)) return '—';
+      return `${pct}%`;
+    }
+
+    function formatPrice(priceDollars) {
+      if (!Number.isFinite(priceDollars)) return '—';
+      return `$${priceDollars}/hr`;
+    }
+
     function sortProviders() {
-      const sorted = [...demoProviders];
-      if (sortBy === 'response') sorted.sort((a, b) => a.response - b.response);
-      else if (sortBy === 'reliability') sorted.sort((a, b) => b.reliability - a.reliability);
-      else if (sortBy === 'price') sorted.sort((a, b) => a.price - b.price);
+      const sorted = [...providers];
+      if (sortBy === 'response') sorted.sort((a, b) => (a.response ?? 999999) - (b.response ?? 999999));
+      else if (sortBy === 'reliability') sorted.sort((a, b) => (b.reliability ?? -1) - (a.reliability ?? -1));
+      else if (sortBy === 'price') sorted.sort((a, b) => (a.price ?? 999999) - (b.price ?? 999999));
       return sorted;
     }
 
     function renderBadges(p) {
       const badges = [];
-      if (p.response <= 5) badges.push('<span class="bicon fast" data-tooltip="Fast Responder">⚡</span>');
+      if (Number.isFinite(p.response) && p.response <= 5) badges.push('<span class="bicon fast" data-tooltip="Fast Responder">⚡</span>');
       if (p.verified) badges.push('<span class="bicon verified" data-tooltip="Verified">✓</span>');
       if (p.top) badges.push('<span class="bicon top" data-tooltip="Top Performer">🏆</span>');
       return badges.slice(0, 3).join('');
@@ -585,34 +676,51 @@
       `;
     }
 
+    function providerProfileHref(p) {
+      const params = new URLSearchParams();
+      params.set('city', currentCitySlug);
+      params.set('category', currentCategorySlug);
+      if (p.providerSlug) params.set('provider', p.providerSlug);
+      return `profile.html?${params.toString()}`;
+    }
+
     function renderRow(p, rank) {
       const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=0b1020&textColor=ffffff`;
+      const href = providerProfileHref(p);
       return `
         <div class="row">
           <div class="rank ${rank <= 3 ? 'top' : ''}">${rank}</div>
           <div class="taskleader-cell">
             <div class="avatar"><img src="${avatarUrl}" alt=""></div>
             <div class="name-col">
-              <a class="name" href="profile.html?id=${p.id}">${p.name}</a>
-              <div class="area">Base: ${p.area}</div>
+              <a class="name" href="${href}">${escapeHtml(p.name)}</a>
+              <div class="area">Base: ${escapeHtml(p.area)}</div>
             </div>
           </div>
           <div class="metric response">${formatResp(p.response)}</div>
-          <div class="metric reliability">${p.reliability}%</div>
-          <div class="price">$${p.price}/hr</div>
+          <div class="metric reliability">${formatReliability(p.reliability)}</div>
+          <div class="price">${formatPrice(p.price)}</div>
           <div class="badge-cell">${renderBadges(p)}</div>
-          <button class="wa" onclick="location.href='profile.html?id=${p.id}'">Connect</button>
+          <button class="wa" onclick="location.href='${href}'">Connect</button>
         </div>
       `;
     }
 
     function renderMobileCard(p, rank, categoryName) {
+      // Match desktop avatar source logic (Dicebear initials)
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=0b1020&textColor=ffffff`;
+      const href = providerProfileHref(p);
       return `
         <div class="taskleader-card" data-rank="${rank}">
           <div class="card-content">
-            <span class="card-category">${categoryName}</span>
-            <a class="card-name" href="profile.html?id=${p.id}">${p.name}</a>
-            <div class="card-area">📍 ${p.area}</div>
+            <span class="card-category">${escapeHtml(categoryName)}</span>
+            <div class="card-header">
+              <div class="avatar"><img src="${avatarUrl}" alt=""></div>
+              <div class="card-title">
+                <a class="card-name" href="${href}">${escapeHtml(p.name)}</a>
+                <div class="card-area">📍 ${escapeHtml(p.area)}</div>
+              </div>
+            </div>
           </div>
           <div class="card-stats">
             <div class="card-stat response">
@@ -620,49 +728,129 @@
               <span class="card-stat-label">Response</span>
             </div>
             <div class="card-stat reliability">
-              <span class="card-stat-value">${p.reliability}%</span>
+              <span class="card-stat-value">${formatReliability(p.reliability)}</span>
               <span class="card-stat-label">Reliability</span>
             </div>
             <div class="card-stat price">
-              <span class="card-stat-value">$${p.price}/hr</span>
+              <span class="card-stat-value">${formatPrice(p.price)}</span>
               <span class="card-stat-label">Price</span>
             </div>
           </div>
           <div class="card-badges">${renderBadges(p)}</div>
-          <a class="card-cta" href="profile.html?id=${p.id}">View Profile →</a>
+          <a class="card-cta" href="${href}">View Profile →</a>
         </div>
       `;
     }
 
+    function renderEmptyState(message) {
+      const msg = message || 'TaskLeaders coming soon to your area.';
+      const emptyHtml = `
+        <div style="text-align: center; padding: 28px 18px; color: rgba(255,255,255,0.55);">
+          <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 700;">${escapeHtml(msg)}</p>
+          <p style="margin: 0; font-size: 12px; color: rgba(255,255,255,0.45);">Check back shortly as we onboard local providers.</p>
+        </div>
+      `;
+
+      document.getElementById('top3').innerHTML = emptyHtml;
+      document.getElementById('board').innerHTML = emptyHtml;
+    }
+
     function render() {
-      const sorted = sortProviders();
-      const categoryName = document.querySelector('h1 span')?.textContent || 'Handyman';
-      
       document.getElementById('top3Heading').textContent = `Top 3 by ${sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}`;
-      
+
+      if (!Array.isArray(providers) || providers.length === 0) {
+        setHeaderCopy();
+        renderEmptyState('No TaskLeaders available yet for this category.');
+        return;
+      }
+
+      const sorted = sortProviders();
+
       const top3 = sorted.slice(0, 3);
       const rest = sorted.slice(3);
-      
+
       // Desktop: horizontal table
       const top3Desktop = renderHeader() + top3.map((p, i) => renderRow(p, i + 1)).join('');
       const boardDesktop = renderHeader() + rest.map((p, i) => renderRow(p, i + 4)).join('');
-      
-      // Mobile: ranked cards
-      const top3Mobile = top3.map((p, i) => renderMobileCard(p, i + 1, categoryName)).join('');
-      const boardMobile = rest.map((p, i) => renderMobileCard(p, i + 4, categoryName)).join('');
-      
+
+      // Mobile: ranked cards (category label must come from API/init, not DOM scraping)
+      const top3Mobile = top3.map((p, i) => renderMobileCard(p, i + 1, currentCategoryName)).join('');
+      const boardMobile = rest.map((p, i) => renderMobileCard(p, i + 4, currentCategoryName)).join('');
+
       document.getElementById('top3').innerHTML = top3Desktop + top3Mobile;
       document.getElementById('board').innerHTML = boardDesktop + boardMobile;
+
+      setHeaderCopy();
     }
 
-    function setSort(mode) {
+    function setSort(mode, evt) {
       sortBy = mode;
-      document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
+      document.querySelectorAll('.sort-btn').forEach((btn) => btn.classList.remove('active'));
+      const target = evt?.target;
+      if (target && target.classList.contains('sort-btn')) target.classList.add('active');
       render();
     }
 
-    render();
+    async function init() {
+      currentCitySlug = getCityFromURL();
+      currentCategorySlug = getCategoryFromURL();
+
+      // Initial best-effort copy from slugs (will be overwritten by API)
+      currentCityName = titleCaseFromSlug(currentCitySlug) || 'Vancouver';
+      currentCategoryName = titleCaseFromSlug(currentCategorySlug) || 'Handyman';
+      currentCategoryIcon = '🔧';
+
+      setHeaderCopy();
+
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      if (!isFunctionsBaseConfigured(base)) {
+        console.warn('TaskLeaders: TASKLEADERS_FUNCTIONS_BASE is not configured; skipping network calls.');
+        renderEmptyState('TaskLeaders coming soon to your area.');
+        return;
+      }
+
+      try {
+        const url = `${base.replace(/\/$/, '')}/public-category?city=${encodeURIComponent(currentCitySlug)}&category=${encodeURIComponent(currentCategorySlug)}`;
+        const res = await fetch(url);
+        const payload = await res.json();
+
+        if (!payload || payload.ok !== true) {
+          renderEmptyState('TaskLeaders coming soon to your area.');
+          return;
+        }
+
+        currentCityName = payload.data?.city?.name || currentCityName;
+        currentCategoryName = payload.data?.category?.name || currentCategoryName;
+        currentCategoryIcon = payload.data?.category?.icon || currentCategoryIcon;
+
+        const apiProviders = payload.data?.providers || [];
+        providers = (Array.isArray(apiProviders) ? apiProviders : []).map((r) => {
+          const price = Number.isFinite(Number(r.hourly_rate_cents)) ? Math.round(Number(r.hourly_rate_cents) / 100) : null;
+          const response = Number.isFinite(Number(r.response_time_minutes)) ? Number(r.response_time_minutes) : null;
+          const reliability = Number.isFinite(Number(r.reliability_percent)) ? Number(r.reliability_percent) : null;
+          const rank = Number.isFinite(Number(r.rank)) ? Number(r.rank) : null;
+          const isFeatured = Boolean(r.is_featured);
+
+          return {
+            providerSlug: r.provider_slug,
+            name: r.display_name,
+            area: currentCityName,
+            response,
+            reliability,
+            price,
+            verified: true,
+            top: isFeatured || (rank !== null && rank <= 3),
+          };
+        });
+
+        render();
+      } catch (e) {
+        renderEmptyState('TaskLeaders coming soon to your area.');
+      }
+    }
+
+    init();
   </script>
+
 </body>
 </html>

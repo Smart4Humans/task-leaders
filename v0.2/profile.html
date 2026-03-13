@@ -542,7 +542,7 @@
 <body>
   <!-- Sticky Header (appears on scroll) -->
   <div class="sticky-header" id="stickyHeader">
-    <span class="sticky-name">Mike Johnson</span>
+    <span class="sticky-name" id="providerNameSticky">Mike Johnson</span>
     <button class="sticky-connect" onclick="openModal()">Connect</button>
   </div>
 
@@ -566,9 +566,9 @@
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-photo">
-        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face" alt="Mike Johnson" />
+        <img id="providerPhoto" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face" alt="Mike Johnson" />
       </div>
-      <h1 class="hero-name">Mike Johnson</h1>
+      <h1 class="hero-name" id="providerNameHero">Mike Johnson</h1>
       <span class="hero-category" id="heroCategory">Painting</span>
       <div class="hero-location" id="heroLocation">Vancouver</div>
     </section>
@@ -578,17 +578,17 @@
       <div class="trust-item">
         <div class="trust-icon">⚡</div>
         <div class="trust-label">Responds in</div>
-        <div class="trust-value response">~2 min</div>
+        <div class="trust-value response" id="trustResponse">~2 min</div>
       </div>
       <div class="trust-item">
         <div class="trust-icon">✓</div>
         <div class="trust-label">Reliability</div>
-        <div class="trust-value reliability">96%</div>
+        <div class="trust-value reliability" id="trustReliability">96%</div>
       </div>
       <div class="trust-item">
         <div class="trust-icon">$</div>
         <div class="trust-label">From</div>
-        <div class="trust-value">$40/hr</div>
+        <div class="trust-value" id="trustPrice">$40/hr</div>
       </div>
     </section>
 
@@ -607,7 +607,7 @@
     </section>
 
     <!-- Services Section - All categories from real taxonomy -->
-    <section class="section">
+    <section class="section" id="servicesRatesSection">
       <h2>Services & Rates</h2>
       
       <div class="service-item">
@@ -630,8 +630,8 @@
 
     <!-- About Section -->
     <section class="section">
-      <h2>About Mike</h2>
-      <p class="about-text">
+      <h2 id="aboutHeading">About Mike</h2>
+      <p class="about-text" id="aboutText">
         I'm a multi-skilled professional with over 8 years of experience helping homeowners in Vancouver. 
         I specialize in interior and exterior painting, but I'm also happy to tackle handyman jobs 
         and cleaning services. I take pride in showing up on time, communicating clearly, 
@@ -668,7 +668,7 @@
   <div class="modal-overlay" id="modal">
     <div class="modal">
       <div id="step1">
-        <h3>Connect with Mike</h3>
+        <h3 id="connectModalTitle">Connect with Mike</h3>
         <p>Get connected in seconds</p>
         
         <input type="text" class="name-input" id="nameInput" placeholder="Your first name (optional)" />
@@ -696,91 +696,163 @@
     </div>
   </div>
 
+  <script src="js/config.js"></script>
   <script>
-    // Get current category from URL parameter
-    function getCategoryFromURL() {
+    // Profile page — Phase 1 wiring: fetch real provider data from Supabase Edge Function
+    // Canonical URL convention: profile.html?city=vancouver&category=handyman&provider=sam-fixit
+    // IMPORTANT: Connect is intentionally gated for MVP (no direct WhatsApp handoff yet).
+
+    let currentCitySlug = 'vancouver';
+    let currentCategorySlug = 'painting';
+    let currentProviderSlug = '';
+
+    // Read-layer state
+    let connectStatus = 'gated';
+    let connectMessage = 'Direct connect is not enabled yet.';
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function titleCaseFromSlug(slug) {
+      const s = String(slug || '').trim();
+      if (!s) return '';
+      return s
+        .split(/[-_\s]+/g)
+        .filter(Boolean)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+
+    function isFunctionsBaseConfigured(base) {
+      if (!base) return false;
+      if (typeof base !== 'string') return false;
+      const trimmed = base.trim();
+      if (!trimmed) return false;
+      if (trimmed.includes('<PROJECT_REF>')) return false;
+      if (!/^https?:\/\//i.test(trimmed)) return false;
+      return true;
+    }
+
+    function getParam(name, fallback = '') {
       const params = new URLSearchParams(window.location.search);
-      return params.get('category') || 'painting';
+      return (params.get(name) || fallback).trim();
     }
-    
-    // Valid categories from TaskLeaders taxonomy
-    const validCategories = {
-      'handyman': 'Handyman',
-      'plumbing': 'Plumbing',
-      'electrical': 'Electrical',
-      'painting': 'Painting',
-      'cleaning': 'Cleaning',
-      'furniture-assembly': 'Furniture Assembly',
-      'moving': 'Moving Help',
-      'yard-work': 'Yard Work',
-      'hvac': 'HVAC'
-    };
 
-    // Approved cities for primary location (from provider profile)
-    // These are the only valid cities for the hero location line
-    const approvedCities = [
-      'Vancouver', 'Surrey', 'Burnaby', 'Richmond', 'Coquitlam', 'New Westminster',
-      'North Vancouver', 'Port Coquitlam', 'Maple Ridge', 'Langley', 'White Rock',
-      'Port Moody', 'Pitt Meadows', 'Delta', 'Abbotsford', 'Chilliwack', 'Mission'
-    ];
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value;
+    }
 
-    // Provider data model (populated from TaskLeader's Profile Account)
-    const providerData = {
-      baseCity: 'Vancouver', // Must be from approvedCities list
-      serviceAreas: ['Vancouver', 'Burnaby', 'Richmond', 'Kitsilano', 'Fairview', 'Mount Pleasant']
-    };
+    function setProviderName(name) {
+      const safeName = name || 'TaskLeader';
+      setText('providerNameHero', safeName);
+      setText('providerNameSticky', safeName);
+      setText('connectModalTitle', 'Connect with ' + safeName);
+      setText('aboutHeading', 'About ' + safeName);
+    }
 
-    // Validate and set primary location (city only, no icon)
-    function setPrimaryLocation() {
-      const city = providerData.baseCity;
-      // Only display if it's an approved city
-      if (approvedCities.includes(city)) {
-        document.getElementById('heroLocation').textContent = city;
+    function setProviderPhoto(url, name) {
+      const img = document.getElementById('providerPhoto');
+      if (!img) return;
+      if (url) img.setAttribute('src', url);
+      if (name) img.setAttribute('alt', name);
+    }
+
+    function formatResp(minutes) {
+      const n = Number(minutes);
+      if (!Number.isFinite(n) || n <= 0) return '—';
+      return `~${n} min`;
+    }
+
+    function formatPrice(cents) {
+      const n = Number(cents);
+      if (!Number.isFinite(n) || n <= 0) return '—';
+      const dollars = Math.round(n / 100);
+      return `$${dollars}/hr`;
+    }
+
+    function bindProfile(payload) {
+      const provider = payload?.data?.provider;
+      const city = payload?.data?.city;
+
+      const providerName = provider?.display_name || titleCaseFromSlug(currentProviderSlug) || 'TaskLeader';
+      const cityName = city?.name || 'Vancouver';
+      const categoryName = provider?.category?.name || titleCaseFromSlug(currentCategorySlug) || 'Painting';
+
+      setProviderName(providerName);
+      setProviderPhoto(provider?.hero_photo_url, providerName);
+
+      // Category + city
+      setText('heroCategory', categoryName);
+      setText('heroLocation', cityName);
+
+      // Trust metrics
+      setText('trustResponse', formatResp(provider?.response_time_minutes));
+      const reliability = Number(provider?.reliability_percent);
+      setText('trustReliability', Number.isFinite(reliability) ? `${reliability}%` : '—');
+      setText('trustPrice', formatPrice(provider?.hourly_rate_cents));
+
+      // About
+      const about = provider?.about;
+      if (about && String(about).trim()) {
+        setText('aboutText', String(about).trim());
       } else {
-        // Fallback to Vancouver
-        document.getElementById('heroLocation').textContent = 'Vancouver';
+        setText('aboutText', 'Profile details coming soon.');
       }
-    }
 
-    // Populate service areas (cities + neighborhoods)
-    function populateServiceAreas() {
+      // Service areas
+      const areas = Array.isArray(provider?.service_areas) ? provider.service_areas : [];
       const container = document.getElementById('serviceAreasList');
-      container.innerHTML = providerData.serviceAreas.map(area =>
-        `<span class="area-tag">${area}</span>`
-      ).join('');
+      if (container) {
+        const safeAreas = areas.filter(Boolean);
+        container.innerHTML = safeAreas.length
+          ? safeAreas.map((a) => `<span class="area-tag">${escapeHtml(a)}</span>`).join('')
+          : `<span class="area-tag">${escapeHtml(cityName)}</span>`;
+      }
+
+      // Connect gating
+      const connect = payload?.data?.connect;
+      connectStatus = connect?.status || 'gated';
+      connectMessage = connect?.message || connectMessage;
+
+      // Nav links: keep back arrow consistent with Category page routing
+      const back = document.querySelector('a.back');
+      const logo = document.querySelector('a.logo');
+      const backHref = `category.html?city=${encodeURIComponent(currentCitySlug)}&category=${encodeURIComponent(provider?.category?.slug || currentCategorySlug)}`;
+      const homeHref = `homepage.html?city=${encodeURIComponent(currentCitySlug)}`;
+      if (back) back.setAttribute('href', backHref);
+      if (logo) logo.setAttribute('href', homeHref);
+
+      // Title
+      document.title = providerName + ' — TaskLeaders';
+
+      // Honesty rule: hide static template services/rates once real read-layer data is loaded
+      const services = document.getElementById('servicesRatesSection');
+      if (services) services.style.display = 'none';
     }
 
-    // Set hero category based on entry point
-    function setHeroCategory() {
-      const categoryParam = getCategoryFromURL();
-      const categoryName = validCategories[categoryParam] || 'Painting';
-      document.getElementById('heroCategory').textContent = categoryName;
-    }
-
-    // Initialize on load
-    setHeroCategory();
-    setPrimaryLocation();
-    populateServiceAreas();
-    
-    // Sticky header behavior
+    // Sticky header behavior (keep existing behavior)
     const stickyHeader = document.getElementById('stickyHeader');
     const hero = document.querySelector('.hero');
-    
     window.addEventListener('scroll', () => {
       const heroBottom = hero.getBoundingClientRect().bottom;
-      if (heroBottom < 0) {
-        stickyHeader.classList.add('visible');
-      } else {
-        stickyHeader.classList.remove('visible');
-      }
+      if (heroBottom < 0) stickyHeader.classList.add('visible');
+      else stickyHeader.classList.remove('visible');
     });
-    
+
     // Modal controls
     function openModal() {
       document.getElementById('modal').classList.add('active');
       document.getElementById('nameInput').focus();
     }
-    
+
     function closeModal() {
       document.getElementById('modal').classList.remove('active');
       document.getElementById('nameInput').value = '';
@@ -788,50 +860,97 @@
       document.getElementById('consentRequired').checked = false;
       document.getElementById('errorMessage').classList.remove('show');
     }
-    
+
     function showError(message) {
       const errorEl = document.getElementById('errorMessage');
       errorEl.textContent = message;
       errorEl.classList.add('show');
     }
-    
+
     function connectNow() {
-      const name = document.getElementById('nameInput').value.trim();
       const phone = document.getElementById('phoneInput').value.trim();
       const consent = document.getElementById('consentRequired').checked;
-      
+
       if (!phone || phone.length < 10) {
         showError('Please enter a valid WhatsApp number');
         return;
       }
-      
+
       if (!consent) {
         showError('Please agree to receive WhatsApp messages');
         return;
       }
-      
-      // Get current category for personalized message
-      const category = getCategoryFromURL();
-      const categoryName = validCategories[category] || 'painting';
-      
-      // Build personalized message
-      const displayName = name || 'there';
-      const message = encodeURIComponent(
-        `Hi Mike! I'm ${displayName}. Found you on TaskLeaders for ${categoryName.toLowerCase()} services.\n\n` +
-        `I need help with: [please describe your project]\n\n` +
-        `I'm available: [please share your availability]`
-      );
-      
-      // Open WhatsApp
-      window.location.href = `https://wa.me/16045551234?text=${message}`;
-      
-      closeModal();
+
+      // MVP safety rule: no direct WhatsApp handoff until consent / Terms / Privacy checkpoint is finalized.
+      if (connectStatus !== 'enabled') {
+        showError(connectMessage || 'Direct connect is not enabled yet.');
+        return;
+      }
+
+      // Future: if/when enabled, this is where we would open WhatsApp using a server-provided deeplink.
+      showError('Connect is not enabled yet.');
     }
-    
+
+    // Expose modal handlers (used by inline onclick attributes)
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+    window.connectNow = connectNow;
+
     // Close modal on overlay click
-    document.getElementById('modal').addEventListener('click', function(e) {
+    document.getElementById('modal').addEventListener('click', function (e) {
       if (e.target === this) closeModal();
     });
+
+    async function init() {
+      currentCitySlug = getParam('city', 'vancouver').toLowerCase();
+      currentCategorySlug = getParam('category', 'painting').toLowerCase();
+      currentProviderSlug = getParam('provider', '').toLowerCase();
+
+      // Safe initial copy (until API loads)
+      setProviderName(titleCaseFromSlug(currentProviderSlug) || 'TaskLeader');
+      setText('heroCategory', titleCaseFromSlug(currentCategorySlug) || 'Painting');
+      setText('heroLocation', titleCaseFromSlug(currentCitySlug) || 'Vancouver');
+      setText('trustResponse', '—');
+      setText('trustReliability', '—');
+      setText('trustPrice', '—');
+      setText('aboutText', 'Profile details coming soon.');
+
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      if (!isFunctionsBaseConfigured(base)) {
+        console.warn('TaskLeaders: TASKLEADERS_FUNCTIONS_BASE is not configured; skipping network calls.');
+        connectStatus = 'gated';
+        connectMessage = 'Direct WhatsApp connect is not enabled yet.';
+        return;
+      }
+
+      if (!currentProviderSlug) {
+        connectStatus = 'gated';
+        connectMessage = 'This profile is not available yet.';
+        showError('This profile is not available yet.');
+        return;
+      }
+
+      try {
+        const url = `${base.replace(/\/$/, '')}/public-profile?city=${encodeURIComponent(currentCitySlug)}&provider=${encodeURIComponent(currentProviderSlug)}`;
+        const res = await fetch(url);
+        const payload = await res.json();
+
+        if (!payload || payload.ok !== true) {
+          connectStatus = 'gated';
+          connectMessage = 'This profile is not available yet.';
+          showError('This profile is not available yet.');
+          return;
+        }
+
+        bindProfile(payload);
+      } catch (e) {
+        connectStatus = 'gated';
+        connectMessage = 'This profile is not available yet.';
+      }
+    }
+
+    init();
   </script>
+
 </body>
 </html>
