@@ -1,0 +1,1 @@
+window.TASKLEADERS_FUNCTIONS_BASE = "https://iwgoafvemlsswkjroyhl.supabase.co/functions/v1";
