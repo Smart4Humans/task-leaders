@@ -710,6 +710,49 @@
     let connectStatus = 'gated';
     let connectMessage = 'Direct connect is not enabled yet.';
 
+    // Lead event logging (best-effort; never block UX)
+    function getOrCreateSessionId() {
+      try {
+        const key = 'taskleaders_session_id';
+        const existing = localStorage.getItem(key);
+        if (existing && existing.length > 10) return existing;
+        const id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + '_' + Math.random().toString(36).slice(2);
+        localStorage.setItem(key, id);
+        return id;
+      } catch (_e) {
+        return 'anon_' + String(Date.now());
+      }
+    }
+
+    function logLeadEventBestEffort(evt) {
+      try {
+        const base = window.TASKLEADERS_FUNCTIONS_BASE;
+        if (!base || typeof base !== 'string' || !base.startsWith('http')) return;
+
+        const payload = {
+          source: 'public_web',
+          page: 'profile.html',
+          session_id: getOrCreateSessionId(),
+          city_slug: currentCitySlug,
+          category_slug: currentCategorySlug || null,
+          provider_slug: currentProviderSlug || null,
+          meta: {
+            client_time_iso: new Date().toISOString(),
+            referrer: document.referrer || null
+          },
+          ...evt
+        };
+
+        fetch(`${base.replace(/\/$/, '')}/lead-event`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      } catch (_e) {
+        // swallow
+      }
+    }
+
     function escapeHtml(value) {
       return String(value ?? '')
         .replaceAll('&', '&amp;')
@@ -851,6 +894,9 @@
     function openModal() {
       document.getElementById('modal').classList.add('active');
       document.getElementById('nameInput').focus();
+
+      // Lead event: connect modal opened (handoff context optional)
+      logLeadEventBestEffort({ event_type: 'connect_modal_opened' });
     }
 
     function closeModal() {
@@ -870,6 +916,14 @@
     function connectNow() {
       const phone = document.getElementById('phoneInput').value.trim();
       const consent = document.getElementById('consentRequired').checked;
+
+      // Lead event: connect submit attempted (handoff context required here)
+      logLeadEventBestEffort({
+        event_type: 'connect_submit_attempted',
+        consent_checked: Boolean(consent),
+        handoff_channel: 'whatsapp',
+        handoff_mode: 'gated'
+      });
 
       if (!phone || phone.length < 10) {
         showError('Please enter a valid WhatsApp number');
