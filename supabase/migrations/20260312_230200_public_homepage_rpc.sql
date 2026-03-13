@@ -29,7 +29,7 @@ as $$
    and p.status = 'approved'
    and p.is_active = true
   where c.is_active = true
-  group by c.slug, c.display_name, c.icon
+  group by c.slug, c.display_name, c.icon, c.sort_order
   having count(p.id) > 0
   order by coalesce(c.sort_order, 999999) asc, c.display_name asc;
 $$;

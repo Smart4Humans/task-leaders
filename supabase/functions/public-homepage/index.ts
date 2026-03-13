@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
   const city = (url.searchParams.get("city") || "vancouver").trim().toLowerCase();
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceRoleKey = Deno.env.get("TASKLEADERS_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !serviceRoleKey) {
     return json(
@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
         error: {
           code: "server_error",
           message: "Missing server configuration",
-          details: { missing: [!supabaseUrl ? "SUPABASE_URL" : null, !serviceRoleKey ? "SUPABASE_SERVICE_ROLE_KEY" : null].filter(Boolean) },
+          details: { missing: [!supabaseUrl ? "SUPABASE_URL" : null, !serviceRoleKey ? "TASKLEADERS_SERVICE_ROLE_KEY" : null].filter(Boolean) },
         },
       },
       500,
