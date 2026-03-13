@@ -170,7 +170,8 @@
       letter-spacing: 0.3px;
     }
     .form-group input,
-    .form-group select {
+    .form-group select,
+    .form-group textarea {
       width: 100%;
       padding: 14px 16px;
       border-radius: 10px;
@@ -182,7 +183,8 @@
       transition: all 0.2s;
     }
     .form-group input:focus,
-    .form-group select:focus {
+    .form-group select:focus,
+    .form-group textarea:focus {
       border-color: var(--blue);
       background: rgba(255,255,255,0.05);
     }
@@ -354,6 +356,11 @@
             <label>WhatsApp Number</label>
             <input type="tel" id="whatsapp" placeholder="(604) 555-1234" required />
           </div>
+
+          <div class="form-group">
+            <label>Service Area</label>
+            <input type="text" id="serviceArea" placeholder="Vancouver, Burnaby, Richmond" required />
+          </div>
           
           <div class="form-group">
             <label>Primary Service</label>
@@ -368,6 +375,11 @@
               <option value="moving">Moving Help</option>
               <option value="yard-work">Yard Work</option>
             </select>
+          </div>
+
+          <div class="form-group">
+            <label>Short Description</label>
+            <textarea id="description" rows="4" placeholder="What kind of jobs do you take? What are you best at?" required></textarea>
           </div>
           
           <button type="submit" class="submit-btn" id="submitBtn">Apply</button>
@@ -390,17 +402,52 @@
     </div>
   </main>
 
+  <script src="js/config.js"></script>
   <script>
-    function handleApply(e) {
+    async function handleApply(e) {
       e.preventDefault();
+
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
       btn.textContent = 'Sending...';
-      
-      setTimeout(() => {
+
+      try {
+        const base = window.TASKLEADERS_FUNCTIONS_BASE;
+        if (!base || typeof base !== 'string' || !base.startsWith('http')) {
+          throw new Error('Site is not configured yet.');
+        }
+
+        const payload = {
+          first_name: document.getElementById('firstName').value.trim(),
+          last_name: document.getElementById('lastName').value.trim(),
+          business_name: document.getElementById('businessName').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          whatsapp: document.getElementById('whatsapp').value.trim(),
+          category_slug: document.getElementById('service').value.trim(),
+          service_area: document.getElementById('serviceArea').value.trim(),
+          description: document.getElementById('description').value.trim()
+        };
+
+        const url = `${base.replace(/\/$/, '')}/apply`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!data || data.ok !== true) {
+          const msg = data?.error?.message || 'Failed to submit application. Please try again.';
+          throw new Error(msg);
+        }
+
         document.getElementById('apply-form').style.display = 'none';
         document.getElementById('success-state').classList.add('show');
-      }, 1200);
+      } catch (err) {
+        alert(err?.message || 'Failed to submit application. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Apply';
+      }
     }
   </script>
 </body>
