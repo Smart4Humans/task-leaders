@@ -146,7 +146,15 @@ A category should only appear publicly on the Homepage when at least one approve
 
 ### Current customer flow
 
-Homepage → Category Page → TaskLeader Public Profile → Connect → WhatsApp
+Homepage → Category Page → TaskLeader Public Profile → Connect (consent-gated) → WhatsApp
+
+**Consent-driven Connect activation (COMPLETED 2026-03-13):**
+- First-time consent stored in versioned localStorage key: `taskleaders_connect_consent_v2026-03-13`
+- Repeat visits reuse stored consent (checkbox pre-checked)
+- Direct WhatsApp redirect uses `connect.handoff.whatsapp_e164` from read-layer
+- Terms/Privacy return-and-reopen behavior preserved
+- Lead events emitted: `connect_modal_opened`, `connect_submit_attempted`, `connect_consent_accepted`, `connect_whatsapp_redirect`
+- Branch: `release/consent-driven-connect` → merged to main via PR #9 (commit: `3b29ee7`)
 
 ### Current prospective TaskLeader flow
 
@@ -257,6 +265,77 @@ ByteRover at workspace root is useful for decision memory and continuity, but it
 
 ### Pre-edit verification rule
 Before any page work: confirm the target file path matches `task-leaders-deploy/v0.2/`, not `projects/taskleaders/v0.2/`.
+
+### ByteRover Workspace Path Rule
+Curated TaskLeaders ByteRover context lives under the parent workspace:
+/Users/toddbrunel/.openclaw/workspace/.brv/context-tree/project_management/task_leaders/current_status.md
+The local app folder may also contain a .brv, but it can be empty:
+/Users/toddbrunel/.openclaw/workspace/task-leaders-deploy/v0.2/.brv/
+When starting a new session, do not assume the active v0.2/.brv contains the curated TaskLeaders memory
+For exact code state, use repo/main and active files
+For curated continuity, use the parent workspace ByteRover path
+
+---
+
+## Part 6 — Milestone Completion Log
+
+### 2026-03-13: Consent-Driven Connect Activation
+**Status:** ✅ COMPLETED and merged to main
+
+**Scope:**
+- Modified: `profile.html` only
+- No backend files changed
+- No legal pages changed (`terms.html`, `privacy.html` untouched)
+- No unrelated files included
+
+**Implementation:**
+- First-time consent stored in versioned localStorage key: `taskleaders_connect_consent_v2026-03-13`
+- Repeat visits reuse stored consent (checkbox pre-checked on modal open)
+- Direct WhatsApp redirect uses existing read-layer field: `connect.handoff.whatsapp_e164`
+- Existing Terms/Privacy return-and-reopen behavior preserved
+- Best-effort lead events emitted:
+  - `connect_modal_opened`
+  - `connect_submit_attempted`
+  - `connect_consent_accepted`
+  - `connect_whatsapp_redirect`
+
+**Validation:**
+- WhatsApp redirect tested and working
+- Terms/Privacy links return to Profile and reopen Connect modal
+- Repeat-consent behavior verified
+
+**Git/Release:**
+- Branch: `release/consent-driven-connect`
+- PR: #9
+- Merge commit: `3b29ee7`
+
+---
+
+## Part 7 — Resume Note (2026-03-13 Session)
+
+### Completed Today
+- Consent-driven WhatsApp connect on TaskLeader Public Profile: completed, merged to main, and validated
+- PR #9 merged (commit: `3b29ee7`)
+
+### Verified Today
+- Terms/Privacy return-and-reopen behavior still works
+- Repeat consent persistence works
+- ByteRover curated continuity confirmed in parent workspace `.brv`
+
+### Still Undecided
+- Operating system draft started but NOT finalized
+- Ops tool choice pending (CLI vs HTML admin vs OpenClaw-powered)
+- Go-live checklist enforcement rules pending
+- Real TaskLeader recruitment timeline pending
+
+### Next Recommended Planning Step
+Finalize in order:
+1. **Non-negotiable go-live checklist** — 12-point draft exists, needs approval
+2. **Application/status workflow** — 7-step flow drafted, needs approval
+3. **Minimum founder ops actions** — 3 options ranked, needs Decision #1 (ops tool choice)
+4. **Then: narrowest ops mechanism** — implementation pending above decisions
+
+**ByteRover Path Reminder:** Curated TaskLeaders continuity lives in parent workspace `.brv`, not necessarily in `task-leaders-deploy/v0.2/.brv`
 
 ---
 
