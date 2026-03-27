@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="theme-color" content="#0a0a14" />
+  <title>Become a TaskLeader — TaskLeaders</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+    .nav-home {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .nav-home:hover { background: rgba(255,255,255,0.04); color: #fff; }
+
+    main {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    /* Hero */
+    .hero {
+      margin-bottom: 40px;
+    }
+    h1 {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin: 0 0 12px 0;
+      letter-spacing: -0.5px;
+    }
+    h1 .task { color: var(--blue); }
+    .subhead {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.4;
+      margin: 0 0 8px 0;
+    }
+    .urgency {
+      margin-top: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    /* Perks */
+    .perks {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .perk {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.4;
+    }
+    .perk:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .perk:first-child {
+      padding-top: 0;
+    }
+    .perk-check {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(0,200,83,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--green);
+      font-size: 13px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* Apply section */
+    .apply-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    .apply-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .apply-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: rgba(255,255,255,0.7);
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--blue);
+      background: rgba(255,255,255,0.05);
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(255,255,255,0.35);
+    }
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    .form-group select option {
+      background: #1a1a2e;
+      color: #fff;
+    }
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover {
+      background: var(--blue-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0,102,255,0.3);
+    }
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* What happens next */
+    .next-steps {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .next-steps-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 16px;
+    }
+    .next-step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 8px 0;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .next-step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(0,102,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* Success State */
+    .success-state {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success-state.show {
+      display: block;
+    }
+    .success-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    .success-state h2 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .success-state p {
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    .success-highlight {
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.25);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 20px 0;
+      color: var(--green);
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    @media (min-width: 640px) {
+      main { padding: 64px 32px 100px; }
+      h1 { font-size: 44px; }
+      .subhead { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+    <a href="homepage.html" class="nav-home">← Back</a>
+  </header>
+
+  <main>
+    <!-- Application Form -->
+    <div id="apply-form">
+      <div class="hero">
+        <h1>Become a <span class="task">Task</span>Leader</h1>
+        <p class="subhead">We bring the leads. You bring the work.<br>Join Vancouver's most exclusive network of local service providers.</p>
+        <div class="urgency">Now recruiting the first 50 TaskLeaders.</div>
+      </div>
+
+      <div class="perks">
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>Exclusive, guaranteed leads from realtors and property managers</span>
+        </div>
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>You're the only provider who gets each lead — never shared</span>
+        </div>
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>Pay only for leads you accept — first lead FREE</span>
+        </div>
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>Keep 100% of your rate — we never take a commission</span>
+        </div>
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>Ranked by real performance — fast, reliable pros rise to the top</span>
+        </div>
+        <div class="perk">
+          <span class="perk-check">✓</span>
+          <span>Quick 5–10 min founder call to get started</span>
+        </div>
+      </div>
+
+      <div class="apply-section">
+        <div class="apply-title">Apply Now</div>
+        <div class="apply-sub">Quick application. Decision within 24 hours.</div>
+
+        <form onsubmit="handleApply(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name</label>
+              <input type="text" id="firstName" placeholder="John" required />
+            </div>
+            <div class="form-group">
+              <label>Last Name</label>
+              <input type="text" id="lastName" placeholder="Smith" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Business Name <span style="text-transform:none;font-weight:400;color:var(--muted);">(optional)</span></label>
+            <input type="text" id="businessName" placeholder="Your Business Name" />
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="you@example.com" required />
+          </div>
+
+          <div class="form-group">
+            <label>WhatsApp Number</label>
+            <input type="tel" id="whatsapp" placeholder="(604) 555-1234" required />
+          </div>
+
+          <div class="form-group">
+            <label>Service Area</label>
+            <select id="serviceArea" required>
+              <option value="">Select your area</option>
+              <option value="vancouver">Vancouver</option>
+              <option value="burnaby">Burnaby</option>
+              <option value="richmond">Richmond</option>
+              <option value="north-vancouver">North Vancouver</option>
+              <option value="west-vancouver">West Vancouver</option>
+              <option value="surrey">Surrey</option>
+              <option value="coquitlam">Coquitlam</option>
+              <option value="new-westminster">New Westminster</option>
+              <option value="langley">Langley</option>
+              <option value="delta">Delta</option>
+              <option value="maple-ridge">Maple Ridge</option>
+              <option value="port-moody">Port Moody</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Primary Service</label>
+            <select id="service" required>
+              <option value="">Select your service</option>
+              <option value="handyman">Handyman</option>
+              <option value="plumbing">Plumbing</option>
+              <option value="electrical">Electrical</option>
+              <option value="painting">Painting</option>
+              <option value="cleaning">Cleaning</option>
+              <option value="moving">Moving / Transport</option>
+              <option value="yard-work">Yard Work</option>
+              <option value="hvac">HVAC</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Short Description <span style="text-transform:none;font-weight:400;color:var(--muted);">(optional)</span></label>
+            <textarea id="description" rows="4" placeholder="What kind of jobs do you take? What are you best at?"></textarea>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitBtn">Apply Now</button>
+        </form>
+
+        <div class="next-steps">
+          <div class="next-steps-title">What happens next?</div>
+          <div class="next-step-item">
+            <span class="next-step-num">1</span>
+            <span>We review your application (within 24 hours)</span>
+          </div>
+          <div class="next-step-item">
+            <span class="next-step-num">2</span>
+            <span>Quick 5–10 min founder call via WhatsApp</span>
+          </div>
+          <div class="next-step-item">
+            <span class="next-step-num">3</span>
+            <span>Credentials verified, profile activated</span>
+          </div>
+          <div class="next-step-item">
+            <span class="next-step-num">4</span>
+            <span>Start receiving exclusive leads</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success State -->
+    <div class="success-state" id="success-state">
+      <div class="success-icon">📱</div>
+      <h2>Application Received</h2>
+      <p>We'll reach out via WhatsApp within 24 hours to schedule your founder call.</p>
+      <div class="success-highlight">Check your email for confirmation.</div>
+      <p style="font-size:14px;color:var(--muted);">Now recruiting the first 50 TaskLeaders.</p>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script>
+    async function handleApply(e) {
+      e.preventDefault();
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        const base = window.TASKLEADERS_FUNCTIONS_BASE;
+        if (!base || typeof base !== 'string' || !base.startsWith('http')) {
+          throw new Error('Site is not configured yet.');
+        }
+
+        const payload = {
+          first_name: document.getElementById('firstName').value.trim(),
+          last_name: document.getElementById('lastName').value.trim(),
+          business_name: document.getElementById('businessName').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          whatsapp: document.getElementById('whatsapp').value.trim(),
+          category_slug: document.getElementById('service').value.trim(),
+          service_area: document.getElementById('serviceArea').value.trim(),
+          description: document.getElementById('description').value.trim()
+        };
+
+        const url = `${base.replace(/\/$/, '')}/apply`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!data || data.ok !== true) {
+          const msg = data?.error?.message || 'Failed to submit application. Please try again.';
+          throw new Error(msg);
+        }
+
+        document.getElementById('apply-form').style.display = 'none';
+        document.getElementById('success-state').classList.add('show');
+      } catch (err) {
+        alert(err?.message || 'Failed to submit application. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Apply Now';
+      }
+    }
+  </script>
+</body>
+</html>

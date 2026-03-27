@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaskLeaders — Vancouver's trusted local service network</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --charcoal: #1a1a2e;
+      --dark: #0f0f1a;
+      --green: #00c853;
+      --gold: #ffb800;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #0a0a14;
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    header {
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .logo {
+      font-size: 32px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-btn {
+      padding: 14px 28px;
+      border-radius: 8px;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover {
+      background: var(--blue-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,102,255,0.3);
+    }
+    .nav-secondary {
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .nav-secondary:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* Hero — VIP Concierge */
+    .hero {
+      text-align: center;
+      padding: 88px 32px 64px;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .hero h1 {
+      font-size: 52px;
+      font-weight: 800;
+      margin: 0 0 20px 0;
+      line-height: 1.12;
+      letter-spacing: -1px;
+    }
+    .hero .subhead {
+      font-size: 21px;
+      color: rgba(255,255,255,0.8);
+      margin: 0 0 24px 0;
+      font-weight: 500;
+    }
+    .hero .value-anchor {
+      display: inline-block;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--green);
+      background: rgba(0,200,83,0.08);
+      border: 1px solid rgba(0,200,83,0.2);
+      border-radius: 8px;
+      padding: 10px 20px;
+      margin-bottom: 36px;
+    }
+    .hero .value-anchor .strikethrough {
+      text-decoration: line-through;
+      color: rgba(255,255,255,0.45);
+      font-weight: 400;
+    }
+
+    /* Hero CTA */
+    .hero-cta {
+      display: inline-block;
+      padding: 18px 44px;
+      border-radius: 12px;
+      background: var(--green);
+      color: #000;
+      font-size: 17px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s;
+      margin-bottom: 36px;
+    }
+    .hero-cta:hover {
+      background: #00a844;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,200,83,0.35);
+    }
+
+    /* Benefit badges */
+    .benefit-badges {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 0;
+    }
+    .benefit-badge {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.8);
+    }
+
+    /* How It Works */
+    .how-it-works {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 64px 32px;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .how-it-works h2 {
+      font-size: 22px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.6);
+      margin: 0 0 40px 0;
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .step-card {
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 28px 20px;
+      text-align: center;
+    }
+    .step-number {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--blue);
+      margin-bottom: 10px;
+    }
+    .step-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.4;
+    }
+
+    /* Categories */
+    .categories {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 0 32px 72px;
+    }
+    .categories h2 {
+      font-size: 22px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #fff;
+      margin: 0 0 8px 0;
+      text-align: center;
+    }
+    .categories .cat-subhead {
+      font-size: 16px;
+      color: rgba(255,255,255,0.55);
+      text-align: center;
+      margin: 0 0 32px 0;
+      font-weight: 500;
+    }
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .category-tile {
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      color: #fff;
+      display: block;
+    }
+    .category-tile:hover {
+      background: rgba(0,102,255,0.12);
+      border-color: var(--blue);
+      box-shadow: 0 0 24px rgba(0,102,255,0.2);
+      transform: translateY(-2px);
+    }
+    .category-tile.coming-soon {
+      opacity: 0.45;
+      cursor: default;
+      pointer-events: none;
+    }
+    .category-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    .category-name {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .category-count {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+    }
+    .coming-soon-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Provider Recruitment */
+    .provider-cta {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 72px 32px;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .provider-cta h2 {
+      font-size: 36px;
+      font-weight: 800;
+      margin: 0 0 12px 0;
+      letter-spacing: -0.5px;
+    }
+    .provider-cta .provider-subhead {
+      font-size: 18px;
+      color: rgba(255,255,255,0.7);
+      margin: 0 0 32px 0;
+      line-height: 1.5;
+    }
+    .provider-cta-btn {
+      display: inline-block;
+      padding: 16px 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: transparent;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .provider-cta-btn:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 44px 32px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+    }
+    footer p {
+      font-size: 16px;
+      color: rgba(255,255,255,0.5);
+      margin: 0;
+      font-weight: 500;
+    }
+    footer a {
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+    }
+    footer a:hover { color: var(--blue); }
+
+    /* Mobile */
+    @media (max-width: 720px) {
+      header { padding: 14px 16px; }
+      .logo { font-size: 22px; }
+      .nav-btn { padding: 10px 16px; font-size: 13px; }
+      .nav-secondary { font-size: 12px; padding: 6px 10px; }
+
+      .hero { padding: 48px 20px 40px; }
+      .hero h1 { font-size: 32px; letter-spacing: -0.3px; line-height: 1.15; }
+      .hero .subhead { font-size: 17px; }
+      .hero-cta { padding: 16px 32px; font-size: 16px; }
+      .benefit-badges { flex-direction: column; align-items: center; }
+      .benefit-badge { font-size: 13px; }
+
+      .how-it-works { padding: 48px 20px; }
+      .how-it-works h2 { font-size: 14px; letter-spacing: 1.5px; }
+      .steps-grid { grid-template-columns: 1fr; gap: 10px; }
+
+      .categories { padding: 0 16px 48px; }
+      .categories h2 { font-size: 14px; letter-spacing: 1.5px; }
+      .category-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .category-tile { padding: 20px 12px; }
+      .category-icon { font-size: 28px; margin-bottom: 8px; }
+      .category-name { font-size: 15px; }
+
+      .provider-cta { padding: 48px 20px; }
+      .provider-cta h2 { font-size: 26px; }
+      .provider-cta .provider-subhead { font-size: 16px; }
+
+      footer { padding: 32px 20px; }
+      footer p { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+    <div class="nav-links">
+      <a href="vip-concierge.html" class="nav-secondary">VIP Concierge</a>
+      <a href="taskleader-signin.html" class="nav-secondary">TaskLeader Sign In</a>
+      <a href="become-task-leader.html" class="nav-btn">Become a TaskLeader</a>
+    </div>
+  </header>
+
+  <!-- Hero: VIP Concierge -->
+  <section class="hero">
+    <h1>Stop chasing unreliable contractors.<br>We handle it for you.</h1>
+    <p class="subhead">TaskLeaders VIP Concierge connects Vancouver's Realtors and Property Managers<br>with vetted, reliable service providers — through one WhatsApp message.</p>
+    <div class="value-anchor">
+      VIP Concierge — Valued at <span class="strikethrough">$499/year</span> &nbsp;FREE for licensed Realtors &amp; Property Managers
+    </div><br>
+    <a href="vip-concierge.html" class="hero-cta">Request VIP Access</a>
+    <div class="benefit-badges">
+      <span class="benefit-badge">Providers respond in minutes, not days</span>
+      <span class="benefit-badge">Ranked by speed, reliability, and price</span>
+      <span class="benefit-badge">Vetted — only serious professionals</span>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-it-works">
+    <h2>How It Works</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">Step 1</div>
+        <div class="step-text">Sign up once<br><span style="font-weight:400;color:rgba(255,255,255,0.6);font-size:14px;">30 seconds</span></div>
+      </div>
+      <div class="step-card">
+        <div class="step-number">Step 2</div>
+        <div class="step-text">WhatsApp us whenever you need help</div>
+      </div>
+      <div class="step-card">
+        <div class="step-number">Step 3</div>
+        <div class="step-text">We match you with a vetted provider — done</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="categories">
+    <h2>Browse TaskLeaders by Category</h2>
+    <p class="cat-subhead">Providers ranked by Response Speed, Reliability, and Price. No account needed.</p>
+    <div class="category-grid" id="category-grid">
+      <!-- Dynamically populated -->
+    </div>
+  </section>
+
+  <!-- Provider Recruitment -->
+  <section class="provider-cta">
+    <h2>Are you a local service pro?</h2>
+    <p class="provider-subhead">Join Vancouver's most exclusive network of vetted providers.<br>Get leads from realtors and property managers. Pay only for leads you accept.</p>
+    <a href="become-task-leader.html" class="provider-cta-btn">Apply to Become a TaskLeader</a>
+  </section>
+
+  <footer>
+    <p>
+      <a href="terms.html">Terms</a> &nbsp;·&nbsp;
+      <a href="privacy.html">Privacy</a>
+      &nbsp;&nbsp;© 2025 TaskLeaders
+    </p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script>
+    const TASKLEADERS_FUNCTIONS_BASE = window.TASKLEADERS_FUNCTIONS_BASE || 'https://iwgoafvemlsswkjroyhl.supabase.co/functions/v1';
+
+    // Static fallback categories — shown when/if API is unavailable
+    const STATIC_CATEGORIES = [
+      { id: 'cleaning',    name: 'Cleaning',           icon: '🧹' },
+      { id: 'yard-work',   name: 'Yard Work',           icon: '🌿' },
+      { id: 'hvac',        name: 'HVAC',                icon: '❄️'  },
+      { id: 'electrical',  name: 'Electrical',          icon: '⚡' },
+      { id: 'plumbing',    name: 'Plumbing',            icon: '🔧' },
+      { id: 'handyman',    name: 'Handyman',            icon: '🛠️'  },
+      { id: 'painting',    name: 'Painting',            icon: '🖌️'  },
+      { id: 'moving',      name: 'Moving / Transport',  icon: '📦' },
+    ];
+
+    function getCityFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get('city') || 'vancouver').trim().toLowerCase();
+    }
+
+    function buildTile(cat, city) {
+      const count = Number(cat.count || 0);
+      const hasProviders = count > 0;
+      if (hasProviders) {
+        const href = cat.href || `category.html?city=${encodeURIComponent(city)}&category=${encodeURIComponent(cat.id)}`;
+        return `
+          <a href="${href}" class="category-tile">
+            <div class="category-icon">${cat.icon || ''}</div>
+            <div class="category-name">${cat.name}</div>
+            <div class="category-count">${count} TaskLeader${count !== 1 ? 's' : ''}</div>
+          </a>`;
+      } else {
+        return `
+          <div class="category-tile coming-soon">
+            <div class="category-icon">${cat.icon || ''}</div>
+            <div class="category-name">${cat.name}</div>
+            <div class="coming-soon-label">Coming Soon</div>
+          </div>`;
+      }
+    }
+
+    function renderStatic(grid, city) {
+      grid.innerHTML = STATIC_CATEGORIES.map(cat => buildTile(cat, city)).join('');
+    }
+
+    async function init() {
+      const grid = document.getElementById('category-grid');
+      const city = getCityFromURL();
+
+      try {
+        const res = await fetch(`${TASKLEADERS_FUNCTIONS_BASE}/public-homepage?city=${encodeURIComponent(city)}`);
+        const payload = await res.json();
+
+        if (!payload || payload.ok !== true) {
+          renderStatic(grid, city);
+          return;
+        }
+
+        const categories = payload.data?.categories || [];
+        if (!Array.isArray(categories) || categories.length === 0) {
+          renderStatic(grid, city);
+          return;
+        }
+
+        // Filter out Furniture Assembly, merge with static icons
+        const filtered = categories.filter(c => c.id !== 'furniture-assembly');
+        grid.innerHTML = filtered.map(cat => {
+          const staticMatch = STATIC_CATEGORIES.find(s => s.id === cat.id);
+          if (staticMatch && !cat.icon) cat.icon = staticMatch.icon;
+          return buildTile(cat, city);
+        }).join('');
+      } catch (e) {
+        renderStatic(grid, city);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
