@@ -108,14 +108,9 @@
       background: rgba(0,200,83,0.08);
       border: 1px solid rgba(0,200,83,0.2);
       border-radius: 8px;
-      padding: 10px 20px;
+      padding: 14px 24px;
+      line-height: 1.6;
     }
-    .hero .value-anchor .strikethrough {
-      text-decoration: line-through;
-      color: rgba(255,255,255,0.4);
-      font-weight: 400;
-    }
-
     /* Benefits */
     .benefits {
       max-width: 520px;
@@ -166,8 +161,7 @@
       font-weight: 700;
       color: rgba(255,255,255,0.7);
       text-align: center;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.3px;
       margin: 0 0 20px 0;
     }
     .vip-steps {
@@ -395,9 +389,9 @@
 
   <section class="hero">
     <h1>VIP Concierge Access</h1>
-    <p class="subhead">Exclusive to licensed Realtors and Property Managers.<br>Subject to approval.</p>
     <div class="value-anchor">
-      Valued at <span class="strikethrough">$499/year</span> &nbsp;— Currently FREE for qualifying professionals.
+      Membership Only $199/year<br>
+      <span style="font-size:14px; font-weight:500; opacity:0.85;">Currently FREE for approved Realtors and Property Managers</span>
     </div>
   </section>
 
@@ -405,30 +399,30 @@
     <ul class="benefit-list">
       <li class="benefit-item">
         <span class="benefit-check">✓</span>
-        <span>One WhatsApp message — we handle the rest</span>
+        <span>Direct <span class="wa">WhatsApp</span> line when you need a job done</span>
       </li>
       <li class="benefit-item">
         <span class="benefit-check">✓</span>
-        <span>Providers vetted and ranked by real performance data</span>
+        <span><span style="color:var(--blue);font-weight:800;">Task</span><span style="font-weight:800;">Leaders</span> vetted and ranked by real performance data</span>
       </li>
       <li class="benefit-item">
         <span class="benefit-check">✓</span>
-        <span>Your own curated network across 8 service categories</span>
+        <span>Your own curated network of convenient reliable help</span>
       </li>
       <li class="benefit-item">
         <span class="benefit-check">✓</span>
-        <span>Pre-listing prep, maintenance, repairs — all handled</span>
+        <span>Growing number of available service categories</span>
       </li>
       <li class="benefit-item">
         <span class="benefit-check">✓</span>
-        <span>No searching, no managing contacts, no chasing callbacks</span>
+        <span>No wasted time spent searching</span>
       </li>
     </ul>
   </section>
 
   <!-- ── How it Works ── -->
   <section class="how-it-works">
-    <p class="how-it-works-title">How it works</p>
+    <p class="how-it-works-title">How It Works</p>
     <div class="vip-steps">
       <div class="vip-step">
         <div class="vip-step-num">Step 1</div>
@@ -447,7 +441,7 @@
 
   <section class="form-section">
     <div class="form-card" id="form-card">
-      <div class="form-title">Request VIP Access</div>
+      <div class="form-title">Request Access</div>
       <div class="form-subtext">Quick application. We verify and respond within 24 hours.</div>
 
       <form onsubmit="handleSubmit(event)" id="vip-form">
@@ -461,7 +455,7 @@
         </div>
         <div class="form-group">
           <label>WhatsApp Number</label>
-          <input type="tel" id="whatsapp" placeholder="(604) 555-1234" required />
+          <input type="tel" id="whatsapp" placeholder="+1 (604) 555-1234" required />
         </div>
         <div class="form-group">
           <label>Company / Brokerage</label>
