@@ -80,7 +80,7 @@
     /* ── Hero ── */
     .hero {
       text-align: center;
-      padding: 88px 32px 32px;
+      padding: 88px 32px 20px;
       max-width: 780px;
       margin: 0 auto;
     }
@@ -159,7 +159,7 @@
       text-align: center;
     }
     .vip-step-num {
-      font-size: 16px;
+      font-size: 19px;
       font-weight: 700;
       color: var(--green);
       margin-bottom: 10px;
@@ -254,7 +254,7 @@
     .coming-soon-label {
       font-size: 12px;
       font-weight: 600;
-      color: rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.3);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -365,7 +365,7 @@
   <!-- ── Hero ── -->
   <section class="hero">
     <h1>Vancouver's <span class="highlight">fastest</span> way to find <span class="highlight">reliable</span> local help.</h1>
-    <p class="subhead">Ranked by Response, Reliability, or Price</p>
+    <p class="subhead">Ranked by Response, Reliability, and Price</p>
     <p class="support">Prompt, direct and secure connections via <span class="wa">WhatsApp</span></p>
   </section>
 
@@ -398,9 +398,9 @@
   <!-- ── Marketplace ── -->
   <section class="categories">
     <p class="not-vip">Not a VIP? No problem!</p>
-    <h2>Browse for Help by Category</h2>
+    <h2>Browse for help by category</h2>
     <p class="cat-subhead-line">TaskLeaders ranked by Response Speed, Reliability, and Price.</p>
-    <p class="cat-subhead-line">No account needed. No fees.</p>
+    <p class="cat-subhead-line">No account. No fees.</p>
     <div class="category-grid" id="category-grid">
       <!-- Dynamically populated -->
     </div>
@@ -409,7 +409,7 @@
   <!-- ── Provider Recruitment ── -->
   <section class="provider-cta">
     <h2>Are you a skilled service pro or task provider?</h2>
-    <p class="provider-subhead">Become a <span class="brand-task">Task</span><span class="brand-leaders">Leader</span> and join Vancouver's exclusive network for task leads. Pay only for leads you accept. Leads are guaranteed.</p>
+    <p class="provider-subhead">Become a <span class="brand-task">Task</span><span class="brand-leaders">Leader</span> and join an exclusive network.<br>All leads guaranteed.</p>
     <a href="become-task-leader.html" class="provider-cta-btn">Apply Now</a>
   </section>
 
@@ -427,13 +427,13 @@
     const TASKLEADERS_FUNCTIONS_BASE = window.TASKLEADERS_FUNCTIONS_BASE || 'https://iwgoafvemlsswkjroyhl.supabase.co/functions/v1';
 
     const STATIC_CATEGORIES = [
-      { id: 'cleaning',   name: 'Cleaning',          icon: '🧹' },
-      { id: 'yard-work',  name: 'Yard Work',          icon: '🌿' },
-      { id: 'hvac',       name: 'HVAC',               icon: '❄️'  },
+      { id: 'handyman',   name: 'Handyman',           icon: '🛠️'  },
+      { id: 'cleaning',   name: 'Cleaning',           icon: '🧹' },
+      { id: 'painting',   name: 'Painting',           icon: '🖌️'  },
       { id: 'electrical', name: 'Electrical',         icon: '⚡' },
       { id: 'plumbing',   name: 'Plumbing',           icon: '🔧' },
-      { id: 'handyman',   name: 'Handyman',           icon: '🛠️'  },
-      { id: 'painting',   name: 'Painting',           icon: '🖌️'  },
+      { id: 'yard-work',  name: 'Yard Work',          icon: '🌿' },
+      { id: 'hvac',       name: 'HVAC',               icon: '❄️'  },
       { id: 'moving',     name: 'Moving / Transport', icon: '📦' },
     ];
 
@@ -480,11 +480,13 @@
           .filter(c => c.id !== 'furniture-assembly')
           .forEach(c => { apiMap[c.id] = c; });
         // Always render all 8 static categories; use API count when available
-        grid.innerHTML = STATIC_CATEGORIES.map(cat => {
+        // Sort: active (count > 0) first, then coming soon — preserving relative order within each group
+        const merged = STATIC_CATEGORIES.map(cat => {
           const live = apiMap[cat.id];
-          const merged = live ? { ...cat, count: live.count || 0 } : cat;
-          return buildTile(merged, city);
-        }).join('');
+          return live ? { ...cat, count: live.count || 0 } : cat;
+        });
+        merged.sort((a, b) => (Number(b.count || 0) > 0 ? 1 : 0) - (Number(a.count || 0) > 0 ? 1 : 0));
+        grid.innerHTML = merged.map(cat => buildTile(cat, city)).join('');
       } catch (e) {
         renderStatic(grid, city);
       }
