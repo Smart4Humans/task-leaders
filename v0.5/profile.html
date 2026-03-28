@@ -497,7 +497,98 @@
       font-size: 15px;
       cursor: pointer;
     }
-    
+
+    /* Job description + area inputs (same style as phone-input) */
+    .job-input, .area-input {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 16px;
+      margin-bottom: 12px;
+      outline: none;
+      font-family: inherit;
+    }
+    .job-input:focus, .area-input:focus { border-color: var(--blue); }
+    .job-input::placeholder, .area-input::placeholder { color: rgba(255,255,255,0.35); }
+
+    /* Timing selector */
+    .timing-group { margin-bottom: 12px; }
+    .timing-label {
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      display: block;
+      margin-bottom: 8px;
+    }
+    .timing-options {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .timing-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.03);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .timing-option:has(input:checked) {
+      border-color: var(--blue);
+      background: rgba(0,102,255,0.12);
+    }
+    .timing-option input[type="radio"] {
+      accent-color: var(--blue);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .date-picker-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .date-input, .time-input {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+      color-scheme: dark;
+    }
+    .date-input:focus, .time-input:focus { border-color: var(--blue); }
+
+    /* Modal confirmation state */
+    .modal-confirm {
+      text-align: center;
+      padding: 16px 0 8px;
+    }
+    .modal-confirm-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(0,200,83,0.15);
+      border: 1px solid rgba(0,200,83,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin: 0 auto 16px;
+      color: var(--success);
+    }
+    .modal-confirm h3 { margin: 0 0 10px 0; font-size: 20px; }
+    .modal-confirm p  { font-size: 14px; opacity: 0.75; line-height: 1.5; margin: 0 0 20px 0; }
+
     /* Consent Styles */
     .consent-section {
       background: rgba(255,255,255,0.03);
@@ -710,13 +801,37 @@
   <!-- Connection Modal -->
   <div class="modal-overlay" id="modal">
     <div class="modal">
-      <div id="step1">
+
+      <!-- ── Form step ── -->
+      <div id="modalForm">
         <h3 id="connectModalTitle">Connect with Mike</h3>
-        <p>Get connected in seconds</p>
-        
-        <input type="text" class="name-input" id="nameInput" placeholder="Your first name (optional)" />
-        <input type="tel" class="phone-input" id="phoneInput" placeholder="WhatsApp: +1 (604) 555-1234" />
-        
+        <p id="connectModalSub">Tell us about your job so Mike can respond quickly.</p>
+
+        <input type="text"  class="name-input"  id="nameInput"  placeholder="Your full name" />
+        <input type="tel"   class="phone-input"  id="phoneInput"  placeholder="+1 (604) 555-1234" />
+        <input type="text"  class="job-input"    id="jobInput"    placeholder="Brief description of the job" />
+
+        <div class="timing-group">
+          <span class="timing-label">When do you need this?</span>
+          <div class="timing-options">
+            <label class="timing-option">
+              <input type="radio" name="timing" value="asap" checked /> ASAP
+            </label>
+            <label class="timing-option">
+              <input type="radio" name="timing" value="date" /> Specific Date
+            </label>
+            <label class="timing-option">
+              <input type="radio" name="timing" value="flexible" /> Flexible
+            </label>
+          </div>
+          <div class="date-picker-row" id="datePicker" style="display:none;">
+            <input type="date" class="date-input" id="dateInput" />
+            <input type="time" class="time-input" id="timeInput" />
+          </div>
+        </div>
+
+        <input type="text" class="area-input" id="areaInput" placeholder="e.g. Kitsilano, East Van, North Shore" />
+
         <div class="consent-section">
           <div class="consent-item">
             <input type="checkbox" id="consentRequired" />
@@ -726,16 +841,25 @@
             </label>
           </div>
         </div>
-        
+
         <div class="legal-links">
           By connecting, you agree to our <a href="terms.html" target="_blank">Terms</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>
         </div>
-        
+
         <div class="error-message" id="errorMessage"></div>
-        
+
         <button class="btn-primary" onclick="connectNow()">Connect Now</button>
         <button class="btn-secondary" onclick="closeModal()">Cancel</button>
       </div>
+
+      <!-- ── Confirmation step (shown after submission) ── -->
+      <div id="modalConfirmation" class="modal-confirm" style="display:none;">
+        <div class="modal-confirm-icon">✓</div>
+        <h3>Request sent!</h3>
+        <p id="confirmText">They will be notified and reach out to you via <span style="color:var(--success);">WhatsApp</span>.</p>
+        <button class="btn-secondary" onclick="closeModal()">Close</button>
+      </div>
+
     </div>
   </div>
 
@@ -754,21 +878,31 @@
     let connectMessage = 'Direct connect is not enabled yet.';
     let providerWhatsApp = null;
 
-    // Consent gating — single global versioned key
-    const CONSENT_VERSION = '2026-03-13';
-    const CONSENT_KEY = 'taskleaders_connect_consent_v' + CONSENT_VERSION;
+    // Session memory — stores name, phone, consent with 24-hour expiry
+    const SESSION_KEY = 'taskleaders_connect_session';
+    const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 
-    function hasStoredConsent() {
+    function loadSession() {
       try {
-        return localStorage.getItem(CONSENT_KEY) === '1';
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || !data.expires || Date.now() > data.expires) {
+          localStorage.removeItem(SESSION_KEY);
+          return null;
+        }
+        return data;
       } catch (_e) {
-        return false;
+        return null;
       }
     }
 
-    function storeConsent() {
+    function saveSession(name, phone, consent) {
       try {
-        localStorage.setItem(CONSENT_KEY, '1');
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+          name, phone, consent,
+          expires: Date.now() + SESSION_TTL_MS
+        }));
       } catch (_e) {
         // swallow
       }
@@ -862,7 +996,10 @@
       setText('providerNameHero', safeName);
       setText('providerNameSticky', safeName);
       setText('connectModalTitle', 'Connect with ' + safeName);
+      setText('connectModalSub', `Tell us about your job so ${safeName} can respond quickly.`);
       setText('aboutHeading', 'About ' + safeName);
+      const ct = document.getElementById('confirmText');
+      if (ct) ct.innerHTML = `${escapeHtml(safeName)} will be notified and reach out to you via <span style="color:var(--success);">WhatsApp</span>.`;
     }
 
     function setProviderPhoto(url, name) {
@@ -963,8 +1100,8 @@
         const returnParam = encodeURIComponent(returnUrl.toString());
         document.querySelectorAll('.legal-links a').forEach(a => {
           const href = a.getAttribute('href') || '';
-          if (href.startsWith('terms.html')) a.setAttribute('href', `terms.html?return=${returnParam}`);
-          if (href.startsWith('privacy.html')) a.setAttribute('href', `privacy.html?return=${returnParam}`);
+          if (href.startsWith('terms.html'))    a.setAttribute('href', `terms.html?return=${returnParam}`);
+          if (href.startsWith('privacy.html'))  a.setAttribute('href', `privacy.html?return=${returnParam}`);
         });
       } catch (_e) {
         // swallow
@@ -974,26 +1111,46 @@
     function openModal() {
       setLegalReturnLinks();
 
-      // Check for prior consent and pre-check checkbox if exists
-      const hadPriorConsent = hasStoredConsent();
-      document.getElementById('consentRequired').checked = hadPriorConsent;
+      // Show form, hide confirmation
+      document.getElementById('modalForm').style.display = '';
+      document.getElementById('modalConfirmation').style.display = 'none';
+      document.getElementById('errorMessage').classList.remove('show');
+
+      // Pre-fill name, phone, consent from session (24hr window)
+      const session = loadSession();
+      document.getElementById('nameInput').value    = session?.name  || '';
+      document.getElementById('phoneInput').value   = session?.phone || '';
+      document.getElementById('consentRequired').checked = Boolean(session?.consent);
+
+      // Always blank job-specific fields
+      document.getElementById('jobInput').value  = '';
+      document.getElementById('areaInput').value = '';
+      document.getElementById('dateInput').value = '';
+      document.getElementById('timeInput').value = '';
+      const asapRadio = document.querySelector('input[name="timing"][value="asap"]');
+      if (asapRadio) { asapRadio.checked = true; }
+      document.getElementById('datePicker').style.display = 'none';
 
       document.getElementById('modal').classList.add('active');
       document.getElementById('nameInput').focus();
 
-      // Lead event: connect modal opened
       logLeadEventBestEffort({
         event_type: 'connect_modal_opened',
-        had_prior_consent: hadPriorConsent
+        had_prior_session: Boolean(session)
       });
     }
 
     function closeModal() {
       document.getElementById('modal').classList.remove('active');
-      document.getElementById('nameInput').value = '';
-      document.getElementById('phoneInput').value = '';
-      document.getElementById('consentRequired').checked = false;
       document.getElementById('errorMessage').classList.remove('show');
+      // Clear job-specific fields only; session data stays in localStorage
+      document.getElementById('jobInput').value  = '';
+      document.getElementById('areaInput').value = '';
+      document.getElementById('dateInput').value = '';
+      document.getElementById('timeInput').value = '';
+      const asapRadio = document.querySelector('input[name="timing"][value="asap"]');
+      if (asapRadio) { asapRadio.checked = true; }
+      document.getElementById('datePicker').style.display = 'none';
     }
 
     function showError(message) {
@@ -1002,56 +1159,71 @@
       errorEl.classList.add('show');
     }
 
-    function connectNow() {
-      const phone = document.getElementById('phoneInput').value.trim();
+    async function connectNow() {
+      const name    = document.getElementById('nameInput').value.trim();
+      const phone   = document.getElementById('phoneInput').value.trim();
+      const job     = document.getElementById('jobInput').value.trim();
+      const area    = document.getElementById('areaInput').value.trim();
       const consent = document.getElementById('consentRequired').checked;
-      const hadPriorConsent = hasStoredConsent();
+      const timing  = (document.querySelector('input[name="timing"]:checked') || {}).value || 'asap';
+      const timingDate = document.getElementById('dateInput').value || '';
+      const timingTime = document.getElementById('timeInput').value || '';
 
-      // Lead event: connect submit attempted
+      document.getElementById('errorMessage').classList.remove('show');
+
       logLeadEventBestEffort({
         event_type: 'connect_submit_attempted',
-        consent_checked: Boolean(consent),
-        had_prior_consent: hadPriorConsent
+        consent_checked: Boolean(consent)
       });
 
       if (!phone || phone.length < 10) {
         showError('Please enter a valid WhatsApp number');
         return;
       }
-
       if (!consent) {
         showError('Please agree to receive WhatsApp messages');
         return;
       }
 
-      if (!providerWhatsApp) {
-        showError('Unable to connect. Please try again later.');
-        return;
+      // Persist session (name, phone, consent — not job-specific)
+      saveSession(name, phone, consent);
+      logLeadEventBestEffort({ event_type: 'connect_consent_accepted' });
+
+      // Submit to Supabase (best-effort — never block UX)
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      if (isFunctionsBaseConfigured(base)) {
+        fetch(`${base.replace(/\/$/, '')}/connect-request`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            provider_slug:    currentProviderSlug,
+            city_slug:        currentCitySlug,
+            category_slug:    currentCategorySlug,
+            customer_name:    name,
+            customer_whatsapp: phone,
+            job_description:  job,
+            timing,
+            timing_date:      timing === 'date' ? timingDate : null,
+            timing_time:      timing === 'date' ? timingTime : null,
+            area,
+            session_id:       getOrCreateSessionId()
+          })
+        }).catch(() => {});
       }
 
-      // First-time consent: store it
-      const isFirstTime = !hadPriorConsent;
-      if (isFirstTime) {
-        storeConsent();
-      }
-
-      // Lead event: consent accepted
-      logLeadEventBestEffort({
-        event_type: 'connect_consent_accepted',
-        first_time: isFirstTime
-      });
-
-      // Lead event: WhatsApp redirect initiated
-      logLeadEventBestEffort({
-        event_type: 'connect_whatsapp_redirect',
-        provider_slug: currentProviderSlug
-      });
-
-      // Redirect to WhatsApp
-      const message = 'Hi, I found you on TaskLeaders.';
-      const waUrl = 'https://wa.me/' + providerWhatsApp.replace(/\D/g, '') + '?text=' + encodeURIComponent(message);
-      window.location.href = waUrl;
+      // Show confirmation
+      document.getElementById('modalForm').style.display = 'none';
+      document.getElementById('modalConfirmation').style.display = '';
+      logLeadEventBestEffort({ event_type: 'connect_request_sent' });
     }
+
+    // Timing toggle — show/hide date+time picker
+    document.querySelectorAll('input[name="timing"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        document.getElementById('datePicker').style.display =
+          radio.value === 'date' ? 'flex' : 'none';
+      });
+    });
 
     // Expose modal handlers (used by inline onclick attributes)
     window.openModal = openModal;
