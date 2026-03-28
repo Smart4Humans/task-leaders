@@ -80,7 +80,7 @@
     /* ── Hero ── */
     .hero {
       text-align: center;
-      padding: 88px 32px 64px;
+      padding: 88px 32px 32px;
       max-width: 780px;
       margin: 0 auto;
     }
@@ -159,10 +159,8 @@
       text-align: center;
     }
     .vip-step-num {
-      font-size: 12px;
+      font-size: 16px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
       color: var(--green);
       margin-bottom: 10px;
     }
@@ -197,9 +195,9 @@
       border-top: 1px solid rgba(255,255,255,0.06);
     }
     .not-vip {
-      font-size: 20px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.65);
+      font-size: 26px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.75);
       text-align: center;
       padding-top: 64px;
       margin: 0 0 20px 0;
@@ -335,7 +333,7 @@
       .vip-cta-btn      { padding: 16px 32px; font-size: 16px; }
 
       .categories       { padding: 0 16px 48px; }
-      .not-vip          { font-size: 17px; padding-top: 48px; }
+      .not-vip          { font-size: 20px; padding-top: 48px; }
       .categories h2    { font-size: 22px; }
       .cat-subhead-line { font-size: 14px; }
       .category-grid    { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -389,7 +387,7 @@
         </div>
         <div class="vip-step">
           <div class="vip-step-num">Step 3</div>
-          <div class="vip-step-text">We connect you promptly and privately via <span class="wa">WhatsApp</span> with preferred service provider.</div>
+          <div class="vip-step-text">We connect you promptly and privately via <span class="wa">WhatsApp</span>.</div>
         </div>
       </div>
 
@@ -400,8 +398,8 @@
   <!-- ── Marketplace ── -->
   <section class="categories">
     <p class="not-vip">Not a VIP? No problem!</p>
-    <h2>Browse <span class="brand-task">Task</span><span class="brand-leaders">Leaders</span> by Category</h2>
-    <p class="cat-subhead-line"><span class="brand-task">Task</span><span class="brand-leaders">Leaders</span> ranked by Response Speed, Reliability, and Price.</p>
+    <h2>Browse for Help by Category</h2>
+    <p class="cat-subhead-line">TaskLeaders ranked by Response Speed, Reliability, and Price.</p>
     <p class="cat-subhead-line">No account needed. No fees.</p>
     <div class="category-grid" id="category-grid">
       <!-- Dynamically populated -->
@@ -476,11 +474,16 @@
         if (!payload || payload.ok !== true) { renderStatic(grid, city); return; }
         const categories = payload.data?.categories || [];
         if (!Array.isArray(categories) || categories.length === 0) { renderStatic(grid, city); return; }
-        const filtered = categories.filter(c => c.id !== 'furniture-assembly');
-        grid.innerHTML = filtered.map(cat => {
-          const m = STATIC_CATEGORIES.find(s => s.id === cat.id);
-          if (m && !cat.icon) cat.icon = m.icon;
-          return buildTile(cat, city);
+        // Build a lookup from API results (excluding retired categories)
+        const apiMap = {};
+        categories
+          .filter(c => c.id !== 'furniture-assembly')
+          .forEach(c => { apiMap[c.id] = c; });
+        // Always render all 8 static categories; use API count when available
+        grid.innerHTML = STATIC_CATEGORIES.map(cat => {
+          const live = apiMap[cat.id];
+          const merged = live ? { ...cat, count: live.count || 0 } : cat;
+          return buildTile(merged, city);
         }).join('');
       } catch (e) {
         renderStatic(grid, city);
