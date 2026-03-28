@@ -10,6 +10,7 @@
       --blue-dark: #0052cc;
       --green: #00c853;
       --gold: #ffb800;
+      --wa-green: #25D366;
       --bg: #0a0a14;
       --card: rgba(255,255,255,0.05);
       --border: rgba(255,255,255,0.08);
@@ -149,6 +150,49 @@
       color: var(--green);
       font-size: 13px;
       flex-shrink: 0;
+    }
+
+    /* WhatsApp colour */
+    .wa { color: var(--wa-green); }
+
+    /* How it Works */
+    .how-it-works {
+      max-width: 760px;
+      margin: 0 auto 48px;
+      padding: 0 32px;
+    }
+    .how-it-works-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 20px 0;
+    }
+    .vip-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .vip-step {
+      background: rgba(0,0,0,0.28);
+      border: 1px solid rgba(0,200,83,0.15);
+      border-radius: 12px;
+      padding: 24px 16px;
+      text-align: center;
+    }
+    .vip-step-num {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--green);
+      margin-bottom: 10px;
+    }
+    .vip-step-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+      line-height: 1.45;
     }
 
     /* Form */
@@ -331,6 +375,9 @@
       .benefits { padding: 0 20px; margin-bottom: 40px; }
       .benefit-item { font-size: 15px; }
 
+      .how-it-works { padding: 0 20px; margin-bottom: 36px; }
+      .vip-steps    { grid-template-columns: 1fr; gap: 10px; }
+
       .form-section { padding: 0 20px 60px; }
       .form-card { padding: 24px; }
     }
@@ -377,6 +424,25 @@
         <span>No searching, no managing contacts, no chasing callbacks</span>
       </li>
     </ul>
+  </section>
+
+  <!-- ── How it Works ── -->
+  <section class="how-it-works">
+    <p class="how-it-works-title">How it works</p>
+    <div class="vip-steps">
+      <div class="vip-step">
+        <div class="vip-step-num">Step 1</div>
+        <div class="vip-step-text">One Time Signup &mdash; 30 seconds</div>
+      </div>
+      <div class="vip-step">
+        <div class="vip-step-num">Step 2</div>
+        <div class="vip-step-text"><span class="wa">WhatsApp</span> us directly when you need a job done.</div>
+      </div>
+      <div class="vip-step">
+        <div class="vip-step-num">Step 3</div>
+        <div class="vip-step-text">We connect you promptly and privately via <span class="wa">WhatsApp</span>.</div>
+      </div>
+    </div>
   </section>
 
   <section class="form-section">
