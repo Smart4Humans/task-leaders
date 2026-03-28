@@ -1,0 +1,1136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="theme-color" content="#0a0a14" />
+  <title>Mike Johnson — TaskLeaders</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --gold: #ffb800;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+      --success: #25D366;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Header - matches homepage/category exactly */
+    header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 5px 8px;
+      border-radius: 6px;
+    }
+    .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
+    
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+    
+    /* Sticky Header (appears on scroll) */
+    .sticky-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10,10,20,0.98);
+      backdrop-filter: blur(10px);
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      z-index: 99;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+    }
+    .sticky-header.visible {
+      transform: translateY(0);
+    }
+    .sticky-header .sticky-name {
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .sticky-header .sticky-connect {
+      background: var(--success);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    /* Main Container */
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      padding-bottom: 40px;
+    }
+    
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .hero-photo {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      border: 3px solid var(--blue);
+      overflow: hidden;
+      background: rgba(255,255,255,0.05);
+    }
+    .hero-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .hero-name {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+      letter-spacing: -0.3px;
+    }
+    .hero-category {
+      display: inline-block;
+      background: rgba(0,102,255,0.15);
+      color: var(--blue);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+    .hero-location {
+      color: rgba(255,255,255,0.85);
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    
+    /* Trust Bar */
+    .trust-bar {
+      display: flex;
+      justify-content: space-around;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px 16px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+    .trust-item {
+      text-align: center;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .trust-icon {
+      font-size: 22px;
+      margin-bottom: 8px;
+      line-height: 1;
+      color: #fff;
+    }
+    .trust-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .trust-value {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .trust-value.reliability {
+      color: var(--gold);
+    }
+    .trust-value.response {
+      color: var(--green);
+    }
+    
+    /* Badges - match category page exactly */
+    .badges-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .bicon {
+      width: 28px;
+      height: 28px;
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: help;
+      position: relative;
+    }
+    /* Match category page badge colors exactly */
+    .bicon.fast { border: 1px solid rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
+    .bicon.verified { border: 1px solid var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
+    .bicon.top { border: 1px solid rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
+    .bicon.today { border: 1px solid rgba(255,100,50,0.25); background: rgba(255,100,50,0.08); color: rgba(255,100,50,0.95); }
+    .bicon.after { border: 1px solid rgba(150,100,255,0.25); background: rgba(150,100,255,0.08); color: rgba(150,100,255,0.95); }
+    
+    .bicon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.9);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      white-space: nowrap;
+      z-index: 10;
+      margin-bottom: 4px;
+    }
+    
+    /* Verified Badge Row - icon + visible label */
+    .verified-badge-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .verified-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid var(--blue);
+      background: rgba(0,102,255,0.12);
+      color: var(--blue);
+    }
+    .verified-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--blue);
+    }
+    
+    /* Primary CTA */
+    .primary-cta {
+      margin-bottom: 28px;
+    }
+    .connect-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 18px 24px;
+      border-radius: 14px;
+      border: none;
+      background: var(--success);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(37,211,102,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .connect-btn:active {
+      transform: scale(0.98);
+    }
+    .connect-note {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    
+    /* Section Cards */
+    .section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+    }
+    .section h2 {
+      margin: 0 0 16px 0;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    
+    /* Services Section */
+    .service-item {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .service-item:last-child {
+      border-bottom: none;
+    }
+    .service-name {
+      font-weight: 500;
+      font-size: 15px;
+    }
+    .service-rate {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .pricing-note {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .pricing-note::before {
+      content: "💡 ";
+    }
+    
+    /* About Section */
+    .about-text {
+      line-height: 1.7;
+      opacity: 0.9;
+      font-size: 15px;
+      margin: 0 0 16px 0;
+    }
+    .about-meta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .about-meta-item {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .about-meta-item strong {
+      color: var(--blue);
+    }
+    
+    /* Service Areas Section */
+    .areas-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .area-tag {
+      background: rgba(255,255,255,0.08);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
+    
+    /* Secondary CTA */
+    .secondary-cta {
+      text-align: center;
+      padding: 24px 0;
+    }
+    .secondary-cta .connect-btn {
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    
+    /* Photo Gallery */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .gallery-placeholder {
+      aspect-ratio: 1;
+      background: rgba(255,255,255,0.03);
+      border: 1px dashed rgba(255,255,255,0.12);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.2);
+      font-size: 24px;
+    }
+    .gallery-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+      aspect-ratio: 1;
+    }
+
+    /* Profile disclaimer */
+    .profile-disclaimer {
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      text-align: center;
+      line-height: 1.5;
+      padding: 0 16px;
+      margin: 0 0 24px 0;
+    }
+
+    /* Footer spacer */
+    .footer-spacer {
+      height: 40px;
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: 20px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 380px;
+      border: 1px solid rgba(255,255,255,0.1);
+      animation: slideUp 0.3s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal h3 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      text-align: center;
+    }
+    .modal p {
+      margin: 0 0 20px 0;
+      font-size: 14px;
+      opacity: 0.7;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .phone-input, .name-input {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 16px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    .phone-input:focus, .name-input:focus {
+      border-color: var(--blue);
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      background: var(--success);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    .btn-secondary {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    
+    /* Consent Styles */
+    .consent-section {
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .consent-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .consent-item:last-child { margin-bottom: 0; }
+    .consent-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+    .consent-item label {
+      font-size: 13px;
+      line-height: 1.5;
+      opacity: 0.9;
+      cursor: pointer;
+      flex: 1;
+    }
+    .consent-item .hint {
+      display: block;
+      font-size: 11px;
+      opacity: 0.5;
+      margin-top: 4px;
+    }
+    .legal-links {
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.6;
+      margin-bottom: 16px;
+    }
+    .legal-links a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+    .error-message {
+      color: #ff6b6b;
+      font-size: 13px;
+      text-align: center;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .error-message.show { display: block; }
+    .hidden { display: none !important; }
+    
+    /* Mobile-specific hero adjustments */
+    @media (max-width: 767px) {
+      .hero-category { font-size: 13px; padding: 7px 14px; }
+      .hero-location { font-size: 14px; }
+      .trust-bar { padding: 20px 12px; }
+      .trust-icon { font-size: 20px; }
+      .trust-value { font-size: 15px; }
+    }
+    
+    @media (min-width: 768px) {
+      main { padding: 32px; }
+      .hero { margin-bottom: 32px; }
+      .hero-photo { width: 140px; height: 140px; margin-bottom: 24px; }
+      .hero-name { font-size: 32px; margin-bottom: 16px; }
+      .hero-category { font-size: 15px; padding: 10px 18px; }
+      .hero-location { font-size: 16px; }
+      .trust-bar { padding: 28px 20px; }
+      .trust-icon { font-size: 24px; }
+      .trust-value { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sticky Header (appears on scroll) -->
+  <div class="sticky-header" id="stickyHeader">
+    <span class="sticky-name" id="providerNameSticky">Mike Johnson</span>
+    <button class="sticky-connect" onclick="openModal()">Connect</button>
+  </div>
+
+  <!-- Main Header -->
+  <header>
+    <a href="category.html" class="back">←</a>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+  </header>
+
+  <main>
+    <!--
+      LOCATION RULES:
+      Primary Location (hero): City from approved list only
+      Service Areas: Cities + neighborhoods from provider profile
+
+      Approved Cities: Vancouver, Surrey, Burnaby, Richmond, Coquitlam,
+      New Westminster, North Vancouver, Port Coquitlam, Maple Ridge,
+      Langley, White Rock, Port Moody, Pitt Meadows, Delta, Abbotsford,
+      Chilliwack, Mission
+    -->
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-photo">
+        <img id="providerPhoto" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face" alt="Mike Johnson" />
+      </div>
+      <h1 class="hero-name" id="providerNameHero">Mike Johnson</h1>
+      <span class="hero-category" id="heroCategory">Painting</span>
+      <div class="hero-location" id="heroLocation">Vancouver</div>
+    </section>
+
+    <!-- Trust Bar -->
+    <section class="trust-bar">
+      <div class="trust-item">
+        <div class="trust-icon">⚡</div>
+        <div class="trust-label">Responds in</div>
+        <div class="trust-value response" id="trustResponse">~2 min</div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">✓</div>
+        <div class="trust-label">Reliability</div>
+        <div class="trust-value reliability" id="trustReliability">96%</div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">$</div>
+        <div class="trust-label">From</div>
+        <div class="trust-value" id="trustPrice">$40/hr</div>
+      </div>
+    </section>
+
+    <!-- Verified Badge - icon + visible label -->
+    <div class="verified-badge-row">
+      <span class="verified-icon">✓</span>
+      <span class="verified-label">Verified</span>
+    </div>
+
+    <!-- Primary CTA -->
+    <section class="primary-cta">
+      <button class="connect-btn" onclick="openModal()">
+        💬 Connect
+      </button>
+      <p class="connect-note">via <span style="color:var(--success);">WhatsApp</span></p>
+    </section>
+
+    <!-- Services &amp; Rates - hidden once real API data loads -->
+    <section class="section" id="servicesRatesSection">
+      <h2>Services & Rates</h2>
+      
+      <div class="service-item">
+        <span class="service-name">🎨 Painting</span>
+        <span class="service-rate">$45/hr</span>
+      </div>
+      <div class="service-item">
+        <span class="service-name">🔧 Handyman</span>
+        <span class="service-rate">$50/hr</span>
+      </div>
+      <div class="service-item">
+        <span class="service-name">🧹 Cleaning</span>
+        <span class="service-rate">$40/hr</span>
+      </div>
+      
+      <p class="pricing-note">
+        Listed rates are a general guide. Final pricing may vary based on the details of your job, materials required, location, and timing.
+      </p>
+    </section>
+
+    <!-- Photo Gallery — hidden until photos are available -->
+    <section class="section" id="photoGallerySection" style="display:none;">
+      <h2>Photos</h2>
+      <div class="gallery-grid" id="photoGalleryGrid">
+        <!-- Populated from provider profile when photos are uploaded -->
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section">
+      <h2 id="aboutHeading">About Mike</h2>
+      <p class="about-text" id="aboutText">
+        I'm a multi-skilled professional with over 8 years of experience helping homeowners in Vancouver. 
+        I specialize in interior and exterior painting, but I'm also happy to tackle handyman jobs 
+        and cleaning services. I take pride in showing up on time, communicating clearly, 
+        and leaving every space better than I found it. Whether you need a single room painted or a 
+        full home refresh, I'll treat your project with the same care I'd give my own.
+      </p>
+    </section>
+
+    <!-- Service Areas Section -->
+    <section class="section">
+      <h2>Service Areas</h2>
+      <div class="areas-list" id="serviceAreasList">
+        <!-- Populated dynamically from provider profile -->
+      </div>
+    </section>
+
+    <!-- Disclaimer -->
+    <p class="profile-disclaimer">Profile information, credentials, and images are provided by the TaskLeader. TaskLeaders does not independently verify qualifications.</p>
+
+    <!-- Secondary CTA -->
+    <section class="secondary-cta">
+      <button class="connect-btn" onclick="openModal()">
+        💬 Connect with Mike
+      </button>
+      <p class="connect-note">via <span style="color:var(--success);">WhatsApp</span></p>
+    </section>
+  </main>
+
+  <!-- Footer spacer -->
+  <div class="footer-spacer"></div>
+
+  <!-- Connection Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div id="step1">
+        <h3 id="connectModalTitle">Connect with Mike</h3>
+        <p>Get connected in seconds</p>
+        
+        <input type="text" class="name-input" id="nameInput" placeholder="Your first name (optional)" />
+        <input type="tel" class="phone-input" id="phoneInput" placeholder="WhatsApp: +1 (604) 555-1234" />
+        
+        <div class="consent-section">
+          <div class="consent-item">
+            <input type="checkbox" id="consentRequired" />
+            <label for="consentRequired">
+              I agree to receive WhatsApp messages about this inquiry.
+              <span class="hint">Required to connect</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="legal-links">
+          By connecting, you agree to our <a href="terms.html" target="_blank">Terms</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <button class="btn-primary" onclick="connectNow()">Connect Now</button>
+        <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    // Profile page — Phase 1 wiring: fetch real provider data from Supabase Edge Function
+    // Canonical URL convention: profile.html?city=vancouver&category=handyman&provider=sam-fixit
+    // IMPORTANT: Connect is intentionally gated for MVP (no direct WhatsApp handoff yet).
+
+    let currentCitySlug = 'vancouver';
+    let currentCategorySlug = 'painting';
+    let currentProviderSlug = '';
+
+    // Read-layer state
+    let connectStatus = 'gated';
+    let connectMessage = 'Direct connect is not enabled yet.';
+    let providerWhatsApp = null;
+
+    // Consent gating — single global versioned key
+    const CONSENT_VERSION = '2026-03-13';
+    const CONSENT_KEY = 'taskleaders_connect_consent_v' + CONSENT_VERSION;
+
+    function hasStoredConsent() {
+      try {
+        return localStorage.getItem(CONSENT_KEY) === '1';
+      } catch (_e) {
+        return false;
+      }
+    }
+
+    function storeConsent() {
+      try {
+        localStorage.setItem(CONSENT_KEY, '1');
+      } catch (_e) {
+        // swallow
+      }
+    }
+
+    // Lead event logging (best-effort; never block UX)
+    function getOrCreateSessionId() {
+      try {
+        const key = 'taskleaders_session_id';
+        const existing = localStorage.getItem(key);
+        if (existing && existing.length > 10) return existing;
+        const id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + '_' + Math.random().toString(36).slice(2);
+        localStorage.setItem(key, id);
+        return id;
+      } catch (_e) {
+        return 'anon_' + String(Date.now());
+      }
+    }
+
+    function logLeadEventBestEffort(evt) {
+      try {
+        const base = window.TASKLEADERS_FUNCTIONS_BASE;
+        if (!base || typeof base !== 'string' || !base.startsWith('http')) return;
+
+        const payload = {
+          source: 'public_web',
+          page: 'profile.html',
+          session_id: getOrCreateSessionId(),
+          city_slug: currentCitySlug,
+          category_slug: currentCategorySlug || null,
+          provider_slug: currentProviderSlug || null,
+          meta: {
+            client_time_iso: new Date().toISOString(),
+            referrer: document.referrer || null
+          },
+          ...evt
+        };
+
+        fetch(`${base.replace(/\/$/, '')}/lead-event`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      } catch (_e) {
+        // swallow
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function titleCaseFromSlug(slug) {
+      const s = String(slug || '').trim();
+      if (!s) return '';
+      return s
+        .split(/[-_\s]+/g)
+        .filter(Boolean)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+
+    function isFunctionsBaseConfigured(base) {
+      if (!base) return false;
+      if (typeof base !== 'string') return false;
+      const trimmed = base.trim();
+      if (!trimmed) return false;
+      if (trimmed.includes('<PROJECT_REF>')) return false;
+      if (!/^https?:\/\//i.test(trimmed)) return false;
+      return true;
+    }
+
+    function getParam(name, fallback = '') {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get(name) || fallback).trim();
+    }
+
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value;
+    }
+
+    function setProviderName(name) {
+      const safeName = name || 'TaskLeader';
+      setText('providerNameHero', safeName);
+      setText('providerNameSticky', safeName);
+      setText('connectModalTitle', 'Connect with ' + safeName);
+      setText('aboutHeading', 'About ' + safeName);
+    }
+
+    function setProviderPhoto(url, name) {
+      const img = document.getElementById('providerPhoto');
+      if (!img) return;
+      if (url) img.setAttribute('src', url);
+      if (name) img.setAttribute('alt', name);
+    }
+
+    function formatResp(minutes) {
+      const n = Number(minutes);
+      if (!Number.isFinite(n) || n <= 0) return '—';
+      return `~${n} min`;
+    }
+
+    function formatPrice(cents) {
+      const n = Number(cents);
+      if (!Number.isFinite(n) || n <= 0) return '—';
+      const dollars = Math.round(n / 100);
+      return `$${dollars}/hr`;
+    }
+
+    function bindProfile(payload) {
+      const provider = payload?.data?.provider;
+      const city = payload?.data?.city;
+
+      const providerName = provider?.display_name || titleCaseFromSlug(currentProviderSlug) || 'TaskLeader';
+      const cityName = city?.name || 'Vancouver';
+      const categoryName = provider?.category?.name || titleCaseFromSlug(currentCategorySlug) || 'Painting';
+
+      setProviderName(providerName);
+      setProviderPhoto(provider?.hero_photo_url, providerName);
+
+      // Category + city
+      setText('heroCategory', categoryName);
+      setText('heroLocation', cityName);
+
+      // Trust metrics
+      setText('trustResponse', formatResp(provider?.response_time_minutes));
+      const reliability = Number(provider?.reliability_percent);
+      setText('trustReliability', Number.isFinite(reliability) ? `${reliability}%` : '—');
+      setText('trustPrice', formatPrice(provider?.hourly_rate_cents));
+
+      // About
+      const about = provider?.about;
+      if (about && String(about).trim()) {
+        setText('aboutText', String(about).trim());
+      } else {
+        setText('aboutText', 'Profile details coming soon.');
+      }
+
+      // Service areas
+      const areas = Array.isArray(provider?.service_areas) ? provider.service_areas : [];
+      const container = document.getElementById('serviceAreasList');
+      if (container) {
+        const safeAreas = areas.filter(Boolean);
+        container.innerHTML = safeAreas.length
+          ? safeAreas.map((a) => `<span class="area-tag">${escapeHtml(a)}</span>`).join('')
+          : `<span class="area-tag">${escapeHtml(cityName)}</span>`;
+      }
+
+      // Connect gating
+      const connect = payload?.data?.connect;
+      connectStatus = connect?.status || 'gated';
+      connectMessage = connect?.message || connectMessage;
+      providerWhatsApp = connect?.handoff?.whatsapp_e164 || null;
+
+      // Nav links: keep back arrow consistent with Category page routing
+      const back = document.querySelector('a.back');
+      const logo = document.querySelector('a.logo');
+      const backHref = `category.html?city=${encodeURIComponent(currentCitySlug)}&category=${encodeURIComponent(provider?.category?.slug || currentCategorySlug)}`;
+      const homeHref = `homepage.html?city=${encodeURIComponent(currentCitySlug)}`;
+      if (back) back.setAttribute('href', backHref);
+      if (logo) logo.setAttribute('href', homeHref);
+
+      // Title
+      document.title = providerName + ' — TaskLeaders';
+
+      // Honesty rule: hide static template services/rates once real read-layer data is loaded
+      const services = document.getElementById('servicesRatesSection');
+      if (services) services.style.display = 'none';
+    }
+
+    // Sticky header behavior (keep existing behavior)
+    const stickyHeader = document.getElementById('stickyHeader');
+    const hero = document.querySelector('.hero');
+    window.addEventListener('scroll', () => {
+      const heroBottom = hero.getBoundingClientRect().bottom;
+      if (heroBottom < 0) stickyHeader.classList.add('visible');
+      else stickyHeader.classList.remove('visible');
+    });
+
+    // Modal controls
+    function setLegalReturnLinks() {
+      try {
+        const returnUrl = new URL(window.location.href);
+        returnUrl.searchParams.set('reopenConnect', '1');
+        const returnParam = encodeURIComponent(returnUrl.toString());
+        document.querySelectorAll('.legal-links a').forEach(a => {
+          const href = a.getAttribute('href') || '';
+          if (href.startsWith('terms.html')) a.setAttribute('href', `terms.html?return=${returnParam}`);
+          if (href.startsWith('privacy.html')) a.setAttribute('href', `privacy.html?return=${returnParam}`);
+        });
+      } catch (_e) {
+        // swallow
+      }
+    }
+
+    function openModal() {
+      setLegalReturnLinks();
+
+      // Check for prior consent and pre-check checkbox if exists
+      const hadPriorConsent = hasStoredConsent();
+      document.getElementById('consentRequired').checked = hadPriorConsent;
+
+      document.getElementById('modal').classList.add('active');
+      document.getElementById('nameInput').focus();
+
+      // Lead event: connect modal opened
+      logLeadEventBestEffort({
+        event_type: 'connect_modal_opened',
+        had_prior_consent: hadPriorConsent
+      });
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+      document.getElementById('nameInput').value = '';
+      document.getElementById('phoneInput').value = '';
+      document.getElementById('consentRequired').checked = false;
+      document.getElementById('errorMessage').classList.remove('show');
+    }
+
+    function showError(message) {
+      const errorEl = document.getElementById('errorMessage');
+      errorEl.textContent = message;
+      errorEl.classList.add('show');
+    }
+
+    function connectNow() {
+      const phone = document.getElementById('phoneInput').value.trim();
+      const consent = document.getElementById('consentRequired').checked;
+      const hadPriorConsent = hasStoredConsent();
+
+      // Lead event: connect submit attempted
+      logLeadEventBestEffort({
+        event_type: 'connect_submit_attempted',
+        consent_checked: Boolean(consent),
+        had_prior_consent: hadPriorConsent
+      });
+
+      if (!phone || phone.length < 10) {
+        showError('Please enter a valid WhatsApp number');
+        return;
+      }
+
+      if (!consent) {
+        showError('Please agree to receive WhatsApp messages');
+        return;
+      }
+
+      if (!providerWhatsApp) {
+        showError('Unable to connect. Please try again later.');
+        return;
+      }
+
+      // First-time consent: store it
+      const isFirstTime = !hadPriorConsent;
+      if (isFirstTime) {
+        storeConsent();
+      }
+
+      // Lead event: consent accepted
+      logLeadEventBestEffort({
+        event_type: 'connect_consent_accepted',
+        first_time: isFirstTime
+      });
+
+      // Lead event: WhatsApp redirect initiated
+      logLeadEventBestEffort({
+        event_type: 'connect_whatsapp_redirect',
+        provider_slug: currentProviderSlug
+      });
+
+      // Redirect to WhatsApp
+      const message = 'Hi, I found you on TaskLeaders.';
+      const waUrl = 'https://wa.me/' + providerWhatsApp.replace(/\D/g, '') + '?text=' + encodeURIComponent(message);
+      window.location.href = waUrl;
+    }
+
+    // Expose modal handlers (used by inline onclick attributes)
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+    window.connectNow = connectNow;
+
+    // Close modal on overlay click
+    document.getElementById('modal').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    function reopenConnectIfRequested() {
+      const flag = getParam('reopenConnect', '');
+      if (flag !== '1') return;
+
+      // Reopen after the page is ready, then clean only the flag from the URL.
+      setTimeout(() => {
+        openModal();
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('reopenConnect');
+          window.history.replaceState({}, '', url.toString());
+        } catch (_e) {
+          // ignore
+        }
+      }, 0);
+    }
+
+    async function init() {
+      currentCitySlug = getParam('city', 'vancouver').toLowerCase();
+      currentCategorySlug = getParam('category', 'painting').toLowerCase();
+      currentProviderSlug = getParam('provider', '').toLowerCase();
+
+      // Safe initial copy (until API loads)
+      setProviderName(titleCaseFromSlug(currentProviderSlug) || 'TaskLeader');
+      setText('heroCategory', titleCaseFromSlug(currentCategorySlug) || 'Painting');
+      setText('heroLocation', titleCaseFromSlug(currentCitySlug) || 'Vancouver');
+      setText('trustResponse', '—');
+      setText('trustReliability', '—');
+      setText('trustPrice', '—');
+      setText('aboutText', 'Profile details coming soon.');
+
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      if (!isFunctionsBaseConfigured(base)) {
+        console.warn('TaskLeaders: TASKLEADERS_FUNCTIONS_BASE is not configured; skipping network calls.');
+        connectStatus = 'gated';
+        connectMessage = 'Direct WhatsApp connect is not enabled yet.';
+        return;
+      }
+
+      if (!currentProviderSlug) {
+        connectStatus = 'gated';
+        connectMessage = 'This profile is not available yet.';
+        showError('This profile is not available yet.');
+        return;
+      }
+
+      try {
+        const url = `${base.replace(/\/$/, '')}/public-profile?city=${encodeURIComponent(currentCitySlug)}&provider=${encodeURIComponent(currentProviderSlug)}`;
+        const res = await fetch(url);
+        const payload = await res.json();
+
+        if (!payload || payload.ok !== true) {
+          connectStatus = 'gated';
+          connectMessage = 'This profile is not available yet.';
+          showError('This profile is not available yet.');
+          return;
+        }
+
+        bindProfile(payload);
+        reopenConnectIfRequested();
+      } catch (e) {
+        connectStatus = 'gated';
+        connectMessage = 'This profile is not available yet.';
+      }
+    }
+
+    init();
+  </script>
+
+</body>
+</html>

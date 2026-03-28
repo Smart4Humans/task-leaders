@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>TaskLeaders — Category</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --bg: #0a0a14;
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+      --whatsapp: #25D366;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 5px 8px;
+      border-radius: 6px;
+    }
+    .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+
+    .content-header {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 16px 20px 10px;
+    }
+    .content-header h1 {
+      margin: 0 0 6px 0;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+    }
+    .content-header h1 span { color: var(--blue); }
+    .summary-line {
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.02);
+      color: rgba(255,255,255,0.65);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(0,200,83,0.2);
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 20px 32px;
+    }
+
+    .rank-hint {
+      margin: 6px 0 8px;
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+    }
+
+    .sort-bar {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin: 8px 0 10px;
+      flex-wrap: wrap;
+    }
+    .sort-label {
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .sort-btn {
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.02);
+      color: rgba(255,255,255,0.65);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sort-btn:hover { border-color: rgba(255,255,255,0.22); color: #fff; }
+    .sort-btn.active {
+      background: rgba(0,102,255,0.14);
+      border-color: rgba(0,102,255,0.45);
+      color: #fff;
+    }
+
+    .legend {
+      margin: 8px 0 12px;
+      color: rgba(255,255,255,0.5);
+      font-size: 11px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .legend .item { display: inline-flex; gap: 4px; align-items: center; cursor: help; }
+    .legend .ic { width: 18px; height: 18px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+    /* Legend icons match row badge colors exactly */
+    .legend .ic.fast { border: 1px solid rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
+    .legend .ic.verified { border: 1px solid var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
+    .legend .ic.top { border: 1px solid rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
+
+
+    .section-heading {
+      font-size: 17px;
+      font-weight: 700;
+      margin: 20px 0 10px;
+      color: #fff;
+      letter-spacing: -0.2px;
+    }
+    /* Tighten space between Top 3 and More TaskLeaders sections */
+    #board { margin-top: 4px; }
+
+    .board {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.02);
+    }
+
+    /* Column headers: # / TaskLeader / Response / Reliab. / Price / badges / WhatsApp */
+    .board-header {
+      display: grid;
+      grid-template-columns: 44px minmax(200px, 2fr) 90px 80px 80px 90px 100px;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: rgba(255,255,255,0.55);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      align-items: center;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 44px minmax(200px, 2fr) 90px 80px 80px 90px 100px;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      align-items: center;
+      transition: background 0.12s;
+    }
+    .row:last-child { border-bottom: none; }
+    .row:hover { background: rgba(255,255,255,0.02); }
+
+    .rank {
+      font-weight: 800;
+      font-size: 16px;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+    }
+    .rank.top { color: var(--blue); }
+
+    .taskleader-cell { min-width: 0; overflow: hidden; display: flex; align-items: center; gap: 10px; }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+      background: rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .name-col { min-width: 0; overflow: hidden; }
+    .name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #fff;
+      text-decoration: none;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .name:hover { color: var(--blue); }
+
+    .area {
+      color: rgba(255,255,255,0.45);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .metric {
+      font-size: 13px;
+      color: rgba(255,255,255,0.75);
+      font-weight: 600;
+      text-align: left;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .metric.response { color: rgba(0,200,83,0.9); }
+    .metric.reliability { color: rgba(255,184,0,0.9); }
+
+    .price {
+      font-size: 13px;
+      color: rgba(255,255,255,0.9);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* Badges in dedicated column before WhatsApp — flex-wrap ensures future badges don't break layout */
+    .badge-cell {
+      display: flex;
+      gap: 5px;
+      justify-content: flex-start;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .bicon {
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: help;
+      position: relative;
+      flex-shrink: 0;
+    }
+    /* Row badge colors match legend exactly */
+    .bicon.fast { border: 1px solid rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
+    .bicon.verified { border: 1px solid var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
+    .bicon.top { border: 1px solid rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
+
+    
+    .bicon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.9);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      white-space: nowrap;
+      z-index: 10;
+      margin-bottom: 4px;
+    }
+
+    .wa {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(37,211,102,0.5);
+      background: rgba(37,211,102,0.12);
+      color: #d7ffe7;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.12s;
+      flex-shrink: 0;
+    }
+    .wa:hover {
+      background: rgba(37,211,102,0.2);
+      border-color: rgba(37,211,102,0.7);
+    }
+
+    @media (max-width: 900px) {
+      .board-header, .row {
+        grid-template-columns: 40px minmax(160px, 2fr) 80px 70px 70px 80px 90px;
+        gap: 10px;
+        padding: 10px 14px;
+      }
+    }
+
+    /* Mobile: Ranked Cards Layout */
+    @media (max-width: 680px) {
+      .board-header { display: none; }
+      
+      /* Hide desktop row structure on mobile */
+      .row {
+        display: none !important;
+      }
+      
+      /* Mobile card container */
+      .board {
+        border: none;
+        background: transparent;
+      }
+      
+      /* Mobile card styling */
+      .taskleader-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      /* Rank badge - top left corner */
+      .taskleader-card::before {
+        content: attr(data-rank);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 800;
+        background: rgba(255,255,255,0.08);
+        border-bottom-right-radius: 12px;
+        z-index: 2;
+      }
+      
+      .taskleader-card[data-rank="1"]::before {
+        background: rgba(255,184,0,0.9);
+        color: #000;
+      }
+      
+      .taskleader-card[data-rank="2"]::before {
+        background: rgba(192,192,192,0.9);
+        color: #000;
+      }
+      
+      .taskleader-card[data-rank="3"]::before {
+        background: rgba(205,127,50,0.9);
+        color: #fff;
+      }
+      
+      /* Card content wrapper */
+      .card-content {
+        padding: 16px 16px 12px 52px;
+      }
+      
+      /* Category pill */
+      .card-category {
+        display: inline-block;
+        font-size: 11px;
+        padding: 3px 8px;
+        background: rgba(0,102,255,0.15);
+        color: var(--blue);
+        border-radius: 10px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      
+      /* Name and area (now grouped with avatar) */
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .card-title {
+        min-width: 0;
+      }
+
+      .card-name {
+        font-size: 17px;
+        font-weight: 700;
+        color: #fff;
+        text-decoration: none;
+        display: block;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .card-area {
+        font-size: 13px;
+        color: rgba(255,255,255,0.5);
+      }
+      
+      /* Stats row: Response | Reliability | Price */
+      .card-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 12px;
+        background: rgba(0,0,0,0.2);
+        border-radius: 8px;
+        margin-bottom: 12px;
+      }
+      
+      .card-stat {
+        text-align: center;
+      }
+      
+      .card-stat-value {
+        font-size: 16px;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 4px;
+      }
+      
+      .card-stat-label {
+        font-size: 10px;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .card-stat.response .card-stat-value { color: rgba(0,200,83,0.9); }
+      .card-stat.reliability .card-stat-value { color: rgba(255,184,0,0.9); }
+      .card-stat.price .card-stat-value { color: #fff; }
+      
+      /* Badges row */
+      .card-badges {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+        padding: 0 16px;
+      }
+      
+      /* Profile CTA */
+      .card-cta {
+        display: block;
+        width: 100%;
+        padding: 14px;
+        background: rgba(0,102,255,0.12);
+        border-top: 1px solid rgba(0,102,255,0.2);
+        color: #fff;
+        text-align: center;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+        transition: background 0.15s;
+      }
+      
+      .card-cta:hover {
+        background: rgba(0,102,255,0.2);
+      }
+    }
+    
+    /* Desktop: hide mobile cards, show desktop rows */
+    @media (min-width: 681px) {
+      .taskleader-card { display: none !important; }
+      .row { display: grid !important; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="back" href="homepage.html">← Back</a>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+  </header>
+
+  <div class="content-header">
+    <h1 id="categoryTitle">🔧 <span>Handyman</span> in Vancouver</h1>
+    <div class="summary-line">
+      <span class="pill" id="avgResponsePill">⚡ Avg response —</span>
+      <span class="pill" id="providerCountPill">— TaskLeaders</span>
+    </div>
+  </div>
+
+  <main>
+    <div class="rank-hint">TaskLeaders ranked by response speed, reliability, and price.</div>
+
+    <div class="sort-bar">
+      <span class="sort-label">Rank by</span>
+      <button class="sort-btn active" onclick="setSort('response', event)">⚡ Response</button>
+      <button class="sort-btn" onclick="setSort('reliability', event)">✓ Reliability</button>
+      <button class="sort-btn" onclick="setSort('price', event)">$ Price</button>
+    </div>
+
+    <div class="legend">
+      <span class="item" title="Responds in under 5 minutes"><span class="ic fast">⚡</span> Fast</span>
+      <span class="item" title="Identity & background verified"><span class="ic verified">✓</span> Verified</span>
+      <span class="item" title="Top 10% performance score"><span class="ic top">🏆</span> Top</span>
+    </div>
+
+    <div class="section-heading" id="top3Heading">Top 3 by Response</div>
+    <div class="board" id="top3"></div>
+
+    <div class="section-heading">More TaskLeaders</div>
+    <div class="board" id="board"></div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script>
+    // Category page — Phase 1 wiring: fetch real providers from Supabase Edge Function
+    // Canonical URL convention: category.html?city=vancouver&category=handyman
+
+    let sortBy = 'response';
+
+    // Read-layer state (sourced from URL first, then API)
+    let currentCitySlug = 'vancouver';
+    let currentCityName = 'Vancouver';
+
+    let currentCategorySlug = 'handyman';
+    let currentCategoryName = 'Handyman';
+    let currentCategoryIcon = '🔧';
+
+    // UI model providers (mapped from API)
+    let providers = [];
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function isFunctionsBaseConfigured(base) {
+      if (!base) return false;
+      if (typeof base !== 'string') return false;
+      const trimmed = base.trim();
+      if (!trimmed) return false;
+      if (trimmed.includes('<PROJECT_REF>')) return false;
+      if (!/^https?:\/\//i.test(trimmed)) return false;
+      return true;
+    }
+
+    function titleCaseFromSlug(slug) {
+      const s = String(slug || '').trim();
+      if (!s) return '';
+      return s
+        .split(/[-_\s]+/g)
+        .filter(Boolean)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+
+    function getCityFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get('city') || 'vancouver').trim().toLowerCase();
+    }
+
+    function getCategoryFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get('category') || 'handyman').trim().toLowerCase();
+    }
+
+    function setHeaderCopy() {
+      // Update <h1> while preserving the required structure: emoji + <span>Category</span>
+      const h1 = document.getElementById('categoryTitle');
+      if (h1) {
+        h1.innerHTML = `${escapeHtml(currentCategoryIcon || '🔧')} <span>${escapeHtml(currentCategoryName || '')}</span> in ${escapeHtml(currentCityName || '')}`;
+      }
+
+      // Document title
+      if (currentCategoryName && currentCityName) {
+        document.title = `${currentCategoryName} in ${currentCityName} — TaskLeaders`;
+      }
+
+      // Keep navigation scoped to current city
+      const back = document.querySelector('a.back');
+      const logo = document.querySelector('a.logo');
+      const homeHref = `homepage.html?city=${encodeURIComponent(currentCitySlug)}`;
+      if (back) back.setAttribute('href', homeHref);
+      if (logo) logo.setAttribute('href', homeHref);
+
+      // Summary pills
+      const avgEl = document.getElementById('avgResponsePill');
+      const countEl = document.getElementById('providerCountPill');
+
+      const responses = providers.map((p) => p.response).filter((v) => Number.isFinite(v));
+      const avg = responses.length ? Math.round(responses.reduce((a, b) => a + b, 0) / responses.length) : null;
+
+      if (avgEl) avgEl.textContent = `⚡ Avg response ${avg ? `~${avg} min` : '—'}`;
+      if (countEl) countEl.textContent = `${providers.length || '—'} TaskLeaders`;
+    }
+
+    function formatResp(min) {
+      if (!Number.isFinite(min)) return '—';
+      return `~${min} min`;
+    }
+
+    function formatReliability(pct) {
+      if (!Number.isFinite(pct)) return '—';
+      return `${pct}%`;
+    }
+
+    function formatPrice(priceDollars) {
+      if (!Number.isFinite(priceDollars)) return '—';
+      return `$${priceDollars}/hr`;
+    }
+
+    function sortProviders() {
+      const sorted = [...providers];
+      if (sortBy === 'response') sorted.sort((a, b) => (a.response ?? 999999) - (b.response ?? 999999));
+      else if (sortBy === 'reliability') sorted.sort((a, b) => (b.reliability ?? -1) - (a.reliability ?? -1));
+      else if (sortBy === 'price') sorted.sort((a, b) => (a.price ?? 999999) - (b.price ?? 999999));
+      return sorted;
+    }
+
+    function renderBadges(p) {
+      const badges = [];
+      if (Number.isFinite(p.response) && p.response <= 5) badges.push('<span class="bicon fast" data-tooltip="Fast Responder">⚡</span>');
+      if (p.verified) badges.push('<span class="bicon verified" data-tooltip="Verified">✓</span>');
+      if (p.top) badges.push('<span class="bicon top" data-tooltip="Top Performer">🏆</span>');
+      return badges.slice(0, 3).join('');
+    }
+
+    function renderHeader() {
+      return `
+        <div class="board-header">
+          <div style="text-align:center;">Rank</div>
+          <div>TaskLeader</div>
+          <div>Response</div>
+          <div>Reliability</div>
+          <div>Price</div>
+          <div></div>
+          <div>Connect</div>
+        </div>
+      `;
+    }
+
+    function providerProfileHref(p) {
+      const params = new URLSearchParams();
+      params.set('city', currentCitySlug);
+      params.set('category', currentCategorySlug);
+      if (p.providerSlug) params.set('provider', p.providerSlug);
+      return `profile.html?${params.toString()}`;
+    }
+
+    function renderRow(p, rank) {
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=0b1020&textColor=ffffff`;
+      const href = providerProfileHref(p);
+      return `
+        <div class="row">
+          <div class="rank ${rank <= 3 ? 'top' : ''}">${rank}</div>
+          <div class="taskleader-cell">
+            <div class="avatar"><img src="${avatarUrl}" alt=""></div>
+            <div class="name-col">
+              <a class="name" href="${href}">${escapeHtml(p.name)}</a>
+              <div class="area">Base: ${escapeHtml(p.area)}</div>
+            </div>
+          </div>
+          <div class="metric response">${formatResp(p.response)}</div>
+          <div class="metric reliability">${formatReliability(p.reliability)}</div>
+          <div class="price">${formatPrice(p.price)}</div>
+          <div class="badge-cell">${renderBadges(p)}</div>
+          <button class="wa" onclick="location.href='${href}'">Connect</button>
+        </div>
+      `;
+    }
+
+    function renderMobileCard(p, rank, categoryName) {
+      // Match desktop avatar source logic (Dicebear initials)
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=0b1020&textColor=ffffff`;
+      const href = providerProfileHref(p);
+      return `
+        <div class="taskleader-card" data-rank="${rank}">
+          <div class="card-content">
+            <span class="card-category">${escapeHtml(categoryName)}</span>
+            <div class="card-header">
+              <div class="avatar"><img src="${avatarUrl}" alt=""></div>
+              <div class="card-title">
+                <a class="card-name" href="${href}">${escapeHtml(p.name)}</a>
+                <div class="card-area">📍 ${escapeHtml(p.area)}</div>
+              </div>
+            </div>
+          </div>
+          <div class="card-stats">
+            <div class="card-stat response">
+              <span class="card-stat-value">${formatResp(p.response)}</span>
+              <span class="card-stat-label">Response</span>
+            </div>
+            <div class="card-stat reliability">
+              <span class="card-stat-value">${formatReliability(p.reliability)}</span>
+              <span class="card-stat-label">Reliability</span>
+            </div>
+            <div class="card-stat price">
+              <span class="card-stat-value">${formatPrice(p.price)}</span>
+              <span class="card-stat-label">Price</span>
+            </div>
+          </div>
+          <div class="card-badges">${renderBadges(p)}</div>
+          <a class="card-cta" href="${href}">View Profile →</a>
+        </div>
+      `;
+    }
+
+    function renderEmptyState(message) {
+      const msg = message || 'TaskLeaders coming soon to your area.';
+      const emptyHtml = `
+        <div style="text-align: center; padding: 28px 18px; color: rgba(255,255,255,0.55);">
+          <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 700;">${escapeHtml(msg)}</p>
+          <p style="margin: 0; font-size: 12px; color: rgba(255,255,255,0.45);">Check back shortly as we onboard local providers.</p>
+        </div>
+      `;
+
+      document.getElementById('top3').innerHTML = emptyHtml;
+      document.getElementById('board').innerHTML = emptyHtml;
+    }
+
+    function render() {
+      document.getElementById('top3Heading').textContent = `Top 3 by ${sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}`;
+
+      if (!Array.isArray(providers) || providers.length === 0) {
+        setHeaderCopy();
+        renderEmptyState('No TaskLeaders available yet for this category.');
+        return;
+      }
+
+      const sorted = sortProviders();
+
+      const top3 = sorted.slice(0, 3);
+      const rest = sorted.slice(3);
+
+      // Desktop: horizontal table
+      const top3Desktop = renderHeader() + top3.map((p, i) => renderRow(p, i + 1)).join('');
+      const boardDesktop = renderHeader() + rest.map((p, i) => renderRow(p, i + 4)).join('');
+
+      // Mobile: ranked cards (category label must come from API/init, not DOM scraping)
+      const top3Mobile = top3.map((p, i) => renderMobileCard(p, i + 1, currentCategoryName)).join('');
+      const boardMobile = rest.map((p, i) => renderMobileCard(p, i + 4, currentCategoryName)).join('');
+
+      document.getElementById('top3').innerHTML = top3Desktop + top3Mobile;
+      document.getElementById('board').innerHTML = boardDesktop + boardMobile;
+
+      setHeaderCopy();
+    }
+
+    function setSort(mode, evt) {
+      sortBy = mode;
+      document.querySelectorAll('.sort-btn').forEach((btn) => btn.classList.remove('active'));
+      const target = evt?.target;
+      if (target && target.classList.contains('sort-btn')) target.classList.add('active');
+      render();
+    }
+
+    async function init() {
+      currentCitySlug = getCityFromURL();
+      currentCategorySlug = getCategoryFromURL();
+
+      // Initial best-effort copy from slugs (will be overwritten by API)
+      currentCityName = titleCaseFromSlug(currentCitySlug) || 'Vancouver';
+      currentCategoryName = titleCaseFromSlug(currentCategorySlug) || 'Handyman';
+      currentCategoryIcon = '🔧';
+
+      setHeaderCopy();
+
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      if (!isFunctionsBaseConfigured(base)) {
+        console.warn('TaskLeaders: TASKLEADERS_FUNCTIONS_BASE is not configured; skipping network calls.');
+        renderEmptyState('TaskLeaders coming soon to your area.');
+        return;
+      }
+
+      try {
+        const url = `${base.replace(/\/$/, '')}/public-category?city=${encodeURIComponent(currentCitySlug)}&category=${encodeURIComponent(currentCategorySlug)}`;
+        const res = await fetch(url);
+        const payload = await res.json();
+
+        if (!payload || payload.ok !== true) {
+          renderEmptyState('TaskLeaders coming soon to your area.');
+          return;
+        }
+
+        currentCityName = payload.data?.city?.name || currentCityName;
+        currentCategoryName = payload.data?.category?.name || currentCategoryName;
+        currentCategoryIcon = payload.data?.category?.icon || currentCategoryIcon;
+
+        const apiProviders = payload.data?.providers || [];
+        providers = (Array.isArray(apiProviders) ? apiProviders : []).map((r) => {
+          const price = Number.isFinite(Number(r.hourly_rate_cents)) ? Math.round(Number(r.hourly_rate_cents) / 100) : null;
+          const response = Number.isFinite(Number(r.response_time_minutes)) ? Number(r.response_time_minutes) : null;
+          const reliability = Number.isFinite(Number(r.reliability_percent)) ? Number(r.reliability_percent) : null;
+          const rank = Number.isFinite(Number(r.rank)) ? Number(r.rank) : null;
+          const isFeatured = Boolean(r.is_featured);
+
+          return {
+            providerSlug: r.provider_slug,
+            name: r.display_name,
+            area: currentCityName,
+            response,
+            reliability,
+            price,
+            verified: true,
+            top: isFeatured || (rank !== null && rank <= 3),
+          };
+        });
+
+        render();
+      } catch (e) {
+        renderEmptyState('TaskLeaders coming soon to your area.');
+      }
+    }
+
+    init();
+  </script>
+
+</body>
+</html>
