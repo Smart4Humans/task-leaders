@@ -510,6 +510,7 @@
       margin-bottom: 12px;
       outline: none;
       font-family: inherit;
+      resize: vertical;
     }
     .job-input:focus, .area-input:focus { border-color: var(--blue); }
     .job-input::placeholder, .area-input::placeholder { color: rgba(255,255,255,0.35); }
@@ -809,7 +810,7 @@
 
         <input type="text"  class="name-input"  id="nameInput"  placeholder="Your full name" />
         <input type="tel"   class="phone-input"  id="phoneInput"  placeholder="+1 (604) 555-1234" />
-        <input type="text"  class="job-input"    id="jobInput"    placeholder="Brief description of the job" />
+        <textarea class="job-input" id="jobInput" placeholder="Brief description of the job" rows="3"></textarea>
 
         <div class="timing-group">
           <span class="timing-label">When do you need this?</span>
