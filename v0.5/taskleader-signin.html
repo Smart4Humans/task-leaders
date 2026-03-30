@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="theme-color" content="#0a0a14" />
+  <title>TaskLeader Sign In — TaskLeaders</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --green: #00c853;
+      --gold: #ffb800;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+      --success: #25D366;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 5px 8px;
+      border-radius: 6px;
+    }
+    .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+    main {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 40px 20px 100px;
+    }
+    .hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .hero h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+    .hero h1 .blue { color: var(--blue); }
+    .hero p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+      margin: 0;
+    }
+    .signin-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .form-group input:focus {
+      border-color: var(--blue);
+      background: rgba(255,255,255,0.05);
+    }
+    .form-group input::placeholder { color: rgba(255,255,255,0.35); }
+    .helper-text {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      border-radius: 14px;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover { background: #0052cc; }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .trust-badges {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 32px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .trust-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .success-message {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success-message.show { display: block; }
+    .success-icon { font-size: 56px; margin-bottom: 20px; }
+    .success-message h2 { font-size: 22px; margin-bottom: 12px; }
+    .success-message p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .success-message .email-sent {
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.3);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 20px 0;
+      font-weight: 600;
+      color: var(--green);
+    }
+    @media (min-width: 768px) {
+      main { padding: 60px 32px; }
+      .hero h1 { font-size: 28px; }
+      .signin-card { padding: 32px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="homepage.html" class="back">←</a>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+  </header>
+
+  <main>
+    <!-- Sign In Form -->
+    <div id="signin-form">
+      <div class="hero">
+        <h1>Welcome back, <span class="blue">Task</span>Leader</h1>
+        <p>Sign in to update your profile information</p>
+      </div>
+
+      <div class="signin-card">
+        <form onsubmit="handleSignIn(event)">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              placeholder="you@example.com"
+              required
+              autocomplete="email"
+            />
+            <p class="helper-text">We'll send a secure sign-in link to the email you registered with. No password needed. Check your spam folder if you don't see it.</p>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitBtn">
+            Send Sign In Link
+          </button>
+        </form>
+      </div>
+
+      <div class="trust-badges">
+        <span class="trust-badge">🔒 Secure</span>
+        <span class="trust-badge">✓ No password needed</span>
+        <span class="trust-badge">⚡ Instant access</span>
+      </div>
+    </div>
+
+    <!-- Success State -->
+    <div class="success-message" id="success-message">
+      <div class="success-icon">📧</div>
+      <h2>Check your email</h2>
+      <p>We've sent a secure sign-in link to:</p>
+      <div class="email-sent" id="sentEmail">you@example.com</div>
+      <p style="font-size: 13px; color: var(--muted);">
+        Click the link in your email to update your profile.<br>
+        The link expires in 15 minutes for security.
+      </p>
+      <p style="margin-top: 24px; font-size: 13px; color: var(--muted);">
+        Didn't receive it? <a href="#" onclick="resetForm()" style="color: var(--blue);">Try again</a>
+      </p>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script>
+    function handleSignIn(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const submitBtn = document.getElementById('submitBtn');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      setTimeout(() => {
+        document.getElementById('sentEmail').textContent = email;
+        document.getElementById('signin-form').style.display = 'none';
+        document.getElementById('success-message').classList.add('show');
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Sign In Link';
+      }, 1500);
+    }
+
+    function resetForm() {
+      document.getElementById('email').value = '';
+      document.getElementById('signin-form').style.display = 'block';
+      document.getElementById('success-message').classList.remove('show');
+    }
+  </script>
+</body>
+</html>
