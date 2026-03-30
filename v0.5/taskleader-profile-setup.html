@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="theme-color" content="#0a0a14" />
+  <title>TaskLeader Profile Setup — TaskLeaders</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --gold: #ffb800;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+      --success: #25D366;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 5px 8px;
+      border-radius: 6px;
+    }
+    .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 32px 20px 100px;
+    }
+    .hero {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .hero h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+    .hero h1 .blue { color: var(--blue); }
+    .hero-sub {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin: 0;
+    }
+    .form-section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(0,102,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0;
+    }
+    .section-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 4px 0 0 0;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-row.three-col {
+      grid-template-columns: 2fr 1fr 1fr;
+    }
+    @media (max-width: 480px) {
+      .form-row.three-col {
+        grid-template-columns: 1fr 1fr;
+      }
+      .form-row.three-col .form-group:first-child {
+        grid-column: span 2;
+      }
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .form-group label .required {
+      color: #ff6b6b;
+      margin-left: 2px;
+    }
+    .form-group label .optional {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 12px;
+      margin-left: 4px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--blue);
+      background: rgba(255,255,255,0.05);
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(255,255,255,0.35);
+    }
+    .form-group textarea {
+      resize: vertical;
+      line-height: 1.5;
+    }
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    .helper-text {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    .helper-text.primary {
+      color: var(--blue);
+      font-weight: 500;
+    }
+    /* Photo upload */
+    .photo-upload-box {
+      border: 2px dashed rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .photo-upload-box:hover {
+      border-color: var(--blue);
+      background: rgba(0,102,255,0.04);
+    }
+    .photo-upload-box input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: none;
+      background: none;
+    }
+    .photo-upload-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+    .photo-upload-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--blue);
+      margin-bottom: 4px;
+    }
+    .photo-upload-hint {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .photo-preview {
+      display: none;
+      margin-top: 12px;
+    }
+    .photo-preview img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--blue);
+    }
+    /* Work photos */
+    .work-photos-box {
+      border: 2px dashed rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .work-photos-box:hover {
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.02);
+    }
+    .work-photos-box input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: none;
+      background: none;
+    }
+    .work-photos-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .work-photos-preview img {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+    /* Display name toggle */
+    .display-name-toggle {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .toggle-option {
+      flex: 1;
+      padding: 14px;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .toggle-option:hover { border-color: rgba(255,255,255,0.2); }
+    .toggle-option.selected {
+      border-color: var(--blue);
+      background: rgba(0,102,255,0.1);
+    }
+    .toggle-option input { display: none; }
+    .toggle-option .toggle-label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .toggle-option .toggle-hint {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    /* Checkboxes */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .checkbox-item:hover {
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.04);
+    }
+    .checkbox-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--blue);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .city-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    @media (min-width: 480px) {
+      .city-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    /* Terms checkbox */
+    .terms-checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      margin-bottom: 24px;
+      cursor: pointer;
+    }
+    .terms-checkbox-row input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--blue);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .terms-checkbox-row label {
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.5;
+      cursor: pointer;
+    }
+    .terms-checkbox-row label a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+    .terms-checkbox-row label a:hover { text-decoration: underline; }
+    /* Submit */
+    .submit-section { margin-top: 32px; }
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      border-radius: 14px;
+      border: none;
+      background: var(--success);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .submit-btn:hover { background: #128C7E; }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .submit-note {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+    /* Error */
+    .form-error {
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 14px;
+      color: #ff6b6b;
+      margin-bottom: 16px;
+      display: none;
+    }
+    /* Success */
+    .success-message {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .success-message.show { display: block; }
+    .success-icon { font-size: 64px; margin-bottom: 24px; }
+    .success-message h2 { font-size: 24px; margin-bottom: 12px; }
+    .success-message p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .btn-secondary {
+      display: inline-block;
+      padding: 14px 28px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: #fff;
+      font-size: 15px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    @media (min-width: 768px) {
+      main { padding: 40px 32px; }
+      .hero h1 { font-size: 28px; }
+      .form-section { padding: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="homepage.html" class="back">←</a>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+  </header>
+
+  <main>
+    <div id="setup-form">
+      <div class="hero">
+        <h1>Complete your <span class="blue">Task</span>Leader profile.</h1>
+        <p class="hero-sub">Set up your public profile so customers can find and connect with you on TaskLeaders.</p>
+      </div>
+
+      <form id="profile-form" onsubmit="handleSubmit(event)">
+
+        <!-- Identity -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">👤</div>
+            <div>
+              <h2 class="section-title">Identity</h2>
+              <p class="section-subtitle">How customers will know you</p>
+            </div>
+          </div>
+
+          <!-- Profile Photo -->
+          <div class="form-group">
+            <label>Profile Photo <span class="required">*</span></label>
+            <div class="photo-upload-box" id="photoUploadBox">
+              <input type="file" id="profilePhoto" accept="image/*" required onchange="previewProfilePhoto(this)" />
+              <div class="photo-upload-icon">📷</div>
+              <div class="photo-upload-label">Upload a profile photo</div>
+              <div class="photo-upload-hint">JPG or PNG · At least 400×400px</div>
+            </div>
+            <div class="photo-preview" id="photoPreview">
+              <img id="photoPreviewImg" src="" alt="Profile photo preview" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name <span class="required">*</span></label>
+              <input type="text" id="firstName" placeholder="John" required />
+            </div>
+            <div class="form-group">
+              <label>Last Name <span class="required">*</span></label>
+              <input type="text" id="lastName" placeholder="Smith" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Business Name <span class="optional">(optional)</span></label>
+            <input type="text" id="businessName" placeholder="Smith's Home Services" />
+          </div>
+
+          <div class="form-group">
+            <label>How should your name appear publicly? <span class="required">*</span></label>
+            <div class="display-name-toggle">
+              <label class="toggle-option selected" onclick="selectDisplayName('personal', this)">
+                <input type="radio" name="displayNameType" value="personal" checked />
+                <div class="toggle-label">Personal Name</div>
+                <div class="toggle-hint">John Smith</div>
+              </label>
+              <label class="toggle-option" onclick="selectDisplayName('business', this)">
+                <input type="radio" name="displayNameType" value="business" />
+                <div class="toggle-label">Business Name</div>
+                <div class="toggle-hint">Smith's Home Services</div>
+              </label>
+            </div>
+            <p class="helper-text">This is what customers will see on your public profile</p>
+          </div>
+
+          <div class="form-group">
+            <label>Email <span class="required">*</span></label>
+            <input type="email" id="email" placeholder="john@example.com" required />
+            <p class="helper-text">For account notifications and updates</p>
+          </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">💬</div>
+            <div>
+              <h2 class="section-title">Contact</h2>
+              <p class="section-subtitle">How customers connect with you</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>WhatsApp Number <span class="required">*</span></label>
+            <input type="tel" id="whatsapp" placeholder="+1 (604) 555-1234" required />
+            <p class="helper-text primary">💡 This is how customers will reach you. Make sure this number has WhatsApp.</p>
+          </div>
+
+          <div class="form-group">
+            <label>Backup Phone <span class="optional">(optional)</span></label>
+            <input type="tel" id="backupPhone" placeholder="+1 (604) 555-5678" />
+            <p class="helper-text">Optional backup number for account recovery</p>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">📍</div>
+            <div>
+              <h2 class="section-title">Location</h2>
+              <p class="section-subtitle">Where you're based</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Address Line 1 <span class="required">*</span></label>
+            <input type="text" id="address1" placeholder="123 Main Street" required />
+          </div>
+
+          <div class="form-group">
+            <label>Address Line 2 <span class="optional">(optional)</span></label>
+            <input type="text" id="address2" placeholder="Apt 4B" />
+          </div>
+
+          <div class="form-row three-col">
+            <div class="form-group">
+              <label>City <span class="required">*</span></label>
+              <input type="text" id="city" placeholder="Vancouver" required />
+            </div>
+            <div class="form-group">
+              <label>Province <span class="required">*</span></label>
+              <select id="province" required>
+                <option value="BC" selected>BC</option>
+                <option value="AB">AB</option>
+                <option value="SK">SK</option>
+                <option value="MB">MB</option>
+                <option value="ON">ON</option>
+                <option value="QC">QC</option>
+                <option value="NB">NB</option>
+                <option value="NS">NS</option>
+                <option value="PE">PE</option>
+                <option value="NL">NL</option>
+                <option value="NT">NT</option>
+                <option value="NU">NU</option>
+                <option value="YK">YK</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Postal Code <span class="required">*</span></label>
+              <input type="text" id="postalCode" placeholder="V5V 1Y4" maxlength="7" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Base Location <span class="required">*</span></label>
+            <select id="baseCity" required>
+              <option value="">Select your service area</option>
+              <option value="Vancouver">Vancouver</option>
+              <option value="Surrey">Surrey</option>
+              <option value="Burnaby">Burnaby</option>
+              <option value="Richmond">Richmond</option>
+              <option value="Coquitlam">Coquitlam</option>
+              <option value="New Westminster">New Westminster</option>
+              <option value="North Vancouver">North Vancouver</option>
+              <option value="Port Coquitlam">Port Coquitlam</option>
+              <option value="Maple Ridge">Maple Ridge</option>
+              <option value="Langley">Langley</option>
+              <option value="White Rock">White Rock</option>
+              <option value="Port Moody">Port Moody</option>
+              <option value="Pitt Meadows">Pitt Meadows</option>
+              <option value="Delta">Delta</option>
+              <option value="Abbotsford">Abbotsford</option>
+              <option value="Chilliwack">Chilliwack</option>
+              <option value="Mission">Mission</option>
+            </select>
+            <p class="helper-text">This is the main city shown on your public profile</p>
+          </div>
+        </div>
+
+        <!-- Coverage -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">🗺️</div>
+            <div>
+              <h2 class="section-title">Coverage</h2>
+              <p class="section-subtitle">Additional cities you serve</p>
+            </div>
+          </div>
+
+          <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Your base location is automatically included. Select additional cities:</p>
+
+          <div class="checkbox-item" style="margin-bottom: 12px;" onclick="toggleAllCities()">
+            <input type="checkbox" id="selectAllCities" />
+            <label for="selectAllCities" style="margin: 0; font-weight: 600; color: var(--blue);">Select all 17 cities</label>
+          </div>
+
+          <div class="city-grid" id="cityGrid"></div>
+        </div>
+
+        <!-- Services -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">🔧</div>
+            <div>
+              <h2 class="section-title">Services</h2>
+              <p class="section-subtitle">Select the services you offer</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Primary Service <span class="required">*</span></label>
+            <select id="primaryService" required>
+              <option value="">Select your main service</option>
+              <option value="handyman">🔧 Handyman</option>
+              <option value="cleaning">🧹 Cleaning</option>
+              <option value="painting">🎨 Painting</option>
+              <option value="electrical">⚡ Electrical</option>
+              <option value="plumbing">🚿 Plumbing</option>
+              <option value="yard-work">🌿 Yard Work</option>
+              <option value="hvac">❄️ HVAC</option>
+              <option value="moving">🚚 Moving / Transport</option>
+            </select>
+            <p class="helper-text">This is your main service category on your public profile</p>
+          </div>
+
+          <p style="font-size: 13px; color: var(--muted); margin: 20px 0 12px;">Select additional services you offer:</p>
+
+          <div class="checkbox-group" id="additionalServices">
+            <label class="checkbox-item">
+              <input type="checkbox" name="additionalServices" value="handyman" />
+              <span>🔧 Handyman</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="additionalServices" value="cleaning" />
+              <span>🧹 Cleaning</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="additionalServices" value="painting" />
+              <span>🎨 Painting</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="additionalServices" value="electrical" />
+              <span>⚡ Electrical</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="additionalServices" value="plumbing" />
+              <span>🚿 Plumbing</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="additionalServices" value="yard-work" />
+              <span>🌿 Yard Work</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="additionalServices" value="hvac" />
+              <span>❄️ HVAC</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="additionalServices" value="moving" />
+              <span>🚚 Moving / Transport</span>
+            </label>
+          </div>
+
+          <!-- Base Hourly Rate -->
+          <div class="form-group" style="margin-top: 24px;">
+            <label>Base Hourly Rate (CAD) <span class="required">*</span></label>
+            <input type="number" id="hourlyRate" placeholder="e.g. 75" min="1" step="1" required />
+            <p class="helper-text">Your starting rate per hour. You can adjust per job as needed.</p>
+          </div>
+
+          <!-- About / Bio -->
+          <div class="form-group">
+            <label>About You <span class="required">*</span></label>
+            <textarea id="bio" placeholder="Tell customers a bit about your experience, skills, and what sets you apart." rows="4" required></textarea>
+            <p class="helper-text">This appears on your public profile. 2–4 sentences is ideal.</p>
+          </div>
+
+          <!-- Work Photos -->
+          <div class="form-group">
+            <label>Work Photos <span class="optional">(optional)</span></label>
+            <div class="work-photos-box" id="workPhotosBox">
+              <input type="file" id="workPhotos" accept="image/*" multiple onchange="previewWorkPhotos(this)" />
+              <div class="photo-upload-icon">🖼️</div>
+              <div class="photo-upload-label" style="color: rgba(255,255,255,0.7);">Upload up to 6 photos of your work</div>
+              <div class="photo-upload-hint">JPG or PNG · Showcase your best projects</div>
+            </div>
+            <div class="work-photos-preview" id="workPhotosPreview"></div>
+          </div>
+        </div>
+
+        <!-- Terms -->
+        <div class="terms-checkbox-row" onclick="document.getElementById('termsCheck').click()">
+          <input type="checkbox" id="termsCheck" required onclick="event.stopPropagation()" />
+          <label for="termsCheck" onclick="event.stopPropagation()">
+            I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>. I confirm that the information I've provided is accurate.
+          </label>
+        </div>
+
+        <div class="form-error" id="formError"></div>
+
+        <!-- Submit -->
+        <div class="submit-section">
+          <button type="submit" class="submit-btn" id="submitBtn">Complete Profile</button>
+          <p class="submit-note">Your profile will be reviewed and activated within 24–48 hours.</p>
+        </div>
+      </form>
+    </div>
+
+    <!-- Success -->
+    <div class="success-message" id="success-message">
+      <div class="success-icon">✅</div>
+      <h2>Profile Submitted!</h2>
+      <p>Your <span style="color:var(--blue);">Task</span>Leader profile has been submitted. We'll review and activate it within 24–48 hours. You'll receive a confirmation via <span style="color:var(--success);">WhatsApp</span>.</p>
+      <a href="homepage.html" class="btn-secondary">Back to Home</a>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script>
+    const approvedCities = ['Vancouver','Surrey','Burnaby','Richmond','Coquitlam','New Westminster','North Vancouver','Port Coquitlam','Maple Ridge','Langley','White Rock','Port Moody','Pitt Meadows','Delta','Abbotsford','Chilliwack','Mission'];
+
+    function init() {
+      document.getElementById('cityGrid').innerHTML = approvedCities.map(city =>
+        `<label class="checkbox-item"><input type="checkbox" name="serviceCities" value="${city}"/><span>${city}</span></label>`
+      ).join('');
+    }
+
+    function toggleAllCities() {
+      const selectAll = document.getElementById('selectAllCities');
+      document.querySelectorAll('input[name="serviceCities"]').forEach(cb => cb.checked = selectAll.checked);
+    }
+
+    function selectDisplayName(type, el) {
+      document.querySelectorAll('.toggle-option').forEach(e => e.classList.remove('selected'));
+      el.classList.add('selected');
+      el.querySelector('input').checked = true;
+    }
+
+    function previewProfilePhoto(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('photoPreviewImg').src = e.target.result;
+          document.getElementById('photoPreview').style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function previewWorkPhotos(input) {
+      const preview = document.getElementById('workPhotosPreview');
+      preview.innerHTML = '';
+      const files = Array.from(input.files).slice(0, 6);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+
+      const btn = document.getElementById('submitBtn');
+      const errorEl = document.getElementById('formError');
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+
+      const additionalServices = Array.from(
+        document.querySelectorAll('input[name="additionalServices"]:checked')
+      ).map(cb => cb.value);
+
+      const serviceCities = Array.from(
+        document.querySelectorAll('input[name="serviceCities"]:checked')
+      ).map(cb => cb.value);
+
+      const payload = {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        businessName: document.getElementById('businessName').value.trim(),
+        displayNameType: document.querySelector('input[name="displayNameType"]:checked')?.value,
+        email: document.getElementById('email').value.trim(),
+        whatsapp: document.getElementById('whatsapp').value.trim(),
+        backupPhone: document.getElementById('backupPhone').value.trim(),
+        address1: document.getElementById('address1').value.trim(),
+        address2: document.getElementById('address2').value.trim(),
+        city: document.getElementById('city').value.trim(),
+        province: document.getElementById('province').value,
+        postalCode: document.getElementById('postalCode').value.trim(),
+        baseCity: document.getElementById('baseCity').value,
+        serviceCities,
+        primaryService: document.getElementById('primaryService').value,
+        additionalServices,
+        hourlyRate: document.getElementById('hourlyRate').value,
+        bio: document.getElementById('bio').value.trim(),
+      };
+
+      try {
+        const base = window.TASKLEADERS_FUNCTIONS_BASE || '';
+        await fetch(base + '/profile-setup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } catch (_) {
+        // best-effort — always show confirmation
+      }
+
+      document.getElementById('setup-form').style.display = 'none';
+      document.getElementById('success-message').classList.add('show');
+    }
+
+    init();
+  </script>
+</body>
+</html>
