@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="theme-color" content="#0a0a14" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Welcome to TaskLeaders</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Loading / Error states ── */
+    #loading-state, #error-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 40px 24px;
+      text-align: center;
+    }
+    #loading-state { display: flex; }
+    #error-state   { display: none; }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    .error-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .error-msg {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.5;
+      max-width: 320px;
+    }
+
+    /* ── App shell ── */
+    #app {
+      display: none;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo .task    { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      padding: 16px 20px 0;
+    }
+    .progress-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .progress-track {
+      display: flex;
+      gap: 6px;
+    }
+    .progress-dot {
+      flex: 1;
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.12);
+      transition: background 0.3s;
+    }
+    .progress-dot.active {
+      background: var(--blue);
+    }
+    .progress-dot.done {
+      background: var(--green);
+    }
+
+    /* ── Screens ── */
+    #screens {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    .screen {
+      display: none;
+      padding: 28px 20px 40px;
+      max-width: 540px;
+      margin: 0 auto;
+      animation: fadeIn 0.25s ease;
+    }
+    .screen.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Screen headings ── */
+    .screen-eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    h1 {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      margin: 0 0 10px;
+    }
+    h1 .name { color: var(--blue); }
+    .subhead {
+      font-size: 16px;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.5;
+      margin: 0 0 28px;
+    }
+
+    /* ── Checklist (Screen 1) ── */
+    .checklist {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 8px 20px;
+      margin-bottom: 24px;
+    }
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+      color: rgba(255,255,255,0.9);
+      line-height: 1.4;
+    }
+    .check-item:last-child { border-bottom: none; }
+    .check-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(0,200,83,0.15);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── Scoring intro (Screen 1) ── */
+    .scoring-block {
+      background: rgba(0,102,255,0.07);
+      border: 1px solid rgba(0,102,255,0.2);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 28px;
+    }
+    .scoring-block p {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.5;
+    }
+    .scoring-block p:last-child { margin-bottom: 0; }
+    .scoring-metric {
+      font-size: 14px;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 6px;
+    }
+    .scoring-metric strong {
+      color: #fff;
+    }
+
+    /* ── How It Works flow (Screen 2) ── */
+    .flow-list {
+      margin-bottom: 24px;
+    }
+    .flow-step {
+      display: flex;
+      gap: 16px;
+      position: relative;
+      padding-bottom: 24px;
+    }
+    .flow-step:last-child { padding-bottom: 0; }
+    .flow-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 36px;
+      flex-shrink: 0;
+    }
+    .flow-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(0,102,255,0.15);
+      border: 2px solid rgba(0,102,255,0.35);
+      color: var(--blue);
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .flow-line {
+      width: 2px;
+      flex: 1;
+      background: rgba(255,255,255,0.08);
+      margin-top: 6px;
+      min-height: 20px;
+    }
+    .flow-step:last-child .flow-line { display: none; }
+    .flow-content {
+      padding-top: 6px;
+      padding-bottom: 0;
+    }
+    .flow-name {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 3px;
+      color: #fff;
+    }
+    .flow-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* ── Guarantee bullets (Screen 3) ── */
+    .guarantee-list {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 8px 20px;
+      margin-bottom: 24px;
+    }
+    .guarantee-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+      color: rgba(255,255,255,0.9);
+      line-height: 1.4;
+    }
+    .guarantee-item:last-child { border-bottom: none; }
+    .guarantee-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ── Score cards (Screen 4) ── */
+    .score-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 360px) {
+      .score-cards { grid-template-columns: 1fr; }
+    }
+    .score-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px;
+    }
+    .score-card-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .score-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+    .score-card-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: rgba(0,102,255,0.2);
+      color: var(--blue);
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-bottom: 8px;
+    }
+    .score-card-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .score-card-example {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
+    }
+
+    /* ── Small print ── */
+    .small-print {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    /* ── Navigation / CTA ── */
+    .nav-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .btn-back {
+      width: 48px;
+      height: 52px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.6);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-back:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+    .btn-next {
+      flex: 1;
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .btn-next:hover {
+      background: var(--blue-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0,102,255,0.3);
+    }
+    .btn-next.green {
+      background: var(--green);
+    }
+    .btn-next.green:hover {
+      background: #00a844;
+      box-shadow: 0 6px 20px rgba(0,200,83,0.3);
+    }
+    /* Screen 1 has no back button */
+    .nav-row.no-back .btn-back { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div id="loading-state">
+    <div class="spinner"></div>
+    <p style="color:var(--muted);font-size:14px;">Loading your invite…</p>
+  </div>
+
+  <!-- Error -->
+  <div id="error-state">
+    <div class="error-icon">&#x26A0;</div>
+    <div class="error-title">This link is invalid or has expired.</div>
+    <p class="error-msg">If you believe this is a mistake, please contact TaskLeaders directly.</p>
+  </div>
+
+  <!-- App -->
+  <div id="app">
+    <header>
+      <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+    </header>
+
+    <div class="progress-wrap">
+      <div class="progress-label" id="progressLabel">Step 1 of 4</div>
+      <div class="progress-track">
+        <div class="progress-dot active" id="dot1"></div>
+        <div class="progress-dot"        id="dot2"></div>
+        <div class="progress-dot"        id="dot3"></div>
+        <div class="progress-dot"        id="dot4"></div>
+      </div>
+    </div>
+
+    <div id="screens">
+
+      <!-- Screen 1: Welcome / Value Proposition -->
+      <div class="screen active" id="screen1">
+        <div class="screen-eyebrow">You're invited</div>
+        <h1>Welcome to TaskLeaders, <span class="name" id="providerName">there</span>.</h1>
+        <p class="subhead">You're invited to be one of the first 50 TaskLeaders in Vancouver.</p>
+
+        <div class="checklist">
+          <div class="check-item"><div class="check-icon">&#10003;</div><span>Keep 100% of your rate — we never take a commission</span></div>
+          <div class="check-item"><div class="check-icon">&#10003;</div><span>Exclusive leads — one lead, one provider, no bidding</span></div>
+          <div class="check-item"><div class="check-icon">&#10003;</div><span>All accepted leads are guaranteed</span></div>
+          <div class="check-item"><div class="check-icon">&#10003;</div><span>Free 6-month subscription included</span></div>
+          <div class="check-item"><div class="check-icon">&#10003;</div><span>Direct client contact via WhatsApp</span></div>
+        </div>
+
+        <div class="scoring-block">
+          <p>We measure you on two metrics, both published on your public profile:</p>
+          <div class="scoring-metric"><strong>Responsiveness</strong> — How quickly you respond to job requests</div>
+          <div class="scoring-metric"><strong>Reliability</strong> — Rated by clients on communication, quality, and punctuality</div>
+        </div>
+
+        <div class="nav-row no-back">
+          <button class="btn-back" onclick="goBack()" aria-label="Back">&#8592;</button>
+          <button class="btn-next" onclick="goNext()">See How It Works &#8594;</button>
+        </div>
+      </div>
+
+      <!-- Screen 2: How It Works -->
+      <div class="screen" id="screen2">
+        <h1>We bring the leads.<br>You bring the work.</h1>
+
+        <div class="flow-list">
+          <div class="flow-step">
+            <div class="flow-left"><div class="flow-num">1</div><div class="flow-line"></div></div>
+            <div class="flow-content"><div class="flow-name">Job Request</div><div class="flow-desc">Client submits job via VIP Concierge portal</div></div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-left"><div class="flow-num">2</div><div class="flow-line"></div></div>
+            <div class="flow-content"><div class="flow-name">Broadcast</div><div class="flow-desc">We notify all qualified providers who fit the job criteria</div></div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-left"><div class="flow-num">3</div><div class="flow-line"></div></div>
+            <div class="flow-content"><div class="flow-name">You Respond</div><div class="flow-desc">First to confirm earns the exclusive lead</div></div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-left"><div class="flow-num">4</div><div class="flow-line"></div></div>
+            <div class="flow-content"><div class="flow-name">Lead Fee Paid</div><div class="flow-desc">A condition of retaining the exclusive lead</div></div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-left"><div class="flow-num">5</div><div class="flow-line"></div></div>
+            <div class="flow-content"><div class="flow-name">Group Chat Created</div><div class="flow-desc">Private WhatsApp group for you, the client, and TaskLeaders</div></div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-left"><div class="flow-num">6</div><div class="flow-line"></div></div>
+            <div class="flow-content"><div class="flow-name">Job Done</div><div class="flow-desc">Complete the job and confirm in the group chat</div></div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-left"><div class="flow-num">7</div><div class="flow-line"></div></div>
+            <div class="flow-content"><div class="flow-name">Client Feedback</div><div class="flow-desc">Rated on communication, quality, and punctuality</div></div>
+          </div>
+        </div>
+
+        <p class="small-print">*Non-response and non-payment negatively impact your Reliability Score.</p>
+
+        <div class="nav-row">
+          <button class="btn-back" onclick="goBack()" aria-label="Back">&#8592;</button>
+          <button class="btn-next" onclick="goNext()">Next &#8594;</button>
+        </div>
+      </div>
+
+      <!-- Screen 3: Lead Fee Guarantee -->
+      <div class="screen" id="screen3">
+        <h1>If the job doesn't happen, you get your fee back.</h1>
+
+        <div class="guarantee-list">
+          <div class="guarantee-item"><div class="guarantee-dot"></div><span>Every client is pre-screened through our VIP intake process</span></div>
+          <div class="guarantee-item"><div class="guarantee-dot"></div><span>Every lead is within your confirmed service area</span></div>
+          <div class="guarantee-item"><div class="guarantee-dot"></div><span>If no work takes place, your lead fee is refunded</span></div>
+        </div>
+
+        <p class="small-print">Claim within 30 days. Both parties confirm in the WhatsApp group chat.</p>
+
+        <div class="nav-row">
+          <button class="btn-back" onclick="goBack()" aria-label="Back">&#8592;</button>
+          <button class="btn-next" onclick="goNext()">Next &#8594;</button>
+        </div>
+      </div>
+
+      <!-- Screen 4: Your Score -->
+      <div class="screen" id="screen4">
+        <h1>Your Reputation.<br>Built Automatically.</h1>
+        <p class="subhead">Two numbers on your profile. Both earned, not given.</p>
+
+        <div class="score-cards">
+          <div class="score-card">
+            <div class="score-card-icon">&#9889;</div>
+            <div class="score-card-title">Response Time</div>
+            <div class="score-card-badge">Auto-tracked</div>
+            <div class="score-card-desc">How fast you respond to public requests</div>
+            <div class="score-card-example">e.g. ~3 min avg</div>
+          </div>
+          <div class="score-card">
+            <div class="score-card-icon">&#10003;</div>
+            <div class="score-card-title">Reliability Score</div>
+            <div class="score-card-badge">Client-rated</div>
+            <div class="score-card-desc">Three questions: Punctuality &middot; Quality &middot; Communication</div>
+            <div class="score-card-example">Averaged to a % on your profile</div>
+          </div>
+        </div>
+
+        <p class="small-print">New providers display "Building track record" until 5 jobs are logged.</p>
+
+        <div class="nav-row">
+          <button class="btn-back" onclick="goBack()" aria-label="Back">&#8592;</button>
+          <button class="btn-next green" onclick="goToSetup()">Set Up My Profile &#8594;</button>
+        </div>
+      </div>
+
+    </div><!-- /screens -->
+  </div><!-- /app -->
+
+  <script src="js/config.js"></script>
+  <script>
+    let currentScreen = 1;
+    const totalScreens = 4;
+    let providerSlug = '';
+
+    function getSlug() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('slug')?.trim().toLowerCase() || '';
+    }
+
+    function showError() {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').style.display  = 'flex';
+    }
+
+    function showApp(firstName) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('providerName').textContent = firstName || 'there';
+      const appEl = document.getElementById('app');
+      appEl.style.display = 'flex';
+    }
+
+    function updateProgress() {
+      document.getElementById('progressLabel').textContent = `Step ${currentScreen} of ${totalScreens}`;
+      for (let i = 1; i <= totalScreens; i++) {
+        const dot = document.getElementById(`dot${i}`);
+        dot.className = 'progress-dot' +
+          (i < currentScreen ? ' done' : i === currentScreen ? ' active' : '');
+      }
+    }
+
+    function showScreen(n) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(`screen${n}`).classList.add('active');
+      currentScreen = n;
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goNext() {
+      if (currentScreen < totalScreens) showScreen(currentScreen + 1);
+    }
+
+    function goBack() {
+      if (currentScreen > 1) showScreen(currentScreen - 1);
+    }
+
+    function goToSetup() {
+      window.location.href = `taskleader-profile-setup.html?slug=${encodeURIComponent(providerSlug)}`;
+    }
+
+    async function init() {
+      providerSlug = getSlug();
+      if (!providerSlug) {
+        showError();
+        return;
+      }
+
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      if (!base || typeof base !== 'string' || !base.startsWith('http')) {
+        showError();
+        return;
+      }
+
+      try {
+        const res = await fetch(`${base.replace(/\/$/, '')}/get-provider?slug=${encodeURIComponent(providerSlug)}`);
+        const data = await res.json().catch(() => null);
+
+        if (!data || data.ok !== true || !data.data) {
+          showError();
+          return;
+        }
+
+        showApp(data.data.first_name);
+        updateProgress();
+      } catch {
+        showError();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

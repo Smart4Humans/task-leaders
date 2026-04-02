@@ -749,10 +749,10 @@
 
     <!-- Success -->
     <div class="success-message" id="success-message">
-      <div class="success-icon">✅</div>
-      <h2>Profile Submitted!</h2>
-      <p>Your <span style="color:var(--blue);">Task</span>Leader profile has been submitted. We'll review and activate it within 24–48 hours. You'll receive a confirmation via <span style="color:var(--success);">WhatsApp</span>.</p>
-      <a href="homepage.html" class="btn-secondary">Back to Home</a>
+      <div class="success-icon" id="successIcon">✅</div>
+      <h2 id="successTitle">Profile Submitted!</h2>
+      <p id="successBody">Your <span style="color:var(--blue);">Task</span>Leader profile has been submitted. We'll review and activate it within 24–48 hours. You'll receive a confirmation via <span style="color:var(--success);">WhatsApp</span>.</p>
+      <a href="homepage.html" class="btn-secondary" id="successCta">Back to Home</a>
     </div>
   </main>
 
@@ -760,10 +760,93 @@
   <script>
     const approvedCities = ['Vancouver','Surrey','Burnaby','Richmond','Coquitlam','New Westminster','North Vancouver','Port Coquitlam','Maple Ridge','Langley','White Rock','Port Moody','Pitt Meadows','Delta','Abbotsford','Chilliwack','Mission'];
 
-    function init() {
+    let onboardingSlug = '';
+
+    function getSlug() {
+      return new URLSearchParams(window.location.search).get('slug')?.trim().toLowerCase() || '';
+    }
+
+    async function init() {
       document.getElementById('cityGrid').innerHTML = approvedCities.map(city =>
         `<label class="checkbox-item"><input type="checkbox" name="serviceCities" value="${city}"/><span>${city}</span></label>`
       ).join('');
+
+      onboardingSlug = getSlug();
+      if (onboardingSlug) {
+        await prefillFromProvider(onboardingSlug);
+      }
+    }
+
+    async function prefillFromProvider(slug) {
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      if (!base) return;
+
+      try {
+        const res = await fetch(`${base.replace(/\/$/, '')}/get-provider?slug=${encodeURIComponent(slug)}`);
+        const data = await res.json().catch(() => null);
+        if (!data || data.ok !== true || !data.data) return;
+
+        const p = data.data;
+
+        // Basic identity
+        setVal('firstName',  p.first_name);
+        setVal('lastName',   p.last_name);
+        setVal('businessName', p.business_name || '');
+        setVal('email',      p.email);
+        setVal('whatsapp',   p.whatsapp_number);
+        setVal('bio',        p.short_description || '');
+
+        // Primary service
+        if (p.primary_service) {
+          const sel = document.getElementById('primaryService');
+          for (const opt of sel.options) {
+            if (opt.value === p.primary_service) { sel.value = p.primary_service; break; }
+          }
+        }
+
+        // Base city / service area
+        if (p.service_area) {
+          const sel = document.getElementById('baseCity');
+          for (const opt of sel.options) {
+            if (opt.value === p.service_area) { sel.value = p.service_area; break; }
+          }
+        }
+
+        // Update page copy to reflect the welcome flow context
+        const heroH1 = document.querySelector('.hero h1');
+        if (heroH1) heroH1.innerHTML = `Set Up Your <span class="blue">Task</span>Leader Profile`;
+        const heroSub = document.querySelector('.hero-sub');
+        if (heroSub) heroSub.textContent = 'Your application details are pre-filled below. Review everything, add your photo and rate, then go live.';
+
+        // Update submit note
+        const note = document.querySelector('.submit-note');
+        if (note) note.textContent = 'Your profile goes live immediately after submission.';
+
+        // Update success message
+        document.getElementById('successIcon').textContent = '🎉';
+        document.getElementById('successTitle').textContent = "You're live!";
+        document.getElementById('successBody').innerHTML =
+          `Welcome to TaskLeaders, ${escHtml(p.first_name)}. Your profile is now active. You'll start receiving exclusive leads as they come in.`;
+        const cta = document.getElementById('successCta');
+        cta.textContent = 'View My Profile';
+        cta.href = `profile.html?provider=${encodeURIComponent(slug)}`;
+
+      } catch {
+        // silent — form still works without pre-fill
+      }
+    }
+
+    function setVal(id, val) {
+      const el = document.getElementById(id);
+      if (el && val != null) el.value = val;
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
 
     function toggleAllCities() {
@@ -841,15 +924,43 @@
         bio: document.getElementById('bio').value.trim(),
       };
 
+      const base = window.TASKLEADERS_FUNCTIONS_BASE || '';
+
       try {
-        const base = window.TASKLEADERS_FUNCTIONS_BASE || '';
-        await fetch(base + '/profile-setup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        if (onboardingSlug) {
+          // Coming from the welcome flow — update providers record and activate
+          const res = await fetch(`${base.replace(/\/$/, '')}/complete-onboarding`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...payload, slug: onboardingSlug }),
+          });
+          const data = await res.json().catch(() => null);
+          if (!data || data.ok !== true) {
+            const msg = data?.error?.message || 'Submission failed. Please try again.';
+            errorEl.textContent = msg;
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Complete Profile';
+            return;
+          }
+        } else {
+          // Standard new profile submission
+          await fetch(`${base}/profile-setup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        }
       } catch (_) {
-        // best-effort — always show confirmation
+        if (onboardingSlug) {
+          // For welcome-flow submissions, surface the error — don't silently succeed
+          errorEl.textContent = 'Network error. Please check your connection and try again.';
+          errorEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Complete Profile';
+          return;
+        }
+        // Standard flow: best-effort — always show confirmation
       }
 
       document.getElementById('setup-form').style.display = 'none';

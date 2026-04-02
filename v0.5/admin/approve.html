@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin — Approve Applications · TaskLeaders</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --gold: #ffb800;
+      --red: #ff4d4d;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Auth gate ── */
+    #auth-gate {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 24px;
+    }
+    .auth-logo {
+      font-size: 28px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+      margin-bottom: 32px;
+    }
+    .auth-logo .task    { color: var(--blue); }
+    .auth-logo .leaders { color: #fff; }
+    .auth-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 380px;
+    }
+    .auth-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .auth-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .auth-input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      font-family: inherit;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .auth-input:focus { border-color: var(--blue); }
+    .auth-error {
+      font-size: 13px;
+      color: var(--red);
+      margin-bottom: 10px;
+      display: none;
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .auth-btn:hover { background: var(--blue-dark); }
+
+    /* ── App ── */
+    #app { display: none; }
+
+    /* ── Header ── */
+    header {
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo .task    { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+    .admin-badge {
+      background: rgba(255,184,0,0.15);
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .sign-out-btn {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--muted);
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .sign-out-btn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+
+    /* ── Main layout ── */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+    .page-title {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .page-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+
+    /* ── Section headings ── */
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .section-count {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── Refresh btn ── */
+    .refresh-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .refresh-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* ── Loading / empty states ── */
+    .loading-row {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .empty-row {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--muted);
+      font-size: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    /* ── Application cards ── */
+    .app-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+    }
+    .app-card:hover { border-color: rgba(255,255,255,0.15); }
+    .app-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .app-name {
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .app-business {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .app-date {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .app-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .app-tag {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.75);
+      font-weight: 500;
+    }
+    .app-tag.service {
+      background: rgba(0,102,255,0.15);
+      color: var(--blue);
+    }
+    .app-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .approve-btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      background: var(--green);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .approve-btn:hover { background: #00a844; }
+    .approve-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Welcome link result ── */
+    .link-result {
+      display: none;
+      margin-top: 14px;
+      padding: 14px 16px;
+      background: rgba(0,200,83,0.08);
+      border: 1px solid rgba(0,200,83,0.25);
+      border-radius: 10px;
+    }
+    .link-result-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .link-result-url {
+      font-size: 14px;
+      color: #fff;
+      word-break: break-all;
+      margin-bottom: 10px;
+      font-family: 'Courier New', monospace;
+      background: rgba(255,255,255,0.05);
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+    .copy-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { background: var(--blue-dark); }
+    .copy-btn.copied {
+      background: var(--green);
+    }
+
+    /* ── Approved table ── */
+    .approved-section { margin-top: 48px; }
+    .approved-list {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .approved-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 80px;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      font-size: 14px;
+    }
+    .approved-row:last-child { border-bottom: none; }
+    .approved-row.header-row {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.02);
+    }
+    .approved-name { font-weight: 600; }
+    .approved-email { color: var(--muted); font-size: 13px; }
+    .status-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 5px;
+      text-align: center;
+    }
+    .status-badge.pending {
+      background: rgba(255,184,0,0.15);
+      color: var(--gold);
+    }
+    .status-badge.active {
+      background: rgba(0,200,83,0.15);
+      color: var(--green);
+    }
+    .approved-slug {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'Courier New', monospace;
+    }
+    @media (max-width: 560px) {
+      .approved-row { grid-template-columns: 1fr 80px; }
+      .approved-email { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Auth gate -->
+  <div id="auth-gate">
+    <div class="auth-logo"><span class="task">Task</span><span class="leaders">Leaders</span></div>
+    <div class="auth-card">
+      <div class="auth-title">Admin Access</div>
+      <div class="auth-sub">Enter your admin password to continue.</div>
+      <div class="auth-error" id="authError">Incorrect password. Try again.</div>
+      <input
+        type="password"
+        class="auth-input"
+        id="passwordInput"
+        placeholder="Admin password"
+        onkeydown="if(event.key==='Enter')submitAuth()"
+      />
+      <button class="auth-btn" onclick="submitAuth()">Sign In</button>
+    </div>
+  </div>
+
+  <!-- App (shown after auth) -->
+  <div id="app">
+    <header>
+      <a href="../homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="admin-badge">Admin</span>
+        <button class="sign-out-btn" onclick="signOut()">Sign Out</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="page-title">Approve Applications</div>
+      <p class="page-sub">Review pending applications, generate welcome links, and copy them to send manually.</p>
+
+      <!-- Pending section -->
+      <div class="section-head">
+        <div class="section-title">Pending Applications</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="section-count" id="pendingCount"></span>
+          <button class="refresh-btn" onclick="loadData()">Refresh</button>
+        </div>
+      </div>
+
+      <div id="pendingList"><div class="loading-row">Loading…</div></div>
+
+      <!-- Approved section -->
+      <div class="approved-section">
+        <div class="section-head">
+          <div class="section-title">Recently Approved</div>
+          <span class="section-count" id="approvedCount"></span>
+        </div>
+        <div id="approvedList"><div class="loading-row">Loading…</div></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script>
+    const SESSION_KEY = 'tl_admin_pw';
+    let adminPw = '';
+
+    // ── Auth ────────────────────────────────────────────────────────────────
+    function submitAuth() {
+      const pw = document.getElementById('passwordInput').value;
+      if (!pw) return;
+      adminPw = pw;
+      sessionStorage.setItem(SESSION_KEY, pw);
+      loadData();
+    }
+
+    function signOut() {
+      sessionStorage.removeItem(SESSION_KEY);
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('auth-gate').style.display = 'flex';
+      document.getElementById('passwordInput').value = '';
+      adminPw = '';
+    }
+
+    function showApp() {
+      document.getElementById('auth-gate').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    }
+
+    function showAuthError() {
+      const el = document.getElementById('authError');
+      el.style.display = 'block';
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('passwordInput').focus();
+      adminPw = '';
+      sessionStorage.removeItem(SESSION_KEY);
+    }
+
+    // ── Data loading ────────────────────────────────────────────────────────
+    async function loadData() {
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      if (!base) {
+        document.getElementById('pendingList').innerHTML =
+          '<div class="empty-row">Site configuration missing. Check js/config.js.</div>';
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `${base.replace(/\/$/, '')}/approve-application?admin_password=${encodeURIComponent(adminPw)}`
+        );
+        const data = await res.json().catch(() => null);
+
+        if (res.status === 401 || (data && data.error?.code === 'unauthorized')) {
+          showAuthError();
+          return;
+        }
+
+        if (!data || data.ok !== true) {
+          throw new Error(data?.error?.message || 'Failed to load data');
+        }
+
+        showApp();
+        renderPending(data.data.pending || []);
+        renderApproved(data.data.approved || []);
+
+      } catch (err) {
+        document.getElementById('pendingList').innerHTML =
+          `<div class="empty-row">Error loading data: ${err.message}</div>`;
+      }
+    }
+
+    // ── Render pending applications ─────────────────────────────────────────
+    function renderPending(apps) {
+      const el = document.getElementById('pendingList');
+      const count = document.getElementById('pendingCount');
+      count.textContent = `${apps.length} application${apps.length !== 1 ? 's' : ''}`;
+
+      if (apps.length === 0) {
+        el.innerHTML = '<div class="empty-row">No pending applications.</div>';
+        return;
+      }
+
+      el.innerHTML = apps.map(app => {
+        const date = new Date(app.created_at).toLocaleDateString('en-CA', {
+          month: 'short', day: 'numeric', year: 'numeric'
+        });
+        const service = app.category_slug
+          ? app.category_slug.charAt(0).toUpperCase() + app.category_slug.slice(1).replace(/-/g, ' ')
+          : '';
+        const desc = app.description
+          ? `<div class="app-desc">${escHtml(app.description)}</div>`
+          : '';
+
+        return `
+        <div class="app-card" id="card-${app.id}">
+          <div class="app-card-top">
+            <div>
+              <div class="app-name">${escHtml(app.contact_name || '')}</div>
+              ${app.business_name ? `<div class="app-business">${escHtml(app.business_name)}</div>` : ''}
+            </div>
+            <div class="app-date">${date}</div>
+          </div>
+          <div class="app-meta">
+            <span class="app-tag">${escHtml(app.email || '')}</span>
+            <span class="app-tag">${escHtml(app.whatsapp_e164 || '')}</span>
+            ${app.service_area ? `<span class="app-tag">${escHtml(app.service_area)}</span>` : ''}
+            ${service ? `<span class="app-tag service">${escHtml(service)}</span>` : ''}
+          </div>
+          ${desc}
+          <button class="approve-btn" id="btn-${app.id}" onclick="approveApp('${app.id}', this)">
+            Approve &amp; Generate Link
+          </button>
+          <div class="link-result" id="result-${app.id}">
+            <div class="link-result-label">Welcome link ready to copy</div>
+            <div class="link-result-url" id="url-${app.id}"></div>
+            <button class="copy-btn" id="copy-${app.id}" onclick="copyLink('${app.id}')">Copy Link</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── Render approved list ────────────────────────────────────────────────
+    function renderApproved(providers) {
+      const el = document.getElementById('approvedList');
+      const count = document.getElementById('approvedCount');
+      count.textContent = `${providers.length} record${providers.length !== 1 ? 's' : ''}`;
+
+      if (providers.length === 0) {
+        el.innerHTML = '<div class="empty-row">No approved providers yet.</div>';
+        return;
+      }
+
+      const rows = providers.map(p => {
+        const statusClass = p.status === 'active' ? 'active' : 'pending';
+        const statusLabel = p.status === 'active' ? 'Active' : 'Onboarding';
+        return `
+        <div class="approved-row">
+          <div>
+            <div class="approved-name">${escHtml(p.first_name || '')} ${escHtml(p.last_name || '')}</div>
+            <div class="approved-slug">${escHtml(p.slug || '')}</div>
+          </div>
+          <div class="approved-email">${escHtml(p.email || '')}</div>
+          <div><span class="status-badge ${statusClass}">${statusLabel}</span></div>
+        </div>`;
+      }).join('');
+
+      el.innerHTML = `
+        <div class="approved-list">
+          <div class="approved-row header-row">
+            <div>Name / Slug</div>
+            <div>Email</div>
+            <div>Status</div>
+          </div>
+          ${rows}
+        </div>`;
+    }
+
+    // ── Approve an application ───────────────────────────────────────────────
+    async function approveApp(applicationId, btn) {
+      btn.disabled = true;
+      btn.textContent = 'Approving…';
+
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+
+      try {
+        const res = await fetch(`${base.replace(/\/$/, '')}/approve-application`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ application_id: applicationId, admin_password: adminPw })
+        });
+        const data = await res.json().catch(() => null);
+
+        if (!data || data.ok !== true) {
+          const msg = data?.error?.message || 'Failed to approve application.';
+          btn.disabled = false;
+          btn.textContent = 'Approve & Generate Link';
+          alert(msg);
+          return;
+        }
+
+        // Build the full welcome URL
+        const origin = window.location.origin;
+        const basePath = window.location.pathname.replace('/admin/approve.html', '');
+        const welcomeUrl = `${origin}${basePath}/welcome.html?slug=${data.data.slug}`;
+
+        // Show the link
+        document.getElementById(`url-${applicationId}`).textContent = welcomeUrl;
+        const resultEl = document.getElementById(`result-${applicationId}`);
+        resultEl.style.display = 'block';
+
+        btn.textContent = 'Approved';
+        btn.style.background = 'rgba(0,200,83,0.15)';
+        btn.style.color = 'var(--green)';
+        btn.style.border = '1px solid rgba(0,200,83,0.3)';
+
+        // Reload approved list
+        loadApprovedOnly();
+
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Approve & Generate Link';
+        alert('Network error. Please try again.');
+      }
+    }
+
+    async function loadApprovedOnly() {
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      try {
+        const res = await fetch(
+          `${base.replace(/\/$/, '')}/approve-application?admin_password=${encodeURIComponent(adminPw)}`
+        );
+        const data = await res.json().catch(() => null);
+        if (data?.ok) renderApproved(data.data.approved || []);
+      } catch {}
+    }
+
+    // ── Copy link ────────────────────────────────────────────────────────────
+    function copyLink(applicationId) {
+      const url = document.getElementById(`url-${applicationId}`).textContent;
+      const btn = document.getElementById(`copy-${applicationId}`);
+      navigator.clipboard.writeText(url).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy Link';
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy Link';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    // ── Utilities ────────────────────────────────────────────────────────────
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    const savedPw = sessionStorage.getItem(SESSION_KEY);
+    if (savedPw) {
+      adminPw = savedPw;
+      loadData();
+    }
+  </script>
+</body>
+</html>
