@@ -750,8 +750,8 @@
     <!-- Success -->
     <div class="success-message" id="success-message">
       <div class="success-icon" id="successIcon">✅</div>
-      <h2 id="successTitle">Profile Submitted!</h2>
-      <p id="successBody">Your <span style="color:var(--blue);">Task</span>Leader profile has been submitted. We'll review and activate it within 24–48 hours. You'll receive a confirmation via <span style="color:var(--success);">WhatsApp</span>.</p>
+      <h2 id="successTitle">Thank you for your submission!</h2>
+      <p id="successBody" style="white-space:pre-line;">Your profile will be reviewed within 24 hrs, and activated barring any issues.&#10;We'll let you know once activated and look forward to sending your first lead!</p>
       <a href="homepage.html" class="btn-secondary" id="successCta">Back to Home</a>
     </div>
   </main>
@@ -826,13 +826,13 @@
         if (note) note.textContent = 'Your profile goes live immediately after submission.';
 
         // Update success message
-        document.getElementById('successIcon').textContent = '🎉';
-        document.getElementById('successTitle').textContent = "You're live!";
-        document.getElementById('successBody').innerHTML =
-          `Welcome to TaskLeaders, ${escHtml(p.first_name)}. Your profile is now active. You'll start receiving exclusive leads as they come in.`;
+        document.getElementById('successIcon').textContent = '✅';
+        document.getElementById('successTitle').textContent = 'Thank you for your submission!';
+        document.getElementById('successBody').style.whiteSpace = 'pre-line';
+        document.getElementById('successBody').textContent = "Your profile will be reviewed within 24 hrs, and activated barring any issues.\nWe'll let you know once activated and look forward to sending your first lead!";
         const cta = document.getElementById('successCta');
         cta.textContent = 'View My Profile';
-        cta.href = `profile.html?provider=${encodeURIComponent(slug)}`;
+        cta.href = `provider-profile.html?slug=${encodeURIComponent(slug)}`;
 
       } catch {
         // silent — form still works without pre-fill
