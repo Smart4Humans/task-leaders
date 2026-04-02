@@ -754,14 +754,25 @@
           return;
         }
 
-        // Mark queue card as approved and reload pipeline
-        btn.textContent = 'Approved ✓';
-        btn.style.background = 'rgba(0,200,83,0.15)';
-        btn.style.color = 'var(--green)';
-        btn.style.border = '1px solid rgba(0,200,83,0.3)';
+        // Build and display the welcome link inline in the queue card
+        const origin = window.location.origin;
+        const basePath = window.location.pathname.replace('/admin/approve.html', '');
+        const welcomeUrl = `${origin}${basePath}/welcome.html?slug=${data.data.slug}`;
 
-        // Reload the full page data so queue card disappears and pipeline updates
-        setTimeout(() => loadData(), 800);
+        btn.style.display = 'none';
+
+        const detail = document.getElementById(`detail-${applicationId}`);
+        const linkDiv = document.createElement('div');
+        linkDiv.className = 'link-result';
+        linkDiv.style.display = 'block';
+        linkDiv.innerHTML = `
+          <div class="link-result-label">Welcome link — send this to the provider</div>
+          <div class="link-result-url" id="ql-url-${applicationId}">${escHtml(welcomeUrl)}</div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="copy-btn" id="ql-copy-${applicationId}" onclick="copyText('ql-url-${applicationId}','ql-copy-${applicationId}')">Copy Link</button>
+            <button class="copy-btn" style="background:rgba(255,255,255,0.1);" onclick="loadData()">Done — Move to Pipeline</button>
+          </div>`;
+        detail.appendChild(linkDiv);
 
       } catch (err) {
         btn.disabled = false;
