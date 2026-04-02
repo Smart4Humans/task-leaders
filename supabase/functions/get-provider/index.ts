@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
   const { data, error: dbError } = await supabase
-    .from("providers")
+    .from("provider_accounts")
     .select(
       "slug, status, first_name, last_name, business_name, email, whatsapp_number, service_area, primary_service, short_description, profile_photo, base_rate"
     )

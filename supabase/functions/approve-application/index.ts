@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
 
     // Also pull already-approved ones so the admin can see generated links
     const { data: approved } = await supabase
-      .from("providers")
+      .from("provider_accounts")
       .select("slug, first_name, last_name, email, status, created_at")
       .order("created_at", { ascending: false })
       .limit(50);
@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
 
   // Check if a provider record already exists for this application
   const { data: existing } = await supabase
-    .from("providers")
+    .from("provider_accounts")
     .select("slug")
     .eq("application_id", applicationId)
     .maybeSingle();
@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
   for (let attempt = 0; attempt < 5; attempt++) {
     const candidate = generateSlug(firstName);
     const { data: collision } = await supabase
-      .from("providers")
+      .from("provider_accounts")
       .select("slug")
       .eq("slug", candidate)
       .maybeSingle();
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
 
   // Create the provider record
   const { data: provider, error: insertError } = await supabase
-    .from("providers")
+    .from("provider_accounts")
     .insert({
       slug,
       status: "pending_onboarding",

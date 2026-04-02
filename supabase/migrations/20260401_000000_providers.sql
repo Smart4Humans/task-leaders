@@ -1,10 +1,12 @@
--- TaskLeaders MVP — Providers table
--- Created when Todd approves an application and generates a welcome link.
+-- TaskLeaders MVP — Provider accounts table
+-- NOTE: The existing public.providers table is the public marketplace listing table.
+--       This table (provider_accounts) is the onboarding/auth record created at approval.
+--       It bridges: application (submitted) → provider_accounts (approved) → profile goes live.
 -- Status lifecycle: pending_onboarding → active
 
 begin;
 
-create table if not exists public.providers (
+create table if not exists public.provider_accounts (
   id            uuid        primary key default gen_random_uuid(),
   slug          text        unique not null,          -- e.g. marco-a3x9 (used in welcome URL)
   status        text        not null default 'pending_onboarding',  -- pending_onboarding | active
@@ -30,17 +32,17 @@ create table if not exists public.providers (
 );
 
 -- Constraint: status must be one of the known lifecycle values
-alter table public.providers
-  add constraint providers_status_check
+alter table public.provider_accounts
+  add constraint provider_accounts_status_check
   check (status in ('pending_onboarding', 'active'));
 
-create index if not exists idx_providers_slug        on public.providers(slug);
-create index if not exists idx_providers_status      on public.providers(status);
-create index if not exists idx_providers_email       on public.providers(email);
-create index if not exists idx_providers_application on public.providers(application_id);
+create index if not exists idx_provider_accounts_slug        on public.provider_accounts(slug);
+create index if not exists idx_provider_accounts_status      on public.provider_accounts(status);
+create index if not exists idx_provider_accounts_email       on public.provider_accounts(email);
+create index if not exists idx_provider_accounts_application on public.provider_accounts(application_id);
 
 -- Disable public read access — all reads go through Edge Functions with service role
-alter table public.providers enable row level security;
+alter table public.provider_accounts enable row level security;
 
 -- No RLS policies needed at this stage; Edge Functions use service-role key which bypasses RLS.
 

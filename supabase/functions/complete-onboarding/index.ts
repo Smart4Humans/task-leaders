@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
   // Verify the provider exists and is in the right state
   const { data: existing, error: fetchError } = await supabase
-    .from("providers")
+    .from("provider_accounts")
     .select("id, status")
     .eq("slug", slug)
     .single();
@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
   if (cleanString(body.profilePhoto)) updates.profile_photo = cleanString(body.profilePhoto);
 
   const { error: updateError } = await supabase
-    .from("providers")
+    .from("provider_accounts")
     .update(updates)
     .eq("slug", slug);
 
