@@ -326,6 +326,7 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
       margin-bottom: 24px;
+      align-items: start;
     }
     @media (max-width: 360px) {
       .score-cards { grid-template-columns: 1fr; }
@@ -334,48 +335,52 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 10px 12px 16px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
     }
     .score-card-title-row {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 5px;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .score-card-title {
-      font-size: 34px;
+      font-size: 20px;
       font-weight: 700;
       color: #fff;
-      line-height: 1.1;
+      line-height: 1;
     }
     .score-card-icon {
-      font-size: 18px;
+      font-size: 14px;
       line-height: 1;
-      position: relative;
-      top: -2px;
+      color: #fff;
     }
     .score-card-badge {
       display: inline-block;
-      font-size: 15px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      background: rgba(0,0,0,0.45);
+      background: #2E75B6;
       color: #fff;
       border-radius: 4px;
-      padding: 2px 6px;
-      margin-bottom: 8px;
+      padding: 2px 7px;
+      margin-bottom: 10px;
     }
     .score-card-desc {
-      font-size: 21px;
-      color: #f0f0f0;
+      font-size: 13px;
+      color: #d0d0d0;
       line-height: 1.4;
+      white-space: nowrap;
     }
     .score-card-example {
-      margin-top: 10px;
-      font-size: 21px;
-      font-weight: 600;
-      color: #f0f0f0;
+      margin-top: 6px;
+      font-size: 13px;
+      font-weight: 400;
+      color: #d0d0d0;
+      white-space: nowrap;
     }
 
     /* ── Small print ── */
@@ -567,7 +572,6 @@
             </div>
             <div class="score-card-badge">Auto-tracked</div>
             <div class="score-card-desc">How fast you respond to public requests</div>
-            <div class="score-card-example">e.g. ~3 min avg</div>
           </div>
           <div class="score-card">
             <div class="score-card-title-row">
@@ -575,8 +579,8 @@
               <div class="score-card-icon">&#10003;</div>
             </div>
             <div class="score-card-badge">Client-rated</div>
-            <div class="score-card-desc" style="white-space:nowrap;font-size:13px;">Punctuality &middot; Quality &middot; Communication</div>
-            <div class="score-card-example" style="white-space:nowrap;font-size:13px;">Averaged to a % on your profile</div>
+            <div class="score-card-desc">Punctuality &middot; Quality &middot; Communication</div>
+            <div class="score-card-example">Averaged to a % on your profile</div>
           </div>
         </div>
 
