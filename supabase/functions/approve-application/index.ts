@@ -100,14 +100,67 @@ Deno.serve(async (req) => {
     const slug = String(body.slug ?? "").trim();
     if (!slug) return error("bad_request", "Missing required field: slug");
 
+    // Fetch full provider_accounts record for marketplace sync
+    const { data: acct, error: fetchErr } = await supabase
+      .from("provider_accounts")
+      .select("slug, first_name, last_name, primary_service, service_area, whatsapp_number, short_description, profile_photo, base_rate, status")
+      .eq("slug", slug)
+      .single();
+
+    if (fetchErr || !acct) return error("not_found", "Provider account not found", 404);
+    if (acct.status !== "pending_approval") {
+      return error("conflict", `Provider is already ${acct.status}`, 409);
+    }
+
+    // Set status active in provider_accounts
     const { error: updateError } = await supabase
       .from("provider_accounts")
       .update({ status: "active" })
-      .eq("slug", slug)
-      .eq("status", "pending_approval");
+      .eq("slug", slug);
 
     if (updateError) return error("server_error", updateError.message, 500);
-    return json({ ok: true, data: { slug, status: "active" } });
+
+    // Sync into public.providers (marketplace table) so the provider appears in category pages
+    // Look up city_id and category_id
+    const citySlug = "vancouver";
+    const categorySlug = (acct.primary_service || "").toLowerCase().trim();
+
+    const [cityRes, catRes] = await Promise.all([
+      supabase.from("cities").select("id").eq("slug", citySlug).eq("is_active", true).single(),
+      supabase.from("categories").select("id").eq("slug", categorySlug).eq("is_active", true).single(),
+    ]);
+
+    if (!cityRes.data || !catRes.data) {
+      // Activation succeeded but couldn't sync to marketplace — not fatal
+      return json({ ok: true, data: { slug, status: "active", marketplace_synced: false, reason: "city or category not found" } });
+    }
+
+    const displayName = `${acct.first_name || ""} ${acct.last_name || ""}`.trim();
+    // base_rate is stored as text (e.g. "100" or "$100/hr") — extract numeric part for cents
+    const rateNum = parseFloat(String(acct.base_rate || "").replace(/[^0-9.]/g, ""));
+    const hourlyRateCents = Number.isFinite(rateNum) && rateNum > 0 ? Math.round(rateNum * 100) : null;
+
+    const { error: upsertErr } = await supabase
+      .from("providers")
+      .upsert({
+        provider_slug: slug,
+        display_name: displayName,
+        status: "approved",
+        is_active: true,
+        city_id: cityRes.data.id,
+        category_id: catRes.data.id,
+        whatsapp_e164: acct.whatsapp_number ?? null,
+        about_text: acct.short_description ?? null,
+        hero_photo_url: acct.profile_photo ?? null,
+        hourly_rate_cents: hourlyRateCents,
+        service_areas: acct.service_area ? [acct.service_area] : [],
+      }, { onConflict: "provider_slug" });
+
+    if (upsertErr) {
+      return json({ ok: true, data: { slug, status: "active", marketplace_synced: false, reason: upsertErr.message } });
+    }
+
+    return json({ ok: true, data: { slug, status: "active", marketplace_synced: true } });
   }
 
   const applicationId = String(body.application_id ?? "").trim();
