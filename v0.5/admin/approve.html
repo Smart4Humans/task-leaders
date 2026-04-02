@@ -156,8 +156,8 @@
       margin-bottom: 6px;
     }
     .page-sub {
-      font-size: 14px;
-      color: var(--muted);
+      font-size: 16px;
+      color: #fff;
       margin-bottom: 32px;
     }
 
@@ -173,8 +173,8 @@
       font-weight: 700;
     }
     .section-count {
-      font-size: 13px;
-      color: var(--muted);
+      font-size: 15px;
+      color: #fff;
     }
 
     /* ── Refresh btn ── */
@@ -196,14 +196,14 @@
     .loading-row {
       text-align: center;
       padding: 40px 20px;
-      color: var(--muted);
-      font-size: 14px;
+      color: #fff;
+      font-size: 16px;
     }
     .empty-row {
       text-align: center;
       padding: 32px 20px;
-      color: var(--muted);
-      font-size: 14px;
+      color: #fff;
+      font-size: 16px;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -231,13 +231,13 @@
       font-weight: 700;
     }
     .app-business {
-      font-size: 13px;
-      color: var(--muted);
+      font-size: 15px;
+      color: #fff;
       margin-top: 2px;
     }
     .app-date {
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 14px;
+      color: #fff;
       white-space: nowrap;
       flex-shrink: 0;
     }
@@ -248,11 +248,11 @@
       margin-bottom: 14px;
     }
     .app-tag {
-      font-size: 12px;
+      font-size: 13px;
       padding: 4px 10px;
       border-radius: 6px;
       background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.75);
+      color: #fff;
       font-weight: 500;
     }
     .app-tag.service {
@@ -260,8 +260,8 @@
       color: var(--blue);
     }
     .app-desc {
-      font-size: 13px;
-      color: var(--muted);
+      font-size: 15px;
+      color: #fff;
       line-height: 1.5;
       margin-bottom: 16px;
     }
@@ -352,7 +352,7 @@
       background: rgba(255,255,255,0.02);
     }
     .approved-name { font-weight: 600; }
-    .approved-email { color: var(--muted); font-size: 13px; }
+    .approved-email { color: #fff; font-size: 14px; }
     .status-badge {
       font-size: 11px;
       font-weight: 700;
@@ -369,9 +369,54 @@
       color: var(--green);
     }
     .approved-slug {
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
       font-family: 'Courier New', monospace;
+    }
+
+    /* ── Expand / collapse ── */
+    .app-card-summary {
+      cursor: pointer;
+      user-select: none;
+    }
+    .app-card-summary:hover .app-name { color: rgba(255,255,255,0.85); }
+    .expand-toggle {
+      font-size: 12px;
+      color: var(--blue);
+      font-weight: 600;
+      margin-top: 6px;
+      display: inline-block;
+    }
+    .app-card-detail {
+      display: none;
+      border-top: 1px solid var(--border);
+      margin-top: 14px;
+      padding-top: 14px;
+    }
+    .app-card-detail.open { display: block; }
+    .detail-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .detail-label {
+      color: rgba(255,255,255,0.5);
+      font-weight: 600;
+      flex-shrink: 0;
+      min-width: 110px;
+    }
+    .detail-value { color: #fff; }
+
+    /* ── Pending status badge ── */
+    .status-badge.pending-review {
+      background: rgba(255,184,0,0.15);
+      color: var(--gold);
+    }
+    .status-badge.onboarding {
+      background: rgba(0,102,255,0.15);
+      color: var(--blue);
     }
     @media (max-width: 560px) {
       .approved-row { grid-template-columns: 1fr 80px; }
@@ -427,7 +472,7 @@
       <!-- Approved section -->
       <div class="approved-section">
         <div class="section-head">
-          <div class="section-title">Recently Approved</div>
+          <div class="section-title">All Applications</div>
           <span class="section-count" id="approvedCount"></span>
         </div>
         <div id="approvedList"><div class="loading-row">Loading…</div></div>
@@ -523,33 +568,37 @@
         const service = app.category_slug
           ? app.category_slug.charAt(0).toUpperCase() + app.category_slug.slice(1).replace(/-/g, ' ')
           : '';
-        const desc = app.description
-          ? `<div class="app-desc">${escHtml(app.description)}</div>`
-          : '';
 
         return `
         <div class="app-card" id="card-${app.id}">
-          <div class="app-card-top">
-            <div>
-              <div class="app-name">${escHtml(app.contact_name || '')}</div>
-              ${app.business_name ? `<div class="app-business">${escHtml(app.business_name)}</div>` : ''}
+          <div class="app-card-summary" onclick="toggleDetail('${app.id}')">
+            <div class="app-card-top">
+              <div>
+                <div class="app-name">${escHtml(app.contact_name || '')}</div>
+                ${app.business_name ? `<div class="app-business">${escHtml(app.business_name)}</div>` : ''}
+              </div>
+              <div class="app-date">${date}</div>
             </div>
-            <div class="app-date">${date}</div>
+            <div class="app-meta">
+              ${service ? `<span class="app-tag service">${escHtml(service)}</span>` : ''}
+              ${app.service_area ? `<span class="app-tag">${escHtml(app.service_area)}</span>` : ''}
+            </div>
+            <span class="expand-toggle" id="toggle-${app.id}">View full application ▾</span>
           </div>
-          <div class="app-meta">
-            <span class="app-tag">${escHtml(app.email || '')}</span>
-            <span class="app-tag">${escHtml(app.whatsapp_e164 || '')}</span>
-            ${app.service_area ? `<span class="app-tag">${escHtml(app.service_area)}</span>` : ''}
-            ${service ? `<span class="app-tag service">${escHtml(service)}</span>` : ''}
-          </div>
-          ${desc}
-          <button class="approve-btn" id="btn-${app.id}" onclick="approveApp('${app.id}', this)">
-            Approve &amp; Generate Link
-          </button>
-          <div class="link-result" id="result-${app.id}">
-            <div class="link-result-label">Welcome link ready to copy</div>
-            <div class="link-result-url" id="url-${app.id}"></div>
-            <button class="copy-btn" id="copy-${app.id}" onclick="copyLink('${app.id}')">Copy Link</button>
+          <div class="app-card-detail" id="detail-${app.id}">
+            <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${escHtml(app.email || '')}</span></div>
+            <div class="detail-row"><span class="detail-label">WhatsApp</span><span class="detail-value">${escHtml(app.whatsapp_e164 || '')}</span></div>
+            ${app.description ? `<div class="detail-row"><span class="detail-label">Description</span><span class="detail-value">${escHtml(app.description)}</span></div>` : ''}
+            <div style="margin-top:16px;">
+              <button class="approve-btn" id="btn-${app.id}" onclick="approveApp('${app.id}', this)">
+                Approve &amp; Generate Link
+              </button>
+            </div>
+            <div class="link-result" id="result-${app.id}">
+              <div class="link-result-label">Welcome link ready to copy</div>
+              <div class="link-result-url" id="url-${app.id}"></div>
+              <button class="copy-btn" id="copy-${app.id}" onclick="copyLink('${app.id}')">Copy Link</button>
+            </div>
           </div>
         </div>`;
       }).join('');
@@ -567,7 +616,7 @@
       }
 
       const rows = providers.map(p => {
-        const statusClass = p.status === 'active' ? 'active' : 'pending';
+        const statusClass = p.status === 'active' ? 'active' : 'onboarding';
         const statusLabel = p.status === 'active' ? 'Active' : 'Onboarding';
         return `
         <div class="approved-row">
@@ -678,6 +727,15 @@
           btn.classList.remove('copied');
         }, 2000);
       });
+    }
+
+    // ── Expand / collapse pending card ───────────────────────────────────────
+    function toggleDetail(appId) {
+      const detail = document.getElementById(`detail-${appId}`);
+      const toggle = document.getElementById(`toggle-${appId}`);
+      const isOpen = detail.classList.contains('open');
+      detail.classList.toggle('open', !isOpen);
+      toggle.textContent = isOpen ? 'View full application ▾' : 'Hide details ▴';
     }
 
     // ── Utilities ────────────────────────────────────────────────────────────

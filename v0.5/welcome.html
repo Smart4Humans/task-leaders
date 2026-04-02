@@ -163,10 +163,10 @@
       letter-spacing: -0.5px;
       margin: 0 0 10px;
     }
-    h1 .name { color: var(--blue); }
+    h1 .name { color: #fff; }
     .subhead {
       font-size: 16px;
-      color: rgba(255,255,255,0.75);
+      color: #f0f0f0;
       line-height: 1.5;
       margin: 0 0 28px;
     }
@@ -280,9 +280,10 @@
       color: #fff;
     }
     .flow-desc {
-      font-size: 13px;
-      color: var(--muted);
+      font-size: 15px;
+      color: #f0f0f0;
       line-height: 1.4;
+      font-weight: 400;
     }
 
     /* ── Guarantee bullets (Screen 3) ── */
@@ -299,18 +300,24 @@
       gap: 12px;
       padding: 16px 0;
       border-bottom: 1px solid var(--border);
-      font-size: 15px;
-      color: rgba(255,255,255,0.9);
+      font-size: 17px;
+      color: #f0f0f0;
       line-height: 1.4;
     }
     .guarantee-item:last-child { border-bottom: none; }
-    .guarantee-dot {
-      width: 8px;
-      height: 8px;
+    .guarantee-check {
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
-      background: var(--green);
-      margin-top: 6px;
+      background: rgba(0,200,83,0.15);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
+      margin-top: 2px;
     }
 
     /* ── Score cards (Screen 4) ── */
@@ -334,7 +341,7 @@
       margin-bottom: 8px;
     }
     .score-card-title {
-      font-size: 14px;
+      font-size: 17px;
       font-weight: 700;
       margin-bottom: 6px;
       color: #fff;
@@ -345,28 +352,28 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      background: rgba(0,102,255,0.2);
-      color: var(--blue);
+      background: rgba(255,255,255,0.12);
+      color: #fff;
       border-radius: 4px;
       padding: 2px 6px;
       margin-bottom: 8px;
     }
     .score-card-desc {
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 14px;
+      color: #f0f0f0;
       line-height: 1.4;
     }
     .score-card-example {
       margin-top: 10px;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
-      color: rgba(255,255,255,0.85);
+      color: #f0f0f0;
     }
 
     /* ── Small print ── */
     .small-print {
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 13px;
+      color: #aaaaaa;
       line-height: 1.5;
       margin-bottom: 28px;
     }
@@ -461,21 +468,15 @@
       <!-- Screen 1: Welcome / Value Proposition -->
       <div class="screen active" id="screen1">
         <div class="screen-eyebrow">You're invited</div>
-        <h1>Welcome to TaskLeaders, <span class="name" id="providerName">there</span>.</h1>
-        <p class="subhead">You're invited to be one of the first 50 TaskLeaders in Vancouver.</p>
+        <h1>Welcome to <span style="color:var(--blue);">TaskLeaders</span>, <span class="name" id="providerName">there</span>.</h1>
+        <p class="subhead">Be one of the first 50 TaskLeaders in Vancouver.</p>
 
         <div class="checklist">
           <div class="check-item"><div class="check-icon">&#10003;</div><span>Keep 100% of your rate — we never take a commission</span></div>
           <div class="check-item"><div class="check-icon">&#10003;</div><span>Exclusive leads — one lead, one provider, no bidding</span></div>
-          <div class="check-item"><div class="check-icon">&#10003;</div><span>All accepted leads are guaranteed</span></div>
+          <div class="check-item"><div class="check-icon">&#10003;</div><span>All accepted leads are guaranteed (subject to conditions)</span></div>
           <div class="check-item"><div class="check-icon">&#10003;</div><span>Free 6-month subscription included</span></div>
-          <div class="check-item"><div class="check-icon">&#10003;</div><span>Direct client contact via WhatsApp</span></div>
-        </div>
-
-        <div class="scoring-block">
-          <p>We measure you on two metrics, both published on your public profile:</p>
-          <div class="scoring-metric"><strong>Responsiveness</strong> — How quickly you respond to job requests</div>
-          <div class="scoring-metric"><strong>Reliability</strong> — Rated by clients on communication, quality, and punctuality</div>
+          <div class="check-item"><div class="check-icon">&#10003;</div><span>Direct client contact via <span style="color:#25D366;">WhatsApp</span></span></div>
         </div>
 
         <div class="nav-row no-back">
@@ -503,11 +504,11 @@
           </div>
           <div class="flow-step">
             <div class="flow-left"><div class="flow-num">4</div><div class="flow-line"></div></div>
-            <div class="flow-content"><div class="flow-name">Lead Fee Paid</div><div class="flow-desc">A condition of retaining the exclusive lead</div></div>
+            <div class="flow-content"><div class="flow-name">Lead Fee Paid*</div><div class="flow-desc">A condition of retaining the exclusive lead</div></div>
           </div>
           <div class="flow-step">
             <div class="flow-left"><div class="flow-num">5</div><div class="flow-line"></div></div>
-            <div class="flow-content"><div class="flow-name">Group Chat Created</div><div class="flow-desc">Private WhatsApp group for you, the client, and TaskLeaders</div></div>
+            <div class="flow-content"><div class="flow-name">Group Chat Created</div><div class="flow-desc">Private <span style="color:#25D366;">WhatsApp</span> group for you, the client, and TaskLeaders</div></div>
           </div>
           <div class="flow-step">
             <div class="flow-left"><div class="flow-num">6</div><div class="flow-line"></div></div>
@@ -519,7 +520,7 @@
           </div>
         </div>
 
-        <p class="small-print">*Non-response and non-payment negatively impact your Reliability Score.</p>
+        <p class="small-print">*Non-compliance negatively impacts your Reliability Score.</p>
 
         <div class="nav-row">
           <button class="btn-back" onclick="goBack()" aria-label="Back">&#8592;</button>
@@ -529,15 +530,15 @@
 
       <!-- Screen 3: Lead Fee Guarantee -->
       <div class="screen" id="screen3">
-        <h1>If the job doesn't happen, you get your fee back.</h1>
+        <h1>If the job doesn't happen,<br>you get your lead fee back.</h1>
 
         <div class="guarantee-list">
-          <div class="guarantee-item"><div class="guarantee-dot"></div><span>Every client is pre-screened through our VIP intake process</span></div>
-          <div class="guarantee-item"><div class="guarantee-dot"></div><span>Every lead is within your confirmed service area</span></div>
-          <div class="guarantee-item"><div class="guarantee-dot"></div><span>If no work takes place, your lead fee is refunded</span></div>
+          <div class="guarantee-item"><div class="guarantee-check">&#10003;</div><span>Every client is pre-screened through our VIP intake process</span></div>
+          <div class="guarantee-item"><div class="guarantee-check">&#10003;</div><span>Every lead is within your confirmed service area</span></div>
+          <div class="guarantee-item"><div class="guarantee-check">&#10003;</div><span>If no work takes place, your lead fee is refunded*</span></div>
         </div>
 
-        <p class="small-print">Claim within 30 days. Both parties confirm in the WhatsApp group chat.</p>
+        <p class="small-print">*Claim within 30 days. Both parties confirm in the <span style="color:#25D366;">WhatsApp</span> group chat.</p>
 
         <div class="nav-row">
           <button class="btn-back" onclick="goBack()" aria-label="Back">&#8592;</button>
@@ -547,27 +548,25 @@
 
       <!-- Screen 4: Your Score -->
       <div class="screen" id="screen4">
-        <h1>Your Reputation.<br>Built Automatically.</h1>
-        <p class="subhead">Two numbers on your profile. Both earned, not given.</p>
+        <h1>Your Reputation Matters.</h1>
+        <p class="subhead">Scores published on your public profile.</p>
 
         <div class="score-cards">
           <div class="score-card">
             <div class="score-card-icon">&#9889;</div>
-            <div class="score-card-title">Response Time</div>
+            <div class="score-card-title">Responsiveness</div>
             <div class="score-card-badge">Auto-tracked</div>
             <div class="score-card-desc">How fast you respond to public requests</div>
             <div class="score-card-example">e.g. ~3 min avg</div>
           </div>
           <div class="score-card">
             <div class="score-card-icon">&#10003;</div>
-            <div class="score-card-title">Reliability Score</div>
+            <div class="score-card-title">Reliability</div>
             <div class="score-card-badge">Client-rated</div>
-            <div class="score-card-desc">Three questions: Punctuality &middot; Quality &middot; Communication</div>
+            <div class="score-card-desc">Punctuality &middot; Quality &middot; Communication</div>
             <div class="score-card-example">Averaged to a % on your profile</div>
           </div>
         </div>
-
-        <p class="small-print">New providers display "Building track record" until 5 jobs are logged.</p>
 
         <div class="nav-row">
           <button class="btn-back" onclick="goBack()" aria-label="Back">&#8592;</button>
@@ -587,6 +586,12 @@
     function getSlug() {
       const params = new URLSearchParams(window.location.search);
       return params.get('slug')?.trim().toLowerCase() || '';
+    }
+
+    function getStartScreen() {
+      const params = new URLSearchParams(window.location.search);
+      const s = parseInt(params.get('screen'), 10);
+      return (s >= 1 && s <= totalScreens) ? s : 1;
     }
 
     function showError() {
@@ -653,7 +658,7 @@
         }
 
         showApp(data.data.first_name);
-        updateProgress();
+        showScreen(getStartScreen());
       } catch {
         showError();
       }

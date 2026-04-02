@@ -444,7 +444,7 @@
 </head>
 <body>
   <header>
-    <a href="homepage.html" class="back">←</a>
+    <a href="#" class="back" id="backBtn">←</a>
     <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
   </header>
 
@@ -773,7 +773,10 @@
 
       onboardingSlug = getSlug();
       if (onboardingSlug) {
+        document.getElementById('backBtn').href = `welcome.html?slug=${encodeURIComponent(onboardingSlug)}&screen=4`;
         await prefillFromProvider(onboardingSlug);
+      } else {
+        document.getElementById('backBtn').href = 'homepage.html';
       }
     }
 
