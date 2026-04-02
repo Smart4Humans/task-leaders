@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>TaskLeader Profile — TaskLeaders</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --gold: #ffb800;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+      --whatsapp: #25D366;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    .back {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 5px 8px;
+      border-radius: 6px;
+    }
+    .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .hero-photo {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      border: 3px solid var(--blue);
+      overflow: hidden;
+      background: rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+    .hero-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+    .hero-name {
+      font-size: 26px;
+      font-weight: 700;
+      margin: 0 0 10px;
+    }
+    .hero-service {
+      display: inline-block;
+      background: rgba(0,102,255,0.15);
+      color: var(--blue);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .hero-area {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── Stat bar ── */
+    .stat-bar {
+      display: flex;
+      justify-content: space-around;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 12px;
+      margin-bottom: 20px;
+    }
+    .stat-item {
+      text-align: center;
+      flex: 1;
+    }
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    /* ── Section cards ── */
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+    .section h2 {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 14px;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .section p {
+      font-size: 15px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.85);
+      margin: 0;
+    }
+
+    /* ── Status badge ── */
+    .status-notice {
+      text-align: center;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .status-notice.pending {
+      background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.25);
+      color: #f59e0b;
+    }
+    .status-notice.active {
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.2);
+      color: var(--green);
+    }
+
+    /* ── Loading / error ── */
+    .state-msg {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="javascript:history.back()" class="back">←</a>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+  </header>
+
+  <main id="main">
+    <div class="state-msg" id="stateMsg">Loading profile…</div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script>
+    function titleCase(str) {
+      if (!str) return '';
+      return str
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function escHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function statusNotice(status) {
+      if (status === 'active') {
+        return `<div class="status-notice active">Profile active — receiving leads</div>`;
+      }
+      if (status === 'pending_approval') {
+        return `<div class="status-notice pending">Profile under review — will be activated within 24 hrs</div>`;
+      }
+      return `<div class="status-notice pending">Onboarding in progress</div>`;
+    }
+
+    async function load() {
+      const slug = new URLSearchParams(window.location.search).get('slug')?.trim().toLowerCase();
+      if (!slug) {
+        document.getElementById('stateMsg').textContent = 'No provider slug specified.';
+        return;
+      }
+
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      if (!base) {
+        document.getElementById('stateMsg').textContent = 'Site configuration missing.';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${base.replace(/\/$/, '')}/get-provider?slug=${encodeURIComponent(slug)}`);
+        const json = await res.json().catch(() => null);
+
+        if (!json?.ok || !json.data) {
+          document.getElementById('stateMsg').textContent = 'Provider not found.';
+          return;
+        }
+
+        render(json.data);
+      } catch {
+        document.getElementById('stateMsg').textContent = 'Failed to load profile. Please try again.';
+      }
+    }
+
+    function render(p) {
+      const name = `${escHtml(p.first_name || '')} ${escHtml(p.last_name || '')}`.trim();
+      const service = titleCase(p.primary_service || '');
+      const area = escHtml(p.service_area || '');
+      const rate = p.base_rate ? escHtml(p.base_rate) : null;
+      const about = p.short_description ? escHtml(p.short_description) : null;
+
+      // Photo
+      const photoInner = p.profile_photo
+        ? `<img src="${escHtml(p.profile_photo)}" alt="${name}" onload="this.style.display='block';this.parentElement.querySelector('.initials').style.display='none'" /><span class="initials">${escHtml((p.first_name || '?')[0])}</span>`
+        : `<span class="initials">${escHtml((p.first_name || '?')[0])}</span>`;
+
+      document.title = `${name} — TaskLeaders`;
+
+      const sections = [];
+
+      if (about) {
+        sections.push(`
+          <div class="section">
+            <h2>About</h2>
+            <p>${about}</p>
+          </div>`);
+      }
+
+      if (service || rate) {
+        sections.push(`
+          <div class="section">
+            <h2>Service</h2>
+            ${service ? `<p style="margin-bottom:${rate ? '10px' : '0'};">${service}</p>` : ''}
+            ${rate ? `<p style="color:var(--gold);font-weight:700;">${rate}</p>` : ''}
+          </div>`);
+      }
+
+      if (area) {
+        sections.push(`
+          <div class="section">
+            <h2>Service Area</h2>
+            <p>${area}</p>
+          </div>`);
+      }
+
+      document.getElementById('main').innerHTML = `
+        ${statusNotice(p.status)}
+        <div class="hero">
+          <div class="hero-photo">${photoInner}</div>
+          <h1 class="hero-name">${name}</h1>
+          ${service ? `<div class="hero-service">${service}</div>` : ''}
+          ${area ? `<div class="hero-area">${area}</div>` : ''}
+        </div>
+        ${sections.join('')}
+      `;
+    }
+
+    load();
+  </script>
+</body>
+</html>
