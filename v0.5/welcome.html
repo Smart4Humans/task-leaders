@@ -322,8 +322,8 @@
 
     /* ── Score cards (Screen 4) ── */
     .score-cards {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
       margin-bottom: 24px;
     }
@@ -331,7 +331,7 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 18px 16px;
+      padding: 18px 14px;
     }
     .score-card-title-row {
       display: flex;
@@ -340,10 +340,10 @@
       margin-bottom: 6px;
     }
     .score-card-title {
-      font-size: 26px;
+      font-size: 17px;
       font-weight: 700;
       color: #fff;
-      line-height: 1.1;
+      line-height: 1.2;
     }
     .score-card-icon {
       font-size: 16px;
