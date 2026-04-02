@@ -134,5 +134,26 @@ Deno.serve(async (req) => {
     return error("server_error", "Failed to submit application", { supabase: insErr }, 500);
   }
 
+  // Send confirmation email (non-blocking — application succeeds regardless)
+  const resendKey = Deno.env.get("RESEND_API_KEY");
+  const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "TaskLeaders <hello@taskleaders.ca>";
+  if (resendKey) {
+    const emailPayload = {
+      from: fromEmail,
+      to: [email],
+      subject: "We received your TaskLeaders application",
+      html: `<p>Hi ${firstName},</p><p>We received your application and will reach out via WhatsApp within 24 hours to schedule your founder call.</p><p>— The TaskLeaders Team</p>`,
+      text: `Hi ${firstName}, we received your application and will reach out via WhatsApp within 24 hours to schedule your founder call. — The TaskLeaders Team`,
+    };
+    fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(emailPayload),
+    }).catch(() => {}); // fire-and-forget; do not block the response
+  }
+
   return json({ ok: true, data: { application_id: data.id } }, 200);
 });

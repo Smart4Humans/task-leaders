@@ -1,9 +1,6 @@
 # Supabase project configuration
 # https://supabase.com/docs/guides/cli/config
 
-[project]
-id = "iwgoafvemlsswkjroyhl"
-
 # ── Edge function settings ──────────────────────────────────────────────────
 # All functions set verify_jwt = false because:
 #  - Public-facing functions (apply, public-*, lead-event) are called by the browser with no auth
