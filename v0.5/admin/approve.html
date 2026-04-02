@@ -708,6 +708,9 @@
             ${p.service_area ? `<div class="detail-row"><span class="detail-label">Service area</span><span class="detail-value">${escHtml(p.service_area)}</span></div>` : ''}
             ${p.primary_service ? `<div class="detail-row"><span class="detail-label">Service</span><span class="detail-value">${escHtml(p.primary_service)}</span></div>` : ''}
             ${p.short_description ? `<div class="detail-row"><span class="detail-label">Description</span><span class="detail-value">${escHtml(p.short_description)}</span></div>` : ''}
+            <div style="margin-top:14px;">
+              <a href="../provider-profile.html?slug=${escHtml(p.slug)}" target="_blank" class="action-btn resend-btn" style="text-decoration:none;display:inline-block;">View Full Profile ↗</a>
+            </div>
             ${p.status === 'pending_onboarding' ? `
             <div class="link-result" id="resend-panel-${p.slug}" style="display:block;margin-top:12px;">
               <div class="link-result-label">Welcome link</div>
