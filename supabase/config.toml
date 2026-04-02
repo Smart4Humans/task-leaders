@@ -1,0 +1,36 @@
+# Supabase project configuration
+# https://supabase.com/docs/guides/cli/config
+
+[project]
+id = "iwgoafvemlsswkjroyhl"
+
+# ── Edge function settings ──────────────────────────────────────────────────
+# All functions set verify_jwt = false because:
+#  - Public-facing functions (apply, public-*, lead-event) are called by the browser with no auth
+#  - Provider-facing functions (get-provider, complete-onboarding) use slug-based auth
+#  - Admin functions (approve-application) use a server-side admin_password secret
+# Never add the anon key to client-side HTML — these functions handle their own auth logic.
+
+[functions.apply]
+verify_jwt = false
+
+[functions.public-homepage]
+verify_jwt = false
+
+[functions.public-category]
+verify_jwt = false
+
+[functions.public-profile]
+verify_jwt = false
+
+[functions.lead-event]
+verify_jwt = false
+
+[functions.get-provider]
+verify_jwt = false
+
+[functions.complete-onboarding]
+verify_jwt = false
+
+[functions.approve-application]
+verify_jwt = false
