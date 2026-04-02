@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
 
   // Build the update payload — only include non-empty overrides
   const updates: Record<string, unknown> = {
-    status: "active",
+    status: "pending_approval",
     onboarded_at: new Date().toISOString(),
   };
 

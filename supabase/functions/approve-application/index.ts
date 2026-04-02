@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     // Also pull already-approved ones so the admin can see generated links
     const { data: approved } = await supabase
       .from("provider_accounts")
-      .select("slug, first_name, last_name, email, status, created_at")
+      .select("slug, first_name, last_name, business_name, email, whatsapp_number, service_area, primary_service, short_description, status, created_at")
       .order("created_at", { ascending: false })
       .limit(50);
 
@@ -92,6 +92,22 @@ Deno.serve(async (req) => {
   const pw = String(body.admin_password ?? "");
   if (pw !== adminPassword) {
     return error("unauthorized", "Invalid admin password", 401);
+  }
+
+  // ── Activate action ───────────────────────────────────────────────────────
+  const action = String(body.action ?? "approve");
+  if (action === "activate") {
+    const slug = String(body.slug ?? "").trim();
+    if (!slug) return error("bad_request", "Missing required field: slug");
+
+    const { error: updateError } = await supabase
+      .from("provider_accounts")
+      .update({ status: "active" })
+      .eq("slug", slug)
+      .eq("status", "pending_approval");
+
+    if (updateError) return error("server_error", updateError.message, 500);
+    return json({ ok: true, data: { slug, status: "active" } });
   }
 
   const applicationId = String(body.application_id ?? "").trim();
