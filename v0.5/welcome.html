@@ -322,13 +322,10 @@
 
     /* ── Score cards (Screen 4) ── */
     .score-cards {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
       margin-bottom: 24px;
-    }
-    @media (max-width: 360px) {
-      .score-cards { grid-template-columns: 1fr; }
     }
     .score-card {
       background: var(--card);
@@ -566,7 +563,6 @@
             </div>
             <div class="score-card-badge">Auto-tracked</div>
             <div class="score-card-desc">How fast you respond to public requests</div>
-            <div class="score-card-example">e.g. ~3 min avg</div>
           </div>
           <div class="score-card">
             <div class="score-card-title-row">
@@ -574,8 +570,8 @@
               <div class="score-card-icon">&#10003;</div>
             </div>
             <div class="score-card-badge">Client-rated</div>
-            <div class="score-card-desc" style="white-space:nowrap;font-size:11px;">Punctuality &middot; Quality &middot; Communication</div>
-            <div class="score-card-example" style="white-space:nowrap;font-size:12px;">Averaged to a % on your profile</div>
+            <div class="score-card-desc">Punctuality &middot; Quality &middot; Communication</div>
+            <div class="score-card-example">Averaged to a % on your profile</div>
           </div>
         </div>
 
