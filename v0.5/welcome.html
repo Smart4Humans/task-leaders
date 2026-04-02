@@ -326,7 +326,6 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
       margin-bottom: 24px;
-      align-items: start;
     }
     @media (max-width: 360px) {
       .score-cards { grid-template-columns: 1fr; }
@@ -335,52 +334,47 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 22px 14px 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
+      padding: 18px 16px;
     }
     .score-card-title-row {
       display: flex;
       align-items: center;
       gap: 5px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .score-card-title {
-      font-size: 20px;
+      font-size: 26px;
       font-weight: 700;
       color: #fff;
-      line-height: 1;
+      line-height: 1.1;
     }
     .score-card-icon {
-      font-size: 14px;
+      font-size: 16px;
       line-height: 1;
       color: #fff;
     }
     .score-card-badge {
       display: inline-block;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       background: #2E75B6;
       color: #fff;
       border-radius: 4px;
-      padding: 2px 7px;
-      margin-bottom: 14px;
+      padding: 2px 6px;
+      margin-bottom: 8px;
     }
     .score-card-desc {
       font-size: 14px;
-      color: #d0d0d0;
+      color: #f0f0f0;
       line-height: 1.4;
-      white-space: nowrap;
     }
     .score-card-example {
-      margin-top: 6px;
+      margin-top: 10px;
       font-size: 14px;
-      font-weight: 400;
-      color: #d0d0d0;
-      white-space: nowrap;
+      font-weight: 600;
+      color: #f0f0f0;
     }
 
     /* ── Small print ── */
@@ -572,6 +566,7 @@
             </div>
             <div class="score-card-badge">Auto-tracked</div>
             <div class="score-card-desc">How fast you respond to public requests</div>
+            <div class="score-card-example">e.g. ~3 min avg</div>
           </div>
           <div class="score-card">
             <div class="score-card-title-row">
@@ -579,8 +574,8 @@
               <div class="score-card-icon">&#10003;</div>
             </div>
             <div class="score-card-badge">Client-rated</div>
-            <div class="score-card-desc" style="font-size:11px;">Punctuality &middot; Quality &middot; Communication</div>
-            <div class="score-card-example">Averaged to a % on your profile</div>
+            <div class="score-card-desc" style="white-space:nowrap;font-size:11px;">Punctuality &middot; Quality &middot; Communication</div>
+            <div class="score-card-example" style="white-space:nowrap;font-size:12px;">Averaged to a % on your profile</div>
           </div>
         </div>
 
