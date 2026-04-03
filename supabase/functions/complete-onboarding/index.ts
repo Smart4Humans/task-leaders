@@ -69,16 +69,33 @@ Deno.serve(async (req) => {
     onboarded_at: new Date().toISOString(),
   };
 
-  if (cleanString(body.firstName))    updates.first_name = cleanString(body.firstName);
-  if (cleanString(body.lastName))     updates.last_name  = cleanString(body.lastName);
-  if (cleanString(body.businessName)) updates.business_name = cleanString(body.businessName);
-  if (cleanString(body.email))        updates.email = cleanString(body.email).toLowerCase();
-  if (cleanString(body.whatsapp))     updates.whatsapp_number = cleanString(body.whatsapp);
-  if (cleanString(body.baseCity))     updates.service_area = cleanString(body.baseCity);
+  if (cleanString(body.firstName))      updates.first_name      = cleanString(body.firstName);
+  if (cleanString(body.lastName))       updates.last_name       = cleanString(body.lastName);
+  if (cleanString(body.businessName))   updates.business_name   = cleanString(body.businessName);
+  if (cleanString(body.email))          updates.email           = cleanString(body.email).toLowerCase();
+  if (cleanString(body.whatsapp))       updates.whatsapp_number = cleanString(body.whatsapp);
+  if (cleanString(body.baseCity))       updates.service_area    = cleanString(body.baseCity);
   if (cleanString(body.primaryService)) updates.primary_service = cleanString(body.primaryService);
-  if (cleanString(body.bio))          updates.short_description = cleanString(body.bio);
-  if (cleanString(body.hourlyRate))   updates.base_rate = cleanString(body.hourlyRate);
-  if (cleanString(body.profilePhoto)) updates.profile_photo = cleanString(body.profilePhoto);
+  if (cleanString(body.bio))            updates.short_description = cleanString(body.bio);
+  if (cleanString(body.hourlyRate))     updates.base_rate       = cleanString(body.hourlyRate);
+  if (cleanString(body.profilePhoto))   updates.profile_photo   = cleanString(body.profilePhoto);
+
+  // Extended profile fields
+  if (cleanString(body.displayNameType)) updates.display_name_type = cleanString(body.displayNameType);
+  if (cleanString(body.backupPhone))     updates.backup_phone      = cleanString(body.backupPhone);
+  if (cleanString(body.address1))        updates.address_line1     = cleanString(body.address1);
+  if (cleanString(body.address2))        updates.address_line2     = cleanString(body.address2);
+  if (cleanString(body.city))            updates.city              = cleanString(body.city);
+  if (cleanString(body.province))        updates.province          = cleanString(body.province);
+  if (cleanString(body.postalCode))      updates.postal_code       = cleanString(body.postalCode);
+
+  // Array fields — only save if non-empty arrays are provided
+  if (Array.isArray(body.serviceCities) && (body.serviceCities as unknown[]).length > 0) {
+    updates.service_cities = (body.serviceCities as unknown[]).map((v) => cleanString(v)).filter(Boolean);
+  }
+  if (Array.isArray(body.additionalServices) && (body.additionalServices as unknown[]).length > 0) {
+    updates.additional_services = (body.additionalServices as unknown[]).map((v) => cleanString(v)).filter(Boolean);
+  }
 
   const { error: updateError } = await supabase
     .from("provider_accounts")
