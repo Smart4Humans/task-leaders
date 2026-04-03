@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Profile Review — TaskLeaders Admin</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --green: #00c853;
+      --gold: #ffb800;
+      --amber: #f59e0b;
+      --red: #ff4d4d;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    .back {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 5px 8px;
+      border-radius: 6px;
+    }
+    .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo .task { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+    .header-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 28px 20px 80px;
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+    .page-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0 0 28px;
+    }
+
+    /* ── Photo hero ── */
+    .profile-hero {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .profile-photo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid var(--blue);
+      overflow: hidden;
+      background: rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .profile-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .hero-info {}
+    .hero-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+    .hero-service {
+      font-size: 13px;
+      color: var(--blue);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .status-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-pending_onboarding { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+    .badge-pending_approval   { background: rgba(0,102,255,0.12);  color: var(--blue);  border: 1px solid rgba(0,102,255,0.25); }
+    .badge-active             { background: rgba(0,200,83,0.1);   color: var(--green); border: 1px solid rgba(0,200,83,0.2); }
+
+    /* ── Field rows ── */
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 0 0 16px;
+    }
+    .field-row {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .field-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .field-row:first-of-type { padding-top: 0; }
+    .field-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      width: 130px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .field-value {
+      font-size: 14px;
+      color: #fff;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .field-value.empty { color: rgba(255,255,255,0.25); font-style: italic; }
+    .field-value.rate  { color: var(--gold); font-weight: 700; }
+
+    /* ── Activate button ── */
+    .activate-section {
+      margin-top: 28px;
+      text-align: center;
+    }
+    .activate-btn {
+      padding: 14px 40px;
+      border-radius: 10px;
+      border: none;
+      background: var(--green);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .activate-btn:hover { opacity: 0.88; }
+    .activate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .already-active {
+      display: inline-block;
+      padding: 12px 24px;
+      border-radius: 10px;
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.2);
+      color: var(--green);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .action-msg {
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .action-msg.success { color: var(--green); }
+    .action-msg.error   { color: var(--red); }
+
+    /* ── Loading / error ── */
+    .state-msg {
+      text-align: center;
+      padding: 80px 24px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="approve.html" class="back">← Pipeline</a>
+    <a href="approve.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+    <span class="header-label">/ Profile Review</span>
+  </header>
+
+  <main id="main">
+    <div class="state-msg" id="stateMsg">Loading profile…</div>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script>
+    const FUNCTIONS_BASE = window.TASKLEADERS_FUNCTIONS_BASE || 'https://iwgoafvemlsswkjroyhl.supabase.co/functions/v1';
+    const APPROVE_BASE   = FUNCTIONS_BASE.replace(/\/$/, '') + '/approve-application';
+
+    // Admin password — read from sessionStorage (set by approve.html auth flow)
+    let adminPw = sessionStorage.getItem('tl_admin_pw') || '';
+
+    function escHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function titleCase(str) {
+      if (!str) return '';
+      return str.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return null;
+      const d = new Date(iso);
+      return isNaN(d) ? iso : d.toLocaleString('en-CA', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function fmtRate(raw) {
+      if (!raw) return null;
+      const num = parseFloat(String(raw).replace(/[^0-9.]/g, ''));
+      return Number.isFinite(num) && num > 0 ? `$${num % 1 === 0 ? num.toFixed(0) : num.toFixed(2)}/hr` : String(raw);
+    }
+
+    function val(v, cls) {
+      if (v === null || v === undefined || v === '') {
+        return `<span class="field-value empty">—</span>`;
+      }
+      return `<span class="field-value${cls ? ' ' + cls : ''}">${escHtml(v)}</span>`;
+    }
+
+    function row(label, v, cls) {
+      return `<div class="field-row"><span class="field-label">${label}</span>${val(v, cls)}</div>`;
+    }
+
+    function badgeClass(status) {
+      const s = (status || '').replace(/[^a-z_]/g, '');
+      return `badge-${s}`;
+    }
+
+    function badgeLabel(status) {
+      const map = {
+        pending_onboarding: 'Pending Onboarding',
+        pending_approval:   'Pending Approval',
+        active:             'Active',
+      };
+      return map[status] || titleCase(status || 'unknown');
+    }
+
+    async function load() {
+      const slug = new URLSearchParams(window.location.search).get('slug')?.trim().toLowerCase();
+      if (!slug) {
+        document.getElementById('stateMsg').textContent = 'No provider slug specified.';
+        return;
+      }
+
+      try {
+        const res  = await fetch(`${FUNCTIONS_BASE.replace(/\/$/, '')}/get-provider?slug=${encodeURIComponent(slug)}`);
+        const json = await res.json().catch(() => null);
+        if (!json?.ok || !json.data) {
+          document.getElementById('stateMsg').textContent = 'Provider not found.';
+          return;
+        }
+        render(json.data);
+      } catch {
+        document.getElementById('stateMsg').textContent = 'Failed to load profile. Please try again.';
+      }
+    }
+
+    function render(p) {
+      const firstName = escHtml(p.first_name || '');
+      const lastName  = escHtml(p.last_name  || '');
+      const fullName  = [firstName, lastName].filter(Boolean).join(' ') || 'Provider';
+      const service   = titleCase(p.primary_service || '');
+      const rate      = fmtRate(p.base_rate);
+
+      document.title = `${fullName} — Profile Review`;
+
+      const photoHtml = p.profile_photo
+        ? `<div class="profile-photo"><img src="${escHtml(p.profile_photo)}" alt="${fullName}" /></div>`
+        : `<div class="profile-photo">${escHtml((p.first_name || '?')[0].toUpperCase())}</div>`;
+
+      const activateSection = p.status === 'active'
+        ? `<div class="activate-section"><span class="already-active">✓ Already Active</span></div>`
+        : `<div class="activate-section">
+             <button class="activate-btn" id="activateBtn" onclick="activateProvider('${escHtml(p.slug)}')">Activate Provider</button>
+             <div class="action-msg" id="actionMsg"></div>
+           </div>`;
+
+      document.getElementById('main').innerHTML = `
+        <h1 class="page-title">Profile Review</h1>
+        <p class="page-sub">Full provider record for slug: <strong>${escHtml(p.slug)}</strong></p>
+
+        <div class="profile-hero">
+          ${photoHtml}
+          <div class="hero-info">
+            <div class="hero-name">${fullName}</div>
+            ${service ? `<div class="hero-service">${service}</div>` : ''}
+            <span class="status-badge ${badgeClass(p.status)}">${badgeLabel(p.status)}</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Personal Details</div>
+          ${row('First Name',    p.first_name)}
+          ${row('Last Name',     p.last_name)}
+          ${row('Business Name', p.business_name)}
+          ${row('Email',         p.email)}
+          ${row('WhatsApp',      p.whatsapp_number)}
+        </div>
+
+        <div class="section">
+          <div class="section-title">Service</div>
+          ${row('Primary Service', service || p.primary_service)}
+          ${row('Service Area',    p.service_area)}
+          ${row('Base Rate',       rate, 'rate')}
+        </div>
+
+        <div class="section">
+          <div class="section-title">Description</div>
+          ${row('About', p.short_description)}
+        </div>
+
+        <div class="section">
+          <div class="section-title">Account</div>
+          ${row('Status',       badgeLabel(p.status))}
+          ${row('Submitted',    fmtDate(p.created_at))}
+          ${row('Onboarded',    fmtDate(p.onboarded_at))}
+        </div>
+
+        ${activateSection}
+      `;
+    }
+
+    async function activateProvider(slug) {
+      if (!adminPw) {
+        const pw = prompt('Enter admin password to activate:');
+        if (!pw) return;
+        adminPw = pw;
+      }
+      const btn = document.getElementById('activateBtn');
+      const msg = document.getElementById('actionMsg');
+      btn.disabled = true;
+      btn.textContent = 'Activating…';
+      msg.className = 'action-msg';
+      msg.textContent = '';
+
+      try {
+        const res  = await fetch(APPROVE_BASE, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'activate', slug, admin_password: adminPw }),
+        });
+        const json = await res.json().catch(() => null);
+        if (!json?.ok) {
+          const errMsg = json?.error?.message || 'Activation failed.';
+          btn.disabled = false;
+          btn.textContent = 'Activate Provider';
+          msg.className = 'action-msg error';
+          msg.textContent = errMsg;
+          return;
+        }
+        // Success — replace button with confirmed state
+        const section = document.querySelector('.activate-section');
+        section.innerHTML = `<span class="already-active">✓ Provider Activated</span>
+          <div class="action-msg success" style="margin-top:8px;">
+            ${json.data?.marketplace_synced ? 'Activated and synced to marketplace.' : 'Activated. (Marketplace sync skipped — check city/category.)'}
+          </div>`;
+      } catch {
+        btn.disabled = false;
+        btn.textContent = 'Activate Provider';
+        msg.className = 'action-msg error';
+        msg.textContent = 'Network error. Please try again.';
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>
