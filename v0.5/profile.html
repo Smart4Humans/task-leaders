@@ -367,6 +367,21 @@
       border-radius: 20px;
       font-size: 13px;
     }
+    /* Additional Services */
+    .additional-services-section { display: none; }
+    .services-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .service-tag {
+      background: rgba(255,184,0,0.1);
+      border: 1px solid rgba(255,184,0,0.2);
+      color: rgba(255,255,255,0.85);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
     
     /* Secondary CTA */
     .secondary-cta {
@@ -774,6 +789,12 @@
         and leaving every space better than I found it. Whether you need a single room painted or a 
         full home refresh, I'll treat your project with the same care I'd give my own.
       </p>
+    </section>
+
+    <!-- Additional Services Section (shown when provider has extras) -->
+    <section class="section additional-services-section" id="additionalServicesSection">
+      <h2>Additional Services</h2>
+      <div class="services-list" id="additionalServicesList"></div>
     </section>
 
     <!-- Service Areas Section -->
@@ -1299,6 +1320,37 @@
 
         bindProfile(payload);
         reopenConnectIfRequested();
+
+        // Secondary fetch: pull extended fields (service_cities, additional_services)
+        // from provider_accounts via get-provider. Non-blocking — page works without it.
+        try {
+          const extRes = await fetch(`${base.replace(/\/$/, '')}/get-provider?slug=${encodeURIComponent(currentProviderSlug)}`);
+          const extJson = await extRes.json().catch(() => null);
+          if (extJson?.ok && extJson.data) {
+            const ext = extJson.data;
+
+            // Override service areas with service_cities array if available
+            const cities = Array.isArray(ext.service_cities) ? ext.service_cities.filter(Boolean) : [];
+            const container = document.getElementById('serviceAreasList');
+            if (container && cities.length > 0) {
+              container.innerHTML = cities.map(a => `<span class="area-tag">${escapeHtml(a)}</span>`).join('');
+            }
+
+            // Show additional services if present
+            const extras = Array.isArray(ext.additional_services) ? ext.additional_services.filter(Boolean) : [];
+            const extSection = document.getElementById('additionalServicesSection');
+            const extList    = document.getElementById('additionalServicesList');
+            if (extSection && extList && extras.length > 0) {
+              extList.innerHTML = extras.map(s => {
+                const label = s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                return `<span class="service-tag">${escapeHtml(label)}</span>`;
+              }).join('');
+              extSection.style.display = '';
+            }
+          }
+        } catch (_) {
+          // silent — extended fields are supplementary
+        }
       } catch (e) {
         connectStatus = 'gated';
         connectMessage = 'This profile is not available yet.';
