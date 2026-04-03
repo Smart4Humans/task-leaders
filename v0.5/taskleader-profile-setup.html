@@ -891,9 +891,8 @@
         document.getElementById('successBody').innerHTML = 'Profiles are reviewed within 24 hrs and activated barring any issues.<br>We look forward to sending you your first lead!';
         const cta = document.getElementById('successCta');
         cta.textContent = 'View My Profile';
-        // Link to the same public Marketplace profile page that Clients see
-        const _category = (p.primary_service || 'handyman').toLowerCase();
-        cta.href = `profile.html?city=vancouver&category=${encodeURIComponent(_category)}&provider=${encodeURIComponent(slug)}`;
+        // Link to the public profile page using canonical ?slug= param
+        cta.href = `profile.html?slug=${encodeURIComponent(slug)}`;
 
       } catch {
         // silent — form still works without pre-fill
@@ -1166,6 +1165,7 @@
 
       document.getElementById('setup-form').style.display = 'none';
       document.getElementById('success-message').classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     init();

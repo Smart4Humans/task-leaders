@@ -1317,97 +1317,145 @@
       }, 0);
     }
 
-    async function init() {
-      currentCitySlug = getParam('city', 'vancouver').toLowerCase();
-      currentCategorySlug = getParam('category', 'painting').toLowerCase();
-      currentProviderSlug = getParam('provider', '').toLowerCase();
+    function computeMinRate(serviceRates, baseRate) {
+      if (serviceRates && typeof serviceRates === 'object') {
+        const vals = Object.values(serviceRates).map(Number).filter(n => Number.isFinite(n) && n > 0);
+        if (vals.length > 0) {
+          const min = Math.min(...vals);
+          return `$${min % 1 === 0 ? min.toFixed(0) : min.toFixed(2)}/hr`;
+        }
+      }
+      const n = parseFloat(String(baseRate || '').replace(/[^0-9.]/g, ''));
+      return Number.isFinite(n) && n > 0
+        ? `$${n % 1 === 0 ? n.toFixed(0) : n.toFixed(2)}/hr`
+        : '—';
+    }
 
-      // Safe initial copy (until API loads)
-      setProviderName(titleCaseFromSlug(currentProviderSlug) || 'TaskLeader');
-      setText('heroCategory', titleCaseFromSlug(currentCategorySlug) || 'Painting');
-      setText('heroLocation', titleCaseFromSlug(currentCitySlug) || 'Vancouver');
+    function bindFromAccount(p) {
+      // Display name — respects display_name_type preference
+      const displayName = (p.display_name_type === 'business' && p.business_name)
+        ? p.business_name.trim()
+        : [p.first_name, p.last_name].filter(Boolean).join(' ').trim() || 'TaskLeader';
+      const firstName = (p.first_name || '').trim() || displayName.split(' ')[0];
+
+      setProviderName(displayName);
+      setConnectFirstName(firstName);
+
+      // Profile photo — provider's own record only, no fallback to another provider
+      if (p.profile_photo) setProviderPhoto(p.profile_photo, displayName);
+
+      // Category badge — strip leading emoji from label
+      const rawLabel = SERVICE_LABELS[p.primary_service] || titleCaseFromSlug(p.primary_service || currentCategorySlug || '');
+      setText('heroCategory', rawLabel.replace(/^\S+\s/, '') || titleCaseFromSlug(currentCategorySlug) || '');
+
+      // Location
+      setText('heroLocation', p.service_area || titleCaseFromSlug(currentCitySlug) || 'Vancouver');
+
+      // Trust bar — response/reliability not in provider_accounts; FROM = min of service_rates
+      setText('trustResponse', '—');
+      setText('trustReliability', '—');
+      setText('trustPrice', computeMinRate(p.service_rates, p.base_rate));
+
+      // Bio
+      setText('aboutText', (p.short_description || '').trim() || 'Profile details coming soon.');
+
+      // Service areas from service_cities array
+      const cities = Array.isArray(p.service_cities) ? p.service_cities.filter(Boolean) : [];
+      const areaContainer = document.getElementById('serviceAreasList');
+      if (areaContainer) {
+        areaContainer.innerHTML = cities.length
+          ? cities.map(a => `<span class="area-tag">${escapeHtml(a)}</span>`).join('')
+          : `<span class="area-tag">${escapeHtml(p.service_area || titleCaseFromSlug(currentCitySlug) || 'Vancouver')}</span>`;
+      }
+
+      // Per-service rates from service_rates JSONB
+      renderServiceRates(p.service_rates, p.primary_service);
+
+      // Additional services
+      const extras = Array.isArray(p.additional_services) ? p.additional_services.filter(Boolean) : [];
+      const extSection = document.getElementById('additionalServicesSection');
+      const extList = document.getElementById('additionalServicesList');
+      if (extSection && extList && extras.length > 0) {
+        extList.innerHTML = extras.map(s => {
+          const label = SERVICE_LABELS[s] || s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          return `<span class="service-tag">${escapeHtml(label)}</span>`;
+        }).join('');
+        extSection.style.display = '';
+      }
+
+      // Work photos
+      const photos = Array.isArray(p.work_photos) ? p.work_photos.filter(Boolean) : [];
+      const gallerySection = document.getElementById('photoGallerySection');
+      const galleryGrid = document.getElementById('photoGalleryGrid');
+      if (gallerySection && galleryGrid && photos.length > 0) {
+        galleryGrid.innerHTML = photos.map(url =>
+          `<img class="gallery-img" src="${escapeHtml(url)}" alt="Work photo" loading="lazy" />`
+        ).join('');
+        gallerySection.style.display = '';
+      }
+
+      // Nav links
+      const back = document.querySelector('a.back');
+      const logo = document.querySelector('a.logo');
+      const catSlug = p.primary_service || currentCategorySlug || 'handyman';
+      if (back) back.setAttribute('href', `category.html?city=${encodeURIComponent(currentCitySlug)}&category=${encodeURIComponent(catSlug)}`);
+      if (logo) logo.setAttribute('href', `homepage.html?city=${encodeURIComponent(currentCitySlug)}`);
+
+      // Page + browser tab title
+      document.title = displayName + ' — TaskLeaders';
+
+      // Connect is gated (no direct WhatsApp handoff for MVP)
+      connectStatus = 'gated';
+    }
+
+    async function init() {
+      // Accept ?slug= (canonical) or ?provider= (legacy category-page links)
+      currentProviderSlug = (getParam('slug', '') || getParam('provider', '')).toLowerCase();
+      currentCitySlug = getParam('city', 'vancouver').toLowerCase();
+      currentCategorySlug = getParam('category', '').toLowerCase();
+
+      // Clear template defaults while loading — never show Mike Johnson
+      setProviderName('');
+      document.title = 'TaskLeaders';
+      setText('heroCategory', '');
+      setText('heroLocation', '');
       setText('trustResponse', '—');
       setText('trustReliability', '—');
       setText('trustPrice', '—');
-      setText('aboutText', 'Profile details coming soon.');
+      setText('aboutText', '');
+      const servicesTemplate = document.getElementById('servicesRatesSection');
+      if (servicesTemplate) servicesTemplate.style.display = 'none';
 
       const base = window.TASKLEADERS_FUNCTIONS_BASE;
       if (!isFunctionsBaseConfigured(base)) {
         console.warn('TaskLeaders: TASKLEADERS_FUNCTIONS_BASE is not configured; skipping network calls.');
         connectStatus = 'gated';
-        connectMessage = 'Direct WhatsApp connect is not enabled yet.';
         return;
       }
 
       if (!currentProviderSlug) {
         connectStatus = 'gated';
-        connectMessage = 'This profile is not available yet.';
-        showError('This profile is not available yet.');
         return;
       }
 
       try {
-        const url = `${base.replace(/\/$/, '')}/public-profile?city=${encodeURIComponent(currentCitySlug)}&provider=${encodeURIComponent(currentProviderSlug)}`;
-        const res = await fetch(url);
-        const payload = await res.json();
+        const res = await fetch(`${base.replace(/\/$/, '')}/get-provider?slug=${encodeURIComponent(currentProviderSlug)}`);
+        const json = await res.json().catch(() => null);
 
-        if (!payload || payload.ok !== true) {
+        if (!json?.ok || !json.data) {
+          // No match — show clean not-found state, never fall through to template data
+          setProviderName('Profile Not Found');
+          document.title = 'Profile Not Found — TaskLeaders';
+          setText('aboutText', 'This provider profile could not be found.');
           connectStatus = 'gated';
-          connectMessage = 'This profile is not available yet.';
-          showError('This profile is not available yet.');
           return;
         }
 
-        bindProfile(payload);
+        bindFromAccount(json.data);
         reopenConnectIfRequested();
 
-        // Secondary fetch: pull extended fields from provider_accounts via get-provider.
-        // Non-blocking — page works without it.
-        try {
-          const extRes = await fetch(`${base.replace(/\/$/, '')}/get-provider?slug=${encodeURIComponent(currentProviderSlug)}`);
-          const extJson = await extRes.json().catch(() => null);
-          if (extJson?.ok && extJson.data) {
-            const ext = extJson.data;
-
-            // Always use provider's first_name for Connect button (not display_name)
-            if (ext.first_name) setConnectFirstName(ext.first_name);
-
-            // Override bio with short_description if public-profile about was empty/missing
-            if (ext.short_description && ext.short_description.trim()) {
-              const aboutEl = document.getElementById('aboutText');
-              if (aboutEl && (aboutEl.textContent === 'Profile details coming soon.' || !aboutEl.textContent.trim())) {
-                aboutEl.textContent = ext.short_description.trim();
-              }
-            }
-
-            // Override service areas with service_cities array if available
-            const cities = Array.isArray(ext.service_cities) ? ext.service_cities.filter(Boolean) : [];
-            const container = document.getElementById('serviceAreasList');
-            if (container && cities.length > 0) {
-              container.innerHTML = cities.map(a => `<span class="area-tag">${escapeHtml(a)}</span>`).join('');
-            }
-
-            // Render per-service rates from service_rates JSONB
-            renderServiceRates(ext.service_rates, ext.primary_service);
-
-            // Show additional services if present
-            const extras = Array.isArray(ext.additional_services) ? ext.additional_services.filter(Boolean) : [];
-            const extSection = document.getElementById('additionalServicesSection');
-            const extList    = document.getElementById('additionalServicesList');
-            if (extSection && extList && extras.length > 0) {
-              extList.innerHTML = extras.map(s => {
-                const label = SERVICE_LABELS[s] || s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                return `<span class="service-tag">${escapeHtml(label)}</span>`;
-              }).join('');
-              extSection.style.display = '';
-            }
-          }
-        } catch (_) {
-          // silent — extended fields are supplementary
-        }
-      } catch (e) {
+      } catch (_e) {
         connectStatus = 'gated';
-        connectMessage = 'This profile is not available yet.';
       }
     }
 
