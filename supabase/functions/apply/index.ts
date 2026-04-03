@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
 
   // Send confirmation email (non-blocking — application succeeds regardless)
   const resendKey = Deno.env.get("RESEND_API_KEY");
-  const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "TaskLeaders <hello@taskleaders.ca>";
+  const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "TaskLeaders <info@task-leaders.com>";
   if (resendKey) {
     const emailPayload = {
       from: fromEmail,
