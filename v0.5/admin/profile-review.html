@@ -337,6 +337,19 @@
         || titleCase(status || 'Unknown');
     }
 
+    function renderServiceRates(rates) {
+      if (!rates || typeof rates !== 'object' || Object.keys(rates).length === 0) {
+        return `<span class="field-value empty">—</span>`;
+      }
+      const items = Object.entries(rates).map(([svc, rate]) => {
+        const label = svc.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const n = Number(rate);
+        const rateStr = Number.isFinite(n) ? `$${n % 1 === 0 ? n.toFixed(0) : n.toFixed(2)}/hr` : String(rate);
+        return `<span class="tag service">${esc(label)}: ${esc(rateStr)}</span>`;
+      }).join('');
+      return `<div class="tag-list">${items}</div>`;
+    }
+
     function displayNameTypeLabel(v) {
       if (!v) return null;
       if (v === 'full') return 'Full Name (First + Last)';
@@ -453,6 +466,10 @@
             ${tagList(p.additional_services, 'service')}
           </div>
           ${row('Base Rate', rate, 'rate')}
+          <div class="field-row">
+            <span class="field-label">Service Rates</span>
+            ${renderServiceRates(p.service_rates)}
+          </div>
         </div>
 
         <!-- Bio -->

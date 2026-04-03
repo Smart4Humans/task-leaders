@@ -99,6 +99,16 @@ Deno.serve(async (req) => {
   if (Array.isArray(body.workPhotos) && (body.workPhotos as unknown[]).length > 0) {
     updates.work_photos = (body.workPhotos as unknown[]).map((v) => cleanString(v)).filter(Boolean);
   }
+  // Per-service rates: object where keys are service slugs and values are hourly rates
+  if (body.serviceRates && typeof body.serviceRates === "object" && !Array.isArray(body.serviceRates)) {
+    const rates: Record<string, number> = {};
+    for (const [k, v] of Object.entries(body.serviceRates as Record<string, unknown>)) {
+      const key = cleanString(k);
+      const val = parseFloat(String(v));
+      if (key && Number.isFinite(val) && val > 0) rates[key] = val;
+    }
+    if (Object.keys(rates).length > 0) updates.service_rates = rates;
+  }
 
   const { error: updateError } = await supabase
     .from("provider_accounts")

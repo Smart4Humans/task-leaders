@@ -22,18 +22,14 @@ function error(code: string, message: string, status = 400) {
   return json({ ok: false, error: { code, message } }, status);
 }
 
-/** Generate a slug: lowercase first name + hyphen + 4 random alphanumeric chars */
-function generateSlug(firstName: string): string {
-  const base = firstName
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "")
-    .slice(0, 20) || "provider";
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let rand = "";
-  for (let i = 0; i < 4; i++) {
-    rand += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return `${base}-${rand}`;
+/** Generate a base slug: lowercase first-last. Returns empty string if both names empty. */
+function buildBaseSlug(firstName: string, lastName: string): string {
+  const f = firstName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const l = lastName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (f && l) return `${f}-${l}`;
+  if (f) return f;
+  if (l) return l;
+  return "provider";
 }
 
 Deno.serve(async (req) => {
@@ -103,7 +99,7 @@ Deno.serve(async (req) => {
     // Fetch full provider_accounts record for marketplace sync
     const { data: acct, error: fetchErr } = await supabase
       .from("provider_accounts")
-      .select("slug, first_name, last_name, primary_service, service_area, whatsapp_number, short_description, profile_photo, base_rate, status")
+      .select("slug, first_name, last_name, business_name, display_name_type, primary_service, service_area, service_cities, whatsapp_number, short_description, profile_photo, base_rate, service_rates, status")
       .eq("slug", slug)
       .single();
 
@@ -135,10 +131,19 @@ Deno.serve(async (req) => {
       return json({ ok: true, data: { slug, status: "active", marketplace_synced: false, reason: "city or category not found" } });
     }
 
-    const displayName = `${acct.first_name || ""} ${acct.last_name || ""}`.trim();
+    // Compute display name based on provider's preference
+    const displayName = (acct.display_name_type === "business" && acct.business_name)
+      ? acct.business_name
+      : `${acct.first_name || ""} ${acct.last_name || ""}`.trim();
+
     // base_rate is stored as text (e.g. "100" or "$100/hr") — extract numeric part for cents
     const rateNum = parseFloat(String(acct.base_rate || "").replace(/[^0-9.]/g, ""));
     const hourlyRateCents = Number.isFinite(rateNum) && rateNum > 0 ? Math.round(rateNum * 100) : null;
+
+    // Use service_cities array for service_areas; fall back to single service_area
+    const serviceAreas = Array.isArray(acct.service_cities) && acct.service_cities.length > 0
+      ? acct.service_cities
+      : (acct.service_area ? [acct.service_area] : []);
 
     const { error: upsertErr } = await supabase
       .from("providers")
@@ -153,7 +158,8 @@ Deno.serve(async (req) => {
         about_text: acct.short_description ?? null,
         hero_photo_url: acct.profile_photo ?? null,
         hourly_rate_cents: hourlyRateCents,
-        service_areas: acct.service_area ? [acct.service_area] : [],
+        service_areas: serviceAreas,
+        service_rates: acct.service_rates ?? null,
       }, { onConflict: "provider_slug" });
 
     if (upsertErr) {
@@ -209,10 +215,11 @@ Deno.serve(async (req) => {
   const firstName = (meta.first_name || app.contact_name?.split(" ")[0] || "Provider").trim();
   const lastName = (meta.last_name || app.contact_name?.split(" ").slice(1).join(" ") || "").trim();
 
-  // Generate a unique slug (retry up to 5 times on collision)
+  // Generate a unique slug: firstname-lastname, falling back to firstname-lastname-2, -3, etc.
+  const baseSlug = buildBaseSlug(firstName, lastName);
   let slug = "";
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const candidate = generateSlug(firstName);
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const candidate = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`;
     const { data: collision } = await supabase
       .from("provider_accounts")
       .select("slug")

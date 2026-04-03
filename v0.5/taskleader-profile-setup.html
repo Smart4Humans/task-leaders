@@ -435,6 +435,21 @@
       text-decoration: none;
       cursor: pointer;
     }
+    .inline-rate-input {
+      width: 160px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    .inline-rate-input:focus { border-color: var(--blue); }
+    .inline-rate-input::placeholder { color: rgba(255,255,255,0.35); }
+    .checkbox-item-wrap { margin-bottom: 4px; }
     @media (min-width: 768px) {
       main { padding: 40px 32px; }
       .hero h1 { font-size: 28px; }
@@ -665,48 +680,88 @@
             <p class="helper-text">This is your main service category on your public profile</p>
           </div>
 
+          <!-- Primary Service Rate -->
+          <div class="form-group" style="margin-top: 20px;" id="primaryServiceRateGroup">
+            <label>Rate for <span id="primaryServiceRateLabel">Primary Service</span> (CAD/hr) <span class="required">*</span></label>
+            <input type="number" id="hourlyRate" placeholder="e.g. 75" min="1" step="1" required />
+            <p class="helper-text">Your hourly rate for this service. You can adjust per job as needed.</p>
+          </div>
+
           <p style="font-size: 13px; color: var(--muted); margin: 20px 0 12px;">Select additional services you offer:</p>
 
           <div class="checkbox-group" id="additionalServices">
-            <label class="checkbox-item">
-              <input type="checkbox" name="additionalServices" value="handyman" />
-              <span>🔧 Handyman</span>
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" name="additionalServices" value="cleaning" />
-              <span>🧹 Cleaning</span>
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" name="additionalServices" value="painting" />
-              <span>🎨 Painting</span>
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" name="additionalServices" value="electrical" />
-              <span>⚡ Electrical</span>
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" name="additionalServices" value="plumbing" />
-              <span>🚿 Plumbing</span>
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" name="additionalServices" value="yard-work" />
-              <span>🌿 Yard Work</span>
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" name="additionalServices" value="hvac" />
-              <span>❄️ HVAC</span>
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" name="additionalServices" value="moving" />
-              <span>🚚 Moving / Transport</span>
-            </label>
-          </div>
-
-          <!-- Base Hourly Rate -->
-          <div class="form-group" style="margin-top: 24px;">
-            <label>Base Hourly Rate (CAD) <span class="required">*</span></label>
-            <input type="number" id="hourlyRate" placeholder="e.g. 75" min="1" step="1" required />
-            <p class="helper-text">Your starting rate per hour. You can adjust per job as needed.</p>
+            <div class="checkbox-item-wrap" data-service="handyman">
+              <label class="checkbox-item" onclick="toggleServiceRate('handyman', this)">
+                <input type="checkbox" name="additionalServices" value="handyman" onclick="event.stopPropagation(); toggleServiceRate('handyman', this.closest('.checkbox-item-wrap').querySelector('.checkbox-item'))" />
+                <span>🔧 Handyman</span>
+              </label>
+              <div class="service-rate-input" id="rate-handyman" style="display:none; margin: 6px 0 4px 28px;">
+                <input type="number" class="inline-rate-input" data-service="handyman" placeholder="Rate (CAD/hr)" min="1" step="1" />
+              </div>
+            </div>
+            <div class="checkbox-item-wrap" data-service="cleaning">
+              <label class="checkbox-item" onclick="toggleServiceRate('cleaning', this)">
+                <input type="checkbox" name="additionalServices" value="cleaning" onclick="event.stopPropagation(); toggleServiceRate('cleaning', this.closest('.checkbox-item-wrap').querySelector('.checkbox-item'))" />
+                <span>🧹 Cleaning</span>
+              </label>
+              <div class="service-rate-input" id="rate-cleaning" style="display:none; margin: 6px 0 4px 28px;">
+                <input type="number" class="inline-rate-input" data-service="cleaning" placeholder="Rate (CAD/hr)" min="1" step="1" />
+              </div>
+            </div>
+            <div class="checkbox-item-wrap" data-service="painting">
+              <label class="checkbox-item" onclick="toggleServiceRate('painting', this)">
+                <input type="checkbox" name="additionalServices" value="painting" onclick="event.stopPropagation(); toggleServiceRate('painting', this.closest('.checkbox-item-wrap').querySelector('.checkbox-item'))" />
+                <span>🎨 Painting</span>
+              </label>
+              <div class="service-rate-input" id="rate-painting" style="display:none; margin: 6px 0 4px 28px;">
+                <input type="number" class="inline-rate-input" data-service="painting" placeholder="Rate (CAD/hr)" min="1" step="1" />
+              </div>
+            </div>
+            <div class="checkbox-item-wrap" data-service="electrical">
+              <label class="checkbox-item" onclick="toggleServiceRate('electrical', this)">
+                <input type="checkbox" name="additionalServices" value="electrical" onclick="event.stopPropagation(); toggleServiceRate('electrical', this.closest('.checkbox-item-wrap').querySelector('.checkbox-item'))" />
+                <span>⚡ Electrical</span>
+              </label>
+              <div class="service-rate-input" id="rate-electrical" style="display:none; margin: 6px 0 4px 28px;">
+                <input type="number" class="inline-rate-input" data-service="electrical" placeholder="Rate (CAD/hr)" min="1" step="1" />
+              </div>
+            </div>
+            <div class="checkbox-item-wrap" data-service="plumbing">
+              <label class="checkbox-item" onclick="toggleServiceRate('plumbing', this)">
+                <input type="checkbox" name="additionalServices" value="plumbing" onclick="event.stopPropagation(); toggleServiceRate('plumbing', this.closest('.checkbox-item-wrap').querySelector('.checkbox-item'))" />
+                <span>🚿 Plumbing</span>
+              </label>
+              <div class="service-rate-input" id="rate-plumbing" style="display:none; margin: 6px 0 4px 28px;">
+                <input type="number" class="inline-rate-input" data-service="plumbing" placeholder="Rate (CAD/hr)" min="1" step="1" />
+              </div>
+            </div>
+            <div class="checkbox-item-wrap" data-service="yard-work">
+              <label class="checkbox-item" onclick="toggleServiceRate('yard-work', this)">
+                <input type="checkbox" name="additionalServices" value="yard-work" onclick="event.stopPropagation(); toggleServiceRate('yard-work', this.closest('.checkbox-item-wrap').querySelector('.checkbox-item'))" />
+                <span>🌿 Yard Work</span>
+              </label>
+              <div class="service-rate-input" id="rate-yard-work" style="display:none; margin: 6px 0 4px 28px;">
+                <input type="number" class="inline-rate-input" data-service="yard-work" placeholder="Rate (CAD/hr)" min="1" step="1" />
+              </div>
+            </div>
+            <div class="checkbox-item-wrap" data-service="hvac">
+              <label class="checkbox-item" onclick="toggleServiceRate('hvac', this)">
+                <input type="checkbox" name="additionalServices" value="hvac" onclick="event.stopPropagation(); toggleServiceRate('hvac', this.closest('.checkbox-item-wrap').querySelector('.checkbox-item'))" />
+                <span>❄️ HVAC</span>
+              </label>
+              <div class="service-rate-input" id="rate-hvac" style="display:none; margin: 6px 0 4px 28px;">
+                <input type="number" class="inline-rate-input" data-service="hvac" placeholder="Rate (CAD/hr)" min="1" step="1" />
+              </div>
+            </div>
+            <div class="checkbox-item-wrap" data-service="moving">
+              <label class="checkbox-item" onclick="toggleServiceRate('moving', this)">
+                <input type="checkbox" name="additionalServices" value="moving" onclick="event.stopPropagation(); toggleServiceRate('moving', this.closest('.checkbox-item-wrap').querySelector('.checkbox-item'))" />
+                <span>🚚 Moving / Transport</span>
+              </label>
+              <div class="service-rate-input" id="rate-moving" style="display:none; margin: 6px 0 4px 28px;">
+                <input type="number" class="inline-rate-input" data-service="moving" placeholder="Rate (CAD/hr)" min="1" step="1" />
+              </div>
+            </div>
           </div>
 
           <!-- About / Bio -->
@@ -770,6 +825,11 @@
       document.getElementById('cityGrid').innerHTML = approvedCities.map(city =>
         `<label class="checkbox-item"><input type="checkbox" name="serviceCities" value="${city}"/><span>${city}</span></label>`
       ).join('');
+
+      // Update primary service rate label when selection changes
+      const primaryServiceSel = document.getElementById('primaryService');
+      primaryServiceSel.addEventListener('change', updatePrimaryServiceRateLabel);
+      updatePrimaryServiceRateLabel();
 
       onboardingSlug = getSlug();
       if (onboardingSlug) {
@@ -856,6 +916,54 @@
     function toggleAllCities() {
       const selectAll = document.getElementById('selectAllCities');
       document.querySelectorAll('input[name="serviceCities"]').forEach(cb => cb.checked = selectAll.checked);
+    }
+
+    const SERVICE_LABELS_SETUP = {
+      handyman: 'Handyman', cleaning: 'Cleaning', painting: 'Painting',
+      electrical: 'Electrical', plumbing: 'Plumbing', 'yard-work': 'Yard Work',
+      hvac: 'HVAC', moving: 'Moving / Transport',
+    };
+
+    function updatePrimaryServiceRateLabel() {
+      const svc = document.getElementById('primaryService').value;
+      const label = SERVICE_LABELS_SETUP[svc] || (svc ? svc.charAt(0).toUpperCase() + svc.slice(1) : 'Primary Service');
+      const span = document.getElementById('primaryServiceRateLabel');
+      if (span) span.textContent = label;
+    }
+
+    function toggleServiceRate(service, labelEl) {
+      const cb = labelEl.querySelector('input[type="checkbox"]');
+      const rateDiv = document.getElementById('rate-' + service);
+      if (!cb || !rateDiv) return;
+      const checked = cb.checked;
+      rateDiv.style.display = checked ? 'block' : 'none';
+      if (checked) {
+        const rateInput = rateDiv.querySelector('.inline-rate-input');
+        if (rateInput && !rateInput.value) {
+          const base = document.getElementById('hourlyRate').value;
+          if (base) rateInput.value = base;
+        }
+      }
+    }
+
+    function collectServiceRates() {
+      const rates = {};
+      const primaryService = document.getElementById('primaryService').value;
+      const baseRate = parseFloat(document.getElementById('hourlyRate').value);
+      if (primaryService && Number.isFinite(baseRate) && baseRate > 0) {
+        rates[primaryService] = baseRate;
+      }
+      document.querySelectorAll('input[name="additionalServices"]:checked').forEach(cb => {
+        const svc = cb.value;
+        const rateInput = document.querySelector(`.inline-rate-input[data-service="${svc}"]`);
+        const val = rateInput ? parseFloat(rateInput.value) : NaN;
+        if (Number.isFinite(val) && val > 0) {
+          rates[svc] = val;
+        } else if (Number.isFinite(baseRate) && baseRate > 0) {
+          rates[svc] = baseRate; // fall back to base rate
+        }
+      });
+      return Object.keys(rates).length > 0 ? rates : undefined;
     }
 
     function selectDisplayName(type, el) {
@@ -1001,6 +1109,7 @@
         additionalServices,
         hourlyRate: document.getElementById('hourlyRate').value,
         bio: document.getElementById('bio').value.trim(),
+        serviceRates: collectServiceRates(),
       };
 
       const base = window.TASKLEADERS_FUNCTIONS_BASE || '';

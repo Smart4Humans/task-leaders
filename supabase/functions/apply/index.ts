@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
       from: fromEmail,
       to: [email],
       subject: "We received your TaskLeaders application",
-      html: `<p>Hi ${firstName},</p><p>We received your application and will reach out via WhatsApp within 24 hours to schedule your founder call.</p><p>— The TaskLeaders Team</p>`,
+      html: `<!DOCTYPE html><html><body style="font-family:sans-serif;font-size:15px;color:#000;margin:0;padding:20px;"><p>Hi ${firstName},</p><p>We received your application and will reach out via WhatsApp within 24 hours to schedule your founder call.</p><p>— The TaskLeaders Team</p></body></html>`,
       text: `Hi ${firstName}, we received your application and will reach out via WhatsApp within 24 hours to schedule your founder call. — The TaskLeaders Team`,
     };
     fetch("https://api.resend.com/emails", {

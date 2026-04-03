@@ -1014,9 +1014,9 @@
     }
 
     function setProviderName(name) {
-      const safeName = name || 'TaskLeader';
+      const safeName = (name || 'TaskLeader').trim();
       // Use first name only for the "Connect with …" prompts
-      const firstName = safeName.split(' ')[0] || safeName;
+      const firstName = (safeName.split(' ')[0] || safeName).trim();
       setText('providerNameHero', safeName);
       setText('providerNameSticky', safeName);
       setText('connectModalTitle', 'Connect with ' + firstName);
@@ -1025,6 +1025,45 @@
       setText('aboutHeading', 'About ' + safeName);
       const ct = document.getElementById('confirmText');
       if (ct) ct.innerHTML = `${escapeHtml(safeName)} will be notified and reach out to you via <span style="color:var(--success);">WhatsApp</span>.`;
+    }
+
+    function setConnectFirstName(firstName) {
+      const safe = (firstName || '').trim();
+      if (!safe) return;
+      setText('connectBtnName', safe);
+      setText('connectModalTitle', 'Connect with ' + safe);
+      setText('connectModalSub', `Tell us about your job so ${safe} can respond quickly.`);
+    }
+
+    const SERVICE_LABELS = {
+      handyman: '🔧 Handyman',
+      cleaning: '🧹 Cleaning',
+      painting: '🎨 Painting',
+      electrical: '⚡ Electrical',
+      plumbing: '🚿 Plumbing',
+      'yard-work': '🌿 Yard Work',
+      hvac: '❄️ HVAC',
+      moving: '🚚 Moving / Transport',
+    };
+
+    function renderServiceRates(serviceRates, primaryService) {
+      const section = document.getElementById('servicesRatesSection');
+      if (!section) return;
+      if (!serviceRates || typeof serviceRates !== 'object' || Object.keys(serviceRates).length === 0) {
+        // No per-service rates — hide template
+        section.style.display = 'none';
+        return;
+      }
+      const items = Object.entries(serviceRates).map(([svc, rate]) => {
+        const label = SERVICE_LABELS[svc] || svc.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const rateStr = `$${Number(rate).toFixed(Number(rate) % 1 === 0 ? 0 : 2)}/hr`;
+        return `<div class="service-item">
+          <span class="service-name">${escapeHtml(label)}</span>
+          <span class="service-rate">${escapeHtml(rateStr)}</span>
+        </div>`;
+      }).join('');
+      section.innerHTML = `<h2>Services &amp; Rates</h2>${items}<p class="pricing-note">Listed rates are a general guide. Final pricing may vary based on the details of your job, materials required, location, and timing.</p>`;
+      section.style.display = '';
     }
 
     function setProviderPhoto(url, name) {
@@ -1069,7 +1108,7 @@
       setText('trustReliability', Number.isFinite(reliability) && reliability > 0 ? `${reliability}%` : '—');
       setText('trustPrice', formatPrice(provider?.hourly_rate_cents));
 
-      // About
+      // About — use about_text from providers (mapped to 'about' by RPC)
       const about = provider?.about;
       if (about && String(about).trim()) {
         setText('aboutText', String(about).trim());
@@ -1077,7 +1116,7 @@
         setText('aboutText', 'Profile details coming soon.');
       }
 
-      // Service areas
+      // Service areas — use service_areas from providers table
       const areas = Array.isArray(provider?.service_areas) ? provider.service_areas : [];
       const container = document.getElementById('serviceAreasList');
       if (container) {
@@ -1101,10 +1140,10 @@
       if (back) back.setAttribute('href', backHref);
       if (logo) logo.setAttribute('href', homeHref);
 
-      // Title
+      // Title — uses display_name (already correct: business name or full name per activation)
       document.title = providerName + ' — TaskLeaders';
 
-      // Honesty rule: hide static template services/rates once real read-layer data is loaded
+      // Hide static template services section — will be replaced by real data in secondary call
       const services = document.getElementById('servicesRatesSection');
       if (services) services.style.display = 'none';
     }
@@ -1322,13 +1361,24 @@
         bindProfile(payload);
         reopenConnectIfRequested();
 
-        // Secondary fetch: pull extended fields (service_cities, additional_services)
-        // from provider_accounts via get-provider. Non-blocking — page works without it.
+        // Secondary fetch: pull extended fields from provider_accounts via get-provider.
+        // Non-blocking — page works without it.
         try {
           const extRes = await fetch(`${base.replace(/\/$/, '')}/get-provider?slug=${encodeURIComponent(currentProviderSlug)}`);
           const extJson = await extRes.json().catch(() => null);
           if (extJson?.ok && extJson.data) {
             const ext = extJson.data;
+
+            // Always use provider's first_name for Connect button (not display_name)
+            if (ext.first_name) setConnectFirstName(ext.first_name);
+
+            // Override bio with short_description if public-profile about was empty/missing
+            if (ext.short_description && ext.short_description.trim()) {
+              const aboutEl = document.getElementById('aboutText');
+              if (aboutEl && (aboutEl.textContent === 'Profile details coming soon.' || !aboutEl.textContent.trim())) {
+                aboutEl.textContent = ext.short_description.trim();
+              }
+            }
 
             // Override service areas with service_cities array if available
             const cities = Array.isArray(ext.service_cities) ? ext.service_cities.filter(Boolean) : [];
@@ -1337,13 +1387,16 @@
               container.innerHTML = cities.map(a => `<span class="area-tag">${escapeHtml(a)}</span>`).join('');
             }
 
+            // Render per-service rates from service_rates JSONB
+            renderServiceRates(ext.service_rates, ext.primary_service);
+
             // Show additional services if present
             const extras = Array.isArray(ext.additional_services) ? ext.additional_services.filter(Boolean) : [];
             const extSection = document.getElementById('additionalServicesSection');
             const extList    = document.getElementById('additionalServicesList');
             if (extSection && extList && extras.length > 0) {
               extList.innerHTML = extras.map(s => {
-                const label = s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                const label = SERVICE_LABELS[s] || s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                 return `<span class="service-tag">${escapeHtml(label)}</span>`;
               }).join('');
               extSection.style.display = '';
