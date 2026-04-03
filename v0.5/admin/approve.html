@@ -683,9 +683,7 @@
           ? `<button class="action-btn activate-btn" onclick="event.stopPropagation();activateProvider('${escHtml(p.slug)}', this)" title="Mark as Active">Activate</button>`
           : '';
 
-        const welcomeOrigin = window.location.origin;
-        const welcomeBase = window.location.pathname.replace('/admin/approve.html', '');
-        const welcomeUrl = `${welcomeOrigin}${welcomeBase}/welcome.html?slug=${escHtml(p.slug)}`;
+        const welcomeUrl = `https://task-leaders.com/v0.5/welcome.html?slug=${escHtml(p.slug)}`;
 
         return `
         <div class="pipe-card" id="pipe-${p.slug}">
@@ -758,9 +756,7 @@
         }
 
         // Build and display the welcome link inline in the queue card
-        const origin = window.location.origin;
-        const basePath = window.location.pathname.replace('/admin/approve.html', '');
-        const welcomeUrl = `${origin}${basePath}/welcome.html?slug=${data.data.slug}`;
+        const welcomeUrl = `https://task-leaders.com/v0.5/welcome.html?slug=${data.data.slug}`;
 
         btn.style.display = 'none';
 
@@ -828,31 +824,37 @@
 
     // ── Copy text from an element by id ─────────────────────────────────────
     function copyText(sourceId, btnId) {
-      const text = document.getElementById(sourceId).textContent;
+      const text = document.getElementById(sourceId).textContent.trim();
       const btn  = document.getElementById(btnId);
-      navigator.clipboard.writeText(text).then(() => {
+
+      function markCopied() {
         btn.textContent = 'Copied!';
         btn.classList.add('copied');
         setTimeout(() => {
           btn.textContent = 'Copy Link';
           btn.classList.remove('copied');
         }, 2000);
-      }).catch(() => {
+      }
+
+      function fallbackCopy() {
         const ta = document.createElement('textarea');
         ta.value = text;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
+        ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
         document.body.appendChild(ta);
+        ta.focus();
         ta.select();
-        document.execCommand('copy');
+        try { document.execCommand('copy'); } catch (_) {}
         document.body.removeChild(ta);
-        btn.textContent = 'Copied!';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = 'Copy Link';
-          btn.classList.remove('copied');
-        }, 2000);
-      });
+        markCopied();
+      }
+
+      // navigator.clipboard is only available in secure contexts (HTTPS).
+      // On HTTP it is undefined, so we must guard before calling it.
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(markCopied).catch(fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
     }
 
     // ── Expand / collapse queue card ─────────────────────────────────────────
