@@ -11,4 +11,5 @@ ALTER TABLE provider_accounts
   ADD COLUMN IF NOT EXISTS province            TEXT,
   ADD COLUMN IF NOT EXISTS postal_code         TEXT,
   ADD COLUMN IF NOT EXISTS service_cities      TEXT[],
-  ADD COLUMN IF NOT EXISTS additional_services TEXT[];
+  ADD COLUMN IF NOT EXISTS additional_services TEXT[],
+  ADD COLUMN IF NOT EXISTS work_photos         TEXT[];

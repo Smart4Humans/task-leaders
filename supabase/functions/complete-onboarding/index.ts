@@ -96,6 +96,9 @@ Deno.serve(async (req) => {
   if (Array.isArray(body.additionalServices) && (body.additionalServices as unknown[]).length > 0) {
     updates.additional_services = (body.additionalServices as unknown[]).map((v) => cleanString(v)).filter(Boolean);
   }
+  if (Array.isArray(body.workPhotos) && (body.workPhotos as unknown[]).length > 0) {
+    updates.work_photos = (body.workPhotos as unknown[]).map((v) => cleanString(v)).filter(Boolean);
+  }
 
   const { error: updateError } = await supabase
     .from("provider_accounts")

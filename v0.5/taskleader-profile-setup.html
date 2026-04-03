@@ -908,11 +908,14 @@
       }
     }
 
+    // Track selected work photo files
+    let _selectedWorkPhotos = [];
+
     function previewWorkPhotos(input) {
+      _selectedWorkPhotos = Array.from(input.files).slice(0, 6);
       const preview = document.getElementById('workPhotosPreview');
       preview.innerHTML = '';
-      const files = Array.from(input.files).slice(0, 6);
-      files.forEach(file => {
+      _selectedWorkPhotos.forEach(file => {
         const reader = new FileReader();
         reader.onload = function(e) {
           const img = document.createElement('img');
@@ -921,6 +924,43 @@
         };
         reader.readAsDataURL(file);
       });
+    }
+
+    /**
+     * Upload work photos to Supabase Storage.
+     * Returns array of public URL strings (empty array on total failure).
+     */
+    async function uploadWorkPhotos(slug) {
+      if (!_selectedWorkPhotos.length || !slug) return [];
+      const SUPABASE_URL = 'https://iwgoafvemlsswkjroyhl.supabase.co';
+      const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3Z29hZnZlbWxzc3dranJveWhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNjMwMDksImV4cCI6MjA4ODkzOTAwOX0.1Eb-wyFk8Suyg2-POO-cy9mhPvb7-KlDg8VlZIIYMqI';
+      const urls = [];
+      for (let i = 0; i < _selectedWorkPhotos.length; i++) {
+        const file = _selectedWorkPhotos[i];
+        const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+        const path = `${slug}/work-${i + 1}.${ext}`;
+        try {
+          const res = await fetch(
+            `${SUPABASE_URL}/storage/v1/object/provider-photos/${path}`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${ANON_KEY}`,
+                'apikey': ANON_KEY,
+                'Content-Type': file.type || 'image/jpeg',
+                'x-upsert': 'true',
+              },
+              body: file,
+            }
+          );
+          if (res.ok) {
+            urls.push(`${SUPABASE_URL}/storage/v1/object/public/provider-photos/${path}`);
+          }
+        } catch {
+          // skip failed photo, continue with others
+        }
+      }
+      return urls;
     }
 
     async function handleSubmit(e) {
@@ -965,16 +1005,24 @@
 
       try {
         if (onboardingSlug) {
-          // Upload profile photo to storage first (non-blocking on failure)
-          btn.textContent = 'Uploading photo…';
-          const profilePhotoUrl = await uploadProfilePhoto(onboardingSlug);
+          // Upload profile photo + work photos to storage (non-blocking on failure)
+          btn.textContent = 'Uploading photos…';
+          const [profilePhotoUrl, workPhotoUrls] = await Promise.all([
+            uploadProfilePhoto(onboardingSlug),
+            uploadWorkPhotos(onboardingSlug),
+          ]);
           btn.textContent = 'Submitting…';
 
           // Coming from the welcome flow — update providers record and activate
           const res = await fetch(`${base.replace(/\/$/, '')}/complete-onboarding`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...payload, slug: onboardingSlug, profilePhoto: profilePhotoUrl || undefined }),
+            body: JSON.stringify({
+              ...payload,
+              slug: onboardingSlug,
+              profilePhoto: profilePhotoUrl || undefined,
+              workPhotos: workPhotoUrls.length > 0 ? workPhotoUrls : undefined,
+            }),
           });
           const data = await res.json().catch(() => null);
           if (!data || data.ok !== true) {
