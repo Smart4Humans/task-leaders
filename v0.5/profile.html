@@ -811,7 +811,7 @@
     <!-- Secondary CTA -->
     <section class="secondary-cta">
       <button class="connect-btn" onclick="openModal()">
-        💬 Connect with Mike
+        💬 Connect with <span id="connectBtnName">…</span>
       </button>
       <p class="connect-note">via <span style="color:var(--success);">WhatsApp</span></p>
     </section>
@@ -1021,6 +1021,7 @@
       setText('providerNameSticky', safeName);
       setText('connectModalTitle', 'Connect with ' + firstName);
       setText('connectModalSub', `Tell us about your job so ${firstName} can respond quickly.`);
+      setText('connectBtnName', firstName);
       setText('aboutHeading', 'About ' + safeName);
       const ct = document.getElementById('confirmText');
       if (ct) ct.innerHTML = `${escapeHtml(safeName)} will be notified and reach out to you via <span style="color:var(--success);">WhatsApp</span>.`;
