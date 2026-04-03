@@ -4,6 +4,19 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Hardcoded category metadata — no DB categories table lookup required.
+// Add new categories here to enable them; existing DB rows are not needed.
+const CATEGORY_META: Record<string, { display_name: string; icon: string }> = {
+  handyman:    { display_name: "Handyman",          icon: "🔧" },
+  cleaning:    { display_name: "Cleaning",           icon: "🧹" },
+  painting:    { display_name: "Painting",           icon: "🖌️" },
+  electrical:  { display_name: "Electrical",         icon: "⚡" },
+  plumbing:    { display_name: "Plumbing",           icon: "🔧" },
+  "yard-work": { display_name: "Yard Work",          icon: "🌿" },
+  hvac:        { display_name: "HVAC",               icon: "❄️" },
+  moving:      { display_name: "Moving / Transport", icon: "📦" },
+};
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -58,7 +71,7 @@ Deno.serve(async (req) => {
   // Resolve city + category (minimal display payload)
   const { data: cityRow, error: cityErr } = await supabase
     .from("cities")
-    .select("slug,name,is_active")
+    .select("id,slug,name,is_active")
     .eq("slug", city)
     .maybeSingle();
 
@@ -69,16 +82,8 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: { code: "not_found", message: "Unknown city", details: { city } } }, 404);
   }
 
-  const { data: categoryRow, error: categoryErr } = await supabase
-    .from("categories")
-    .select("slug,display_name,icon,is_active")
-    .eq("slug", category)
-    .maybeSingle();
-
-  if (categoryErr) {
-    return json({ ok: false, error: { code: "server_error", message: "Failed to load category", details: { supabase: categoryErr } } }, 500);
-  }
-  if (!categoryRow || categoryRow.is_active !== true) {
+  const categoryMeta = CATEGORY_META[category];
+  if (!categoryMeta) {
     return json({ ok: false, error: { code: "not_found", message: "Unknown category", details: { category } } }, 404);
   }
 
@@ -143,7 +148,7 @@ Deno.serve(async (req) => {
     ok: true,
     data: {
       city: { slug: cityRow.slug, name: cityRow.name },
-      category: { slug: categoryRow.slug, name: categoryRow.display_name, icon: categoryRow.icon },
+      category: { slug: category, name: categoryMeta.display_name, icon: categoryMeta.icon },
       providers,
       generated_at: new Date().toISOString(),
     },

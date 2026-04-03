@@ -4,6 +4,18 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Canonical category metadata — used to surface categories not yet in the DB categories table.
+const CATEGORY_META: Record<string, { display_name: string; icon: string }> = {
+  handyman:    { display_name: "Handyman",          icon: "🔧" },
+  cleaning:    { display_name: "Cleaning",           icon: "🧹" },
+  painting:    { display_name: "Painting",           icon: "🖌️" },
+  electrical:  { display_name: "Electrical",         icon: "⚡" },
+  plumbing:    { display_name: "Plumbing",           icon: "🔧" },
+  "yard-work": { display_name: "Yard Work",          icon: "🌿" },
+  hvac:        { display_name: "HVAC",               icon: "❄️" },
+  moving:      { display_name: "Moving / Transport", icon: "📦" },
+};
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -78,13 +90,47 @@ Deno.serve(async (req) => {
     );
   }
 
-  const categories = (rows || []).map((r: any) => ({
-    id: r.category_slug,
-    name: r.display_name,
-    icon: r.icon,
-    count: Number(r.provider_count || 0),
-    href: `category.html?city=${encodeURIComponent(city)}&category=${encodeURIComponent(r.category_slug)}`,
-  }));
+  // Build category map from RPC results
+  const catMap = new Map<string, any>();
+  for (const r of (rows || [])) {
+    catMap.set(r.category_slug, {
+      id: r.category_slug,
+      name: r.display_name,
+      icon: r.icon,
+      count: Number(r.provider_count || 0),
+      href: `category.html?city=${encodeURIComponent(city)}&category=${encodeURIComponent(r.category_slug)}`,
+    });
+  }
+
+  // Supplement with JSONB key counts from provider_accounts.
+  // This makes categories like HVAC visible without requiring a DB categories-table change.
+  const { data: acctRows } = await supabase
+    .from("provider_accounts")
+    .select("service_rates")
+    .eq("status", "active");
+
+  const jsonbCounts: Record<string, number> = {};
+  for (const a of (acctRows || [])) {
+    if (a.service_rates && typeof a.service_rates === "object" && !Array.isArray(a.service_rates)) {
+      for (const slug of Object.keys(a.service_rates)) {
+        jsonbCounts[slug] = (jsonbCounts[slug] || 0) + 1;
+      }
+    }
+  }
+
+  for (const [slug, count] of Object.entries(jsonbCounts)) {
+    if (!CATEGORY_META[slug] || count === 0) continue;
+    const existing = catMap.get(slug);
+    catMap.set(slug, {
+      id: slug,
+      name: existing?.name || CATEGORY_META[slug].display_name,
+      icon: existing?.icon || CATEGORY_META[slug].icon,
+      count: Math.max(existing?.count || 0, count),
+      href: `category.html?city=${encodeURIComponent(city)}&category=${encodeURIComponent(slug)}`,
+    });
+  }
+
+  const categories = Array.from(catMap.values());
 
   return json({
     ok: true,
