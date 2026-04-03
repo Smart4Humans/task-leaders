@@ -751,7 +751,7 @@
     <div class="success-message" id="success-message">
       <div class="success-icon" id="successIcon">✅</div>
       <h2 id="successTitle">Thank you for your submission!</h2>
-      <p id="successBody" style="white-space:pre-line;">Your profile will be reviewed within 24 hrs, and activated barring any issues.&#10;We'll let you know once activated and look forward to sending your first lead!</p>
+      <p id="successBody">Profiles are reviewed within 24 hrs and activated barring any issues.<br>We look forward to sending you your first lead!</p>
       <a href="homepage.html" class="btn-secondary" id="successCta">Back to Home</a>
     </div>
   </main>
@@ -828,8 +828,7 @@
         // Update success message
         document.getElementById('successIcon').textContent = '✅';
         document.getElementById('successTitle').textContent = 'Thank you for your submission!';
-        document.getElementById('successBody').style.whiteSpace = 'pre-line';
-        document.getElementById('successBody').textContent = "Your profile will be reviewed within 24 hrs, and activated barring any issues.\nWe'll let you know once activated and look forward to sending your first lead!";
+        document.getElementById('successBody').innerHTML = 'Profiles are reviewed within 24 hrs and activated barring any issues.<br>We look forward to sending you your first lead!';
         const cta = document.getElementById('successCta');
         cta.textContent = 'View My Profile';
         cta.href = `provider-profile.html?slug=${encodeURIComponent(slug)}`;
