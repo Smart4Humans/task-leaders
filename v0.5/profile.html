@@ -1344,17 +1344,27 @@
       // Profile photo — provider's own record only, no fallback to another provider
       if (p.profile_photo) setProviderPhoto(p.profile_photo, displayName);
 
-      // Category badge — strip leading emoji from label
-      const rawLabel = SERVICE_LABELS[p.primary_service] || titleCaseFromSlug(p.primary_service || currentCategorySlug || '');
-      setText('heroCategory', rawLabel.replace(/^\S+\s/, '') || titleCaseFromSlug(currentCategorySlug) || '');
+      // Category badge — use URL ?category= if it exists in provider's service_rates,
+      // otherwise fall back to primary_service. Strip leading emoji for display.
+      const rates = (p.service_rates && typeof p.service_rates === 'object') ? p.service_rates : {};
+      const activeCategory = (currentCategorySlug && Object.prototype.hasOwnProperty.call(rates, currentCategorySlug))
+        ? currentCategorySlug
+        : p.primary_service || currentCategorySlug || '';
+      const rawLabel = SERVICE_LABELS[activeCategory] || titleCaseFromSlug(activeCategory);
+      setText('heroCategory', rawLabel.replace(/^\S+\s/, '') || titleCaseFromSlug(activeCategory) || '');
 
       // Location
       setText('heroLocation', p.service_area || titleCaseFromSlug(currentCitySlug) || 'Vancouver');
 
-      // Trust bar — response/reliability not in provider_accounts; FROM = min of service_rates
+      // Trust bar — FROM rate = rate for the active category (or min across all if no category match)
       setText('trustResponse', '—');
       setText('trustReliability', '—');
-      setText('trustPrice', computeMinRate(p.service_rates, p.base_rate));
+      const activeCategoryRate = rates[activeCategory];
+      const activeCategoryRateNum = Number(activeCategoryRate);
+      const fromRate = (Number.isFinite(activeCategoryRateNum) && activeCategoryRateNum > 0)
+        ? `$${activeCategoryRateNum % 1 === 0 ? activeCategoryRateNum.toFixed(0) : activeCategoryRateNum.toFixed(2)}/hr`
+        : computeMinRate(p.service_rates, p.base_rate);
+      setText('trustPrice', fromRate);
 
       // Bio
       setText('aboutText', (p.short_description || '').trim() || 'Profile details coming soon.');
@@ -1394,10 +1404,10 @@
         gallerySection.style.display = '';
       }
 
-      // Nav links
+      // Nav links — back arrow returns to the category the client came from
       const back = document.querySelector('a.back');
       const logo = document.querySelector('a.logo');
-      const catSlug = p.primary_service || currentCategorySlug || 'handyman';
+      const catSlug = activeCategory || p.primary_service || currentCategorySlug || 'handyman';
       if (back) back.setAttribute('href', `category.html?city=${encodeURIComponent(currentCitySlug)}&category=${encodeURIComponent(catSlug)}`);
       if (logo) logo.setAttribute('href', `homepage.html?city=${encodeURIComponent(currentCitySlug)}`);
 

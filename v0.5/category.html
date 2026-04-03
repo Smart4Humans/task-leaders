@@ -187,8 +187,7 @@
       color: rgba(255,255,255,0.55);
       font-size: 11px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.3px;
       align-items: center;
     }
 
@@ -310,6 +309,9 @@
     }
 
     .wa {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       padding: 8px 14px;
       border-radius: 6px;
       border: 1px solid rgba(37,211,102,0.5);
@@ -321,6 +323,8 @@
       white-space: nowrap;
       transition: all 0.12s;
       flex-shrink: 0;
+      text-align: center;
+      width: 100%;
     }
     .wa:hover {
       background: rgba(37,211,102,0.2);
@@ -666,7 +670,7 @@
     function renderHeader() {
       return `
         <div class="board-header">
-          <div style="text-align:center;">Rank</div>
+          <div style="text-align:center;">#</div>
           <div>TaskLeader</div>
           <div>Response</div>
           <div>Reliability</div>
@@ -679,9 +683,8 @@
 
     function providerProfileHref(p) {
       const params = new URLSearchParams();
-      params.set('city', currentCitySlug);
+      if (p.providerSlug) params.set('slug', p.providerSlug);
       params.set('category', currentCategorySlug);
-      if (p.providerSlug) params.set('provider', p.providerSlug);
       return `profile.html?${params.toString()}`;
     }
 

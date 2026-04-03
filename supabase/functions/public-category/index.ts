@@ -82,31 +82,62 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: { code: "not_found", message: "Unknown category", details: { category } } }, 404);
   }
 
-  const { data: rows, error: rpcErr } = await supabase.rpc("get_public_category_providers", {
-    p_city_slug: city,
-    p_category_slug: category,
-  });
+  // Fetch all active providers and filter by JSONB key presence client-side.
+  // This returns any provider who has the requested category in their service_rates —
+  // not just those whose primary_service matches.
+  const [accountsRes, metricsRes] = await Promise.all([
+    supabase
+      .from("provider_accounts")
+      .select("slug, first_name, last_name, business_name, display_name_type, service_rates, base_rate, service_area, primary_service")
+      .eq("status", "active"),
+    supabase
+      .from("providers")
+      .select("provider_slug, response_time_minutes, reliability_percent, rank, is_featured")
+      .eq("city_id", cityRow.id)
+      .eq("is_active", true),
+  ]);
 
-  if (rpcErr) {
-    return json(
-      {
-        ok: false,
-        error: { code: "server_error", message: "Failed to load providers", details: { supabase: rpcErr } },
-      },
-      500,
-    );
+  if (accountsRes.error) {
+    return json({ ok: false, error: { code: "server_error", message: "Failed to load providers", details: { supabase: accountsRes.error } } }, 500);
   }
 
-  const providers = (rows || []).map((r: any) => ({
-    provider_slug: r.provider_slug,
-    display_name: r.display_name,
-    response_time_minutes: r.response_time_minutes === null ? null : Number(r.response_time_minutes),
-    reliability_percent: r.reliability_percent === null ? null : Number(r.reliability_percent),
-    hourly_rate_cents: r.hourly_rate_cents === null ? null : Number(r.hourly_rate_cents),
-    currency: r.currency,
-    rank: r.rank === null ? null : Number(r.rank),
-    is_featured: Boolean(r.is_featured),
-  }));
+  // Build metrics lookup by provider_slug
+  const metricsMap: Record<string, any> = {};
+  for (const pub of (metricsRes.data || [])) {
+    metricsMap[pub.provider_slug] = pub;
+  }
+
+  // Filter to providers who have this category as a key in service_rates
+  const filtered = (accountsRes.data || []).filter((p: any) =>
+    p.service_rates &&
+    typeof p.service_rates === "object" &&
+    !Array.isArray(p.service_rates) &&
+    Object.prototype.hasOwnProperty.call(p.service_rates, category)
+  );
+
+  const providers = filtered.map((p: any) => {
+    // Rate shown is the provider's rate for this specific category
+    const categoryRateRaw = p.service_rates[category];
+    const categoryRate = Number(categoryRateRaw);
+    const hourlyRateCents = Number.isFinite(categoryRate) && categoryRate > 0 ? Math.round(categoryRate * 100) : null;
+
+    const displayName = (p.display_name_type === "business" && p.business_name)
+      ? String(p.business_name).trim()
+      : [p.first_name, p.last_name].filter(Boolean).join(" ").trim() || "Provider";
+
+    const metrics = metricsMap[p.slug] || {};
+
+    return {
+      provider_slug: p.slug,
+      display_name: displayName,
+      response_time_minutes: metrics.response_time_minutes != null ? Number(metrics.response_time_minutes) : null,
+      reliability_percent: metrics.reliability_percent != null ? Number(metrics.reliability_percent) : null,
+      hourly_rate_cents: hourlyRateCents,
+      currency: "CAD",
+      rank: metrics.rank != null ? Number(metrics.rank) : null,
+      is_featured: Boolean(metrics.is_featured),
+    };
+  });
 
   return json({
     ok: true,
