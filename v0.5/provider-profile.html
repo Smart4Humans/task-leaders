@@ -254,7 +254,12 @@
       const name = `${escHtml(p.first_name || '')} ${escHtml(p.last_name || '')}`.trim();
       const service = titleCase(p.primary_service || '');
       const area = escHtml(p.service_area || '');
-      const rate = p.base_rate ? escHtml(p.base_rate) : null;
+      // base_rate is stored as a dollar string e.g. "100" → display as "$100/hr"
+      let rate = null;
+      if (p.base_rate) {
+        const num = parseFloat(String(p.base_rate).replace(/[^0-9.]/g, ''));
+        rate = Number.isFinite(num) && num > 0 ? `$${num % 1 === 0 ? num.toFixed(0) : num.toFixed(2)}/hr` : escHtml(p.base_rate);
+      }
       const about = p.short_description ? escHtml(p.short_description) : null;
 
       // Photo

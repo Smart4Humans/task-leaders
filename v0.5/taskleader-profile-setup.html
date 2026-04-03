@@ -863,14 +863,49 @@
       el.querySelector('input').checked = true;
     }
 
+    // Track the selected profile photo file so we can upload it on submit
+    let _selectedProfilePhoto = null;
+
     function previewProfilePhoto(input) {
       if (input.files && input.files[0]) {
+        _selectedProfilePhoto = input.files[0];
         const reader = new FileReader();
         reader.onload = function(e) {
           document.getElementById('photoPreviewImg').src = e.target.result;
           document.getElementById('photoPreview').style.display = 'block';
         };
         reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    /**
+     * Upload profile photo to Supabase Storage.
+     * Returns the public URL string, or null on failure (non-blocking).
+     */
+    async function uploadProfilePhoto(slug) {
+      if (!_selectedProfilePhoto || !slug) return null;
+      const SUPABASE_URL = 'https://iwgoafvemlsswkjroyhl.supabase.co';
+      const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3Z29hZnZlbWxzc3dranJveWhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNjMwMDksImV4cCI6MjA4ODkzOTAwOX0.1Eb-wyFk8Suyg2-POO-cy9mhPvb7-KlDg8VlZIIYMqI';
+      const ext = _selectedProfilePhoto.name.split('.').pop().toLowerCase() || 'jpg';
+      const path = `${slug}/profile.${ext}`;
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/provider-photos/${path}`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${ANON_KEY}`,
+              'apikey': ANON_KEY,
+              'Content-Type': _selectedProfilePhoto.type || 'image/jpeg',
+              'x-upsert': 'true',
+            },
+            body: _selectedProfilePhoto,
+          }
+        );
+        if (!res.ok) return null;
+        return `${SUPABASE_URL}/storage/v1/object/public/provider-photos/${path}`;
+      } catch {
+        return null;
       }
     }
 
@@ -931,11 +966,16 @@
 
       try {
         if (onboardingSlug) {
+          // Upload profile photo to storage first (non-blocking on failure)
+          btn.textContent = 'Uploading photo…';
+          const profilePhotoUrl = await uploadProfilePhoto(onboardingSlug);
+          btn.textContent = 'Submitting…';
+
           // Coming from the welcome flow — update providers record and activate
           const res = await fetch(`${base.replace(/\/$/, '')}/complete-onboarding`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...payload, slug: onboardingSlug }),
+            body: JSON.stringify({ ...payload, slug: onboardingSlug, profilePhoto: profilePhotoUrl || undefined }),
           });
           const data = await res.json().catch(() => null);
           if (!data || data.ok !== true) {
