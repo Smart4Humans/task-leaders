@@ -1043,7 +1043,8 @@
       // Trust metrics
       setText('trustResponse', formatResp(provider?.response_time_minutes));
       const reliability = Number(provider?.reliability_percent);
-      setText('trustReliability', Number.isFinite(reliability) ? `${reliability}%` : '—');
+      // Only show a percentage when there is real survey data; 0 / null → dash
+      setText('trustReliability', Number.isFinite(reliability) && reliability > 0 ? `${reliability}%` : '—');
       setText('trustPrice', formatPrice(provider?.hourly_rate_cents));
 
       // About
