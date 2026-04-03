@@ -994,10 +994,12 @@
 
     function setProviderName(name) {
       const safeName = name || 'TaskLeader';
+      // Use first name only for the "Connect with …" prompts
+      const firstName = safeName.split(' ')[0] || safeName;
       setText('providerNameHero', safeName);
       setText('providerNameSticky', safeName);
-      setText('connectModalTitle', 'Connect with ' + safeName);
-      setText('connectModalSub', `Tell us about your job so ${safeName} can respond quickly.`);
+      setText('connectModalTitle', 'Connect with ' + firstName);
+      setText('connectModalSub', `Tell us about your job so ${firstName} can respond quickly.`);
       setText('aboutHeading', 'About ' + safeName);
       const ct = document.getElementById('confirmText');
       if (ct) ct.innerHTML = `${escapeHtml(safeName)} will be notified and reach out to you via <span style="color:var(--success);">WhatsApp</span>.`;
