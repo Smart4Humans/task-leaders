@@ -138,11 +138,22 @@ Deno.serve(async (req) => {
   const resendKey = Deno.env.get("RESEND_API_KEY");
   const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "TaskLeaders <info@task-leaders.com>";
   if (resendKey) {
+    const emailHtml = [
+      "<html>",
+      "<head><meta charset=\"utf-8\"></head>",
+      `<body style="font-family:sans-serif;font-size:16px;color:#000000;">`,
+      `<p>Hi ${firstName},</p>`,
+      "<p>We received your application and will reach out via WhatsApp within 24 hours to schedule your founder call.</p>",
+      "<p>— The TaskLeaders Team</p>",
+      "</body>",
+      "</html>",
+    ].join("\n");
+    console.log(`[apply] email html bytes: ${new TextEncoder().encode(emailHtml).length}`);
     const emailPayload = {
       from: fromEmail,
       to: [email],
       subject: "We received your TaskLeaders application",
-      html: `<html lang="en"><head><meta charset="utf-8"></head><body style="margin:0;padding:20px;font-family:sans-serif;font-size:15px;color:#000;"><p>Hi ${firstName},</p><p>We received your application and will reach out via WhatsApp within 24 hours to schedule your founder call.</p><p>— The TaskLeaders Team</p></body></html>`,
+      html: emailHtml,
       text: `Hi ${firstName}, we received your application and will reach out via WhatsApp within 24 hours to schedule your founder call. — The TaskLeaders Team`,
     };
     fetch("https://api.resend.com/emails", {

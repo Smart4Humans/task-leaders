@@ -78,59 +78,37 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: { code: "not_found", message: "Unknown city", details: { city } } }, 404);
   }
 
-  const { data: rows, error: rpcErr } = await supabase.rpc("get_homepage_category_supply", { p_city_slug: city });
-
-  if (rpcErr) {
-    return json(
-      {
-        ok: false,
-        error: { code: "server_error", message: "Failed to load category supply", details: { supabase: rpcErr } },
-      },
-      500,
-    );
-  }
-
-  // Build category map from RPC results
-  const catMap = new Map<string, any>();
-  for (const r of (rows || [])) {
-    catMap.set(r.category_slug, {
-      id: r.category_slug,
-      name: r.display_name,
-      icon: r.icon,
-      count: Number(r.provider_count || 0),
-      href: `category.html?city=${encodeURIComponent(city)}&category=${encodeURIComponent(r.category_slug)}`,
-    });
-  }
-
-  // Supplement with JSONB key counts from provider_accounts.
-  // This makes categories like HVAC visible without requiring a DB categories-table change.
-  const { data: acctRows } = await supabase
+  // Count active providers per category by scanning service_rates JSONB keys.
+  // Identical source and logic to public-category — guarantees homepage counts
+  // match the leaderboard exactly, and works for any category (e.g. HVAC) without
+  // requiring a DB categories-table row.
+  const { data: acctRows, error: acctErr } = await supabase
     .from("provider_accounts")
     .select("service_rates")
     .eq("status", "active");
 
-  const jsonbCounts: Record<string, number> = {};
+  if (acctErr) {
+    return json({ ok: false, error: { code: "server_error", message: "Failed to load providers", details: { supabase: acctErr } } }, 500);
+  }
+
+  const counts: Record<string, number> = {};
   for (const a of (acctRows || [])) {
     if (a.service_rates && typeof a.service_rates === "object" && !Array.isArray(a.service_rates)) {
       for (const slug of Object.keys(a.service_rates)) {
-        jsonbCounts[slug] = (jsonbCounts[slug] || 0) + 1;
+        counts[slug] = (counts[slug] || 0) + 1;
       }
     }
   }
 
-  for (const [slug, count] of Object.entries(jsonbCounts)) {
-    if (!CATEGORY_META[slug] || count === 0) continue;
-    const existing = catMap.get(slug);
-    catMap.set(slug, {
+  const categories = Object.entries(counts)
+    .filter(([slug, count]) => count > 0 && Boolean(CATEGORY_META[slug]))
+    .map(([slug, count]) => ({
       id: slug,
-      name: existing?.name || CATEGORY_META[slug].display_name,
-      icon: existing?.icon || CATEGORY_META[slug].icon,
-      count: Math.max(existing?.count || 0, count),
+      name: CATEGORY_META[slug].display_name,
+      icon: CATEGORY_META[slug].icon,
+      count,
       href: `category.html?city=${encodeURIComponent(city)}&category=${encodeURIComponent(slug)}`,
-    });
-  }
-
-  const categories = Array.from(catMap.values());
+    }));
 
   return json({
     ok: true,
