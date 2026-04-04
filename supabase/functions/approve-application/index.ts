@@ -123,12 +123,15 @@ Deno.serve(async (req) => {
 
     const [cityRes, catRes] = await Promise.all([
       supabase.from("cities").select("id").eq("slug", citySlug).eq("is_active", true).single(),
-      supabase.from("categories").select("id").eq("slug", categorySlug).eq("is_active", true).single(),
+      // category_id is best-effort — categories like hvac/yard-work may not be in the DB
+      // categories table yet. The leaderboard (public-category) queries provider_accounts
+      // directly so a null category_id in providers is fine.
+      supabase.from("categories").select("id").eq("slug", categorySlug).eq("is_active", true).maybeSingle(),
     ]);
 
-    if (!cityRes.data || !catRes.data) {
-      // Activation succeeded but couldn't sync to marketplace — not fatal
-      return json({ ok: true, data: { slug, status: "active", marketplace_synced: false, reason: "city or category not found" } });
+    if (!cityRes.data) {
+      // City is required for the providers record; category is optional.
+      return json({ ok: true, data: { slug, status: "active", marketplace_synced: false, reason: "city not found" } });
     }
 
     // Compute display name based on provider's preference
@@ -145,22 +148,25 @@ Deno.serve(async (req) => {
       ? acct.service_cities
       : (acct.service_area ? [acct.service_area] : []);
 
+    const upsertPayload: Record<string, unknown> = {
+      provider_slug: slug,
+      display_name: displayName,
+      status: "approved",
+      is_active: true,
+      city_id: cityRes.data.id,
+      whatsapp_e164: acct.whatsapp_number ?? null,
+      about_text: acct.short_description ?? null,
+      hero_photo_url: acct.profile_photo ?? null,
+      hourly_rate_cents: hourlyRateCents,
+      service_areas: serviceAreas,
+      service_rates: acct.service_rates ?? null,
+    };
+    // Only set category_id when the DB category exists; otherwise leave it null/unset
+    if (catRes.data?.id) upsertPayload.category_id = catRes.data.id;
+
     const { error: upsertErr } = await supabase
       .from("providers")
-      .upsert({
-        provider_slug: slug,
-        display_name: displayName,
-        status: "approved",
-        is_active: true,
-        city_id: cityRes.data.id,
-        category_id: catRes.data.id,
-        whatsapp_e164: acct.whatsapp_number ?? null,
-        about_text: acct.short_description ?? null,
-        hero_photo_url: acct.profile_photo ?? null,
-        hourly_rate_cents: hourlyRateCents,
-        service_areas: serviceAreas,
-        service_rates: acct.service_rates ?? null,
-      }, { onConflict: "provider_slug" });
+      .upsert(upsertPayload, { onConflict: "provider_slug" });
 
     if (upsertErr) {
       return json({ ok: true, data: { slug, status: "active", marketplace_synced: false, reason: upsertErr.message } });
