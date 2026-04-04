@@ -103,7 +103,9 @@ Deno.serve(async (req) => {
   if (body.serviceRates && typeof body.serviceRates === "object" && !Array.isArray(body.serviceRates)) {
     const rates: Record<string, number> = {};
     for (const [k, v] of Object.entries(body.serviceRates as Record<string, unknown>)) {
-      const key = cleanString(k);
+      // Normalise keys to lowercase so JSONB scans in public-category and public-homepage
+      // always find a match regardless of how the key was entered by the client.
+      const key = cleanString(k).toLowerCase();
       const val = parseFloat(String(v));
       if (key && Number.isFinite(val) && val > 0) rates[key] = val;
     }

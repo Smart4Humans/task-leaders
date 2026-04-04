@@ -78,10 +78,11 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: { code: "not_found", message: "Unknown city", details: { city } } }, 404);
   }
 
-  // Count active providers per category by scanning service_rates JSONB keys.
-  // Identical source and logic to public-category — guarantees homepage counts
-  // match the leaderboard exactly, and works for any category (e.g. HVAC) without
-  // requiring a DB categories-table row.
+  // ── IDENTICAL FILTER LOGIC TO public-category ────────────────────────────
+  // Both functions query provider_accounts WHERE status='active' and count
+  // providers per JSONB key in service_rates.  DO NOT change this to an RPC
+  // or a different table — that is what caused the homepage/leaderboard count
+  // mismatch.  If you change the filter here, change it in public-category too.
   const { data: acctRows, error: acctErr } = await supabase
     .from("provider_accounts")
     .select("service_rates")

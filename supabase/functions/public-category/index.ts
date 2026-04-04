@@ -87,13 +87,14 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: { code: "not_found", message: "Unknown category", details: { category } } }, 404);
   }
 
-  // Fetch all active providers and filter by JSONB key presence client-side.
-  // This returns any provider who has the requested category in their service_rates —
-  // not just those whose primary_service matches.
+  // ── IDENTICAL FILTER LOGIC TO public-homepage ────────────────────────────
+  // Query provider_accounts WHERE status='active'; filter by JSONB key presence.
+  // This is the canonical filter — public-homepage counts must mirror this exactly.
+  // Do not add extra filters (city, primary_service, etc.) without updating both.
   const [accountsRes, metricsRes] = await Promise.all([
     supabase
       .from("provider_accounts")
-      .select("slug, first_name, last_name, business_name, display_name_type, service_rates, base_rate, service_area, primary_service")
+      .select("slug, first_name, last_name, business_name, display_name_type, service_rates, base_rate, service_area, primary_service, profile_photo")
       .eq("status", "active"),
     supabase
       .from("providers")
@@ -135,6 +136,7 @@ Deno.serve(async (req) => {
     return {
       provider_slug: p.slug,
       display_name: displayName,
+      profile_photo: p.profile_photo || null,
       response_time_minutes: metrics.response_time_minutes != null ? Number(metrics.response_time_minutes) : null,
       reliability_percent: metrics.reliability_percent != null ? Number(metrics.reliability_percent) : null,
       hourly_rate_cents: hourlyRateCents,

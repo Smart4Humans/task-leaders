@@ -689,14 +689,21 @@
       return `profile.html?${params.toString()}`;
     }
 
+    function avatarImg(p) {
+      const fallback = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=0b1020&textColor=ffffff`;
+      if (p.photoUrl) {
+        return `<img src="${escapeHtml(p.photoUrl)}" alt="" onerror="this.onerror=null;this.src='${fallback}'">`;
+      }
+      return `<img src="${fallback}" alt="">`;
+    }
+
     function renderRow(p, rank) {
-      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=0b1020&textColor=ffffff`;
       const href = providerProfileHref(p);
       return `
         <div class="row">
           <div class="rank ${rank <= 3 ? 'top' : ''}">${rank}</div>
           <div class="taskleader-cell">
-            <div class="avatar"><img src="${avatarUrl}" alt=""></div>
+            <div class="avatar">${avatarImg(p)}</div>
             <div class="name-col">
               <a class="name" href="${href}">${escapeHtml(p.name)}</a>
               <div class="area">Base: ${escapeHtml(p.area)}</div>
@@ -712,15 +719,13 @@
     }
 
     function renderMobileCard(p, rank, categoryName) {
-      // Match desktop avatar source logic (Dicebear initials)
-      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=0b1020&textColor=ffffff`;
       const href = providerProfileHref(p);
       return `
         <div class="taskleader-card" data-rank="${rank}">
           <div class="card-content">
             <span class="card-category">${escapeHtml(categoryName)}</span>
             <div class="card-header">
-              <div class="avatar"><img src="${avatarUrl}" alt=""></div>
+              <div class="avatar">${avatarImg(p)}</div>
               <div class="card-title">
                 <a class="card-name" href="${href}">${escapeHtml(p.name)}</a>
                 <div class="card-area">📍 ${escapeHtml(p.area)}</div>
@@ -839,6 +844,7 @@
           return {
             providerSlug: r.provider_slug,
             name: r.display_name,
+            photoUrl: r.profile_photo || null,
             area: currentCityName,
             response,
             reliability,
