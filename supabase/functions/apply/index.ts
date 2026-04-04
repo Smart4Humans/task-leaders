@@ -92,15 +92,13 @@ Deno.serve(async (req) => {
     auth: { persistSession: false },
   });
 
-  // Validate category is in approved taxonomy + active
-  const { data: catRow, error: catErr } = await supabase
-    .from("categories")
-    .select("slug,is_active")
-    .eq("slug", categorySlug)
-    .maybeSingle();
-
-  if (catErr) return error("server_error", "Failed to validate category", { supabase: catErr }, 500);
-  if (!catRow || catRow.is_active !== true) {
+  // Validate category against hardcoded taxonomy — same set as CATEGORY_META
+  // in public-category and public-homepage. No DB lookup required.
+  const ALLOWED_CATEGORIES = new Set([
+    "handyman", "cleaning", "painting", "electrical", "plumbing",
+    "yard-work", "hvac", "moving",
+  ]);
+  if (!ALLOWED_CATEGORIES.has(categorySlug)) {
     return error("validation_error", "Unknown or inactive category", { field: "category_slug", category_slug: categorySlug });
   }
 
