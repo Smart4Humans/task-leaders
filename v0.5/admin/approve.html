@@ -342,17 +342,19 @@
       user-select: none;
     }
     .pipe-card-main { flex: 1; min-width: 0; }
-    .pipe-name { font-size: 15px; font-weight: 700; }
-    .pipe-slug { font-size: 12px; color: rgba(255,255,255,0.4); font-family: 'Courier New', monospace; margin-top: 2px; }
-    .pipe-email {
-      font-size: 14px;
+    .pipe-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pipe-col {
+      font-size: 13px;
       color: rgba(255,255,255,0.55);
-      flex: 1;
-      min-width: 0;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
+      flex-shrink: 0;
     }
+    .pipe-col-service { width: 100px; }
+    .pipe-col-area    { width: 90px; }
+    .pipe-col-email   { width: 160px; }
+    .pipe-col-wa      { width: 120px; }
     .pipe-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .pipe-chevron { font-size: 11px; color: rgba(255,255,255,0.3); transition: transform 0.2s; line-height: 1; }
     .pipe-card.open .pipe-chevron { transform: rotate(180deg); }
@@ -469,9 +471,12 @@
     .concierge-approve-btn:hover { background: rgba(0,200,83,0.22); }
     .concierge-approve-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    @media (max-width: 600px) {
-      .pipe-email { display: none; }
+    @media (max-width: 700px) {
+      .pipe-col-email, .pipe-col-wa { display: none; }
       .page-title { font-size: 22px; }
+    }
+    @media (max-width: 500px) {
+      .pipe-col-area { display: none; }
     }
   </style>
 </head>
@@ -699,7 +704,7 @@
             </div>
             <div class="app-meta">
               ${service ? `<span class="app-tag service">${escHtml(service)}</span>` : ''}
-              ${app.service_area ? `<span class="app-tag">${escHtml(app.service_area)}</span>` : ''}
+              ${app.service_area ? `<span class="app-tag">${escHtml(toTitleCase(app.service_area))}</span>` : ''}
             </div>
             <span class="expand-toggle" id="toggle-${app.id}">View full application ▾</span>
           </div>
@@ -730,25 +735,33 @@
       applyPipelineFilters();
     }
 
+    function toTitleCase(str) {
+      return String(str || '').replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+    }
+
     function applyPipelineFilters() {
       const q      = (document.getElementById('pipelineSearch')?.value || '').toLowerCase().trim();
       const limit  = (pipelineFilter === 'all' && !q) ? 10 : Infinity;
       let filtered = allProviders;
 
       // Status filter — 10-record cap applies to "All" only; specific filters show all matches
+      // "In Progress" = everything that is not active and not pending_approval (includes pending_onboarding)
       if (pipelineFilter === 'in_progress') {
-        filtered = filtered.filter(p => p.status !== 'active' && p.status !== 'pending_approval' && p.status !== 'pending_onboarding');
+        filtered = filtered.filter(p => p.status !== 'active' && p.status !== 'pending_approval');
       } else if (pipelineFilter === 'pending_approval') {
         filtered = filtered.filter(p => p.status === 'pending_approval');
       } else if (pipelineFilter === 'active') {
         filtered = filtered.filter(p => p.status === 'active');
       }
 
-      // Search filter
+      // Search filter — name, service, area, whatsapp
       if (q) {
         filtered = filtered.filter(p =>
           `${p.first_name || ''} ${p.last_name || ''}`.toLowerCase().includes(q) ||
-          (p.email || '').toLowerCase().includes(q)
+          (p.email || '').toLowerCase().includes(q) ||
+          categoryLabel(p.primary_service || '').toLowerCase().includes(q) ||
+          (p.service_area || '').toLowerCase().includes(q) ||
+          (p.whatsapp_number || '').toLowerCase().includes(q)
         );
       }
 
@@ -783,7 +796,10 @@
             <div class="pipe-card-main">
               <div class="pipe-name">${escHtml(p.first_name || '')} ${escHtml(p.last_name || '')}</div>
             </div>
-            <div class="pipe-email">${escHtml(p.email || '')}</div>
+            <div class="pipe-col pipe-col-service">${escHtml(categoryLabel(p.primary_service || ''))}</div>
+            <div class="pipe-col pipe-col-area">${escHtml(toTitleCase(p.service_area || ''))}</div>
+            <div class="pipe-col pipe-col-email">${escHtml(p.email || '')}</div>
+            <div class="pipe-col pipe-col-wa">${escHtml(p.whatsapp_number || '')}</div>
             <div class="pipe-right">
               <span class="status-badge ${cls}">${label}</span>
               ${actionBtn}
