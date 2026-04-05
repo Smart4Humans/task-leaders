@@ -445,9 +445,15 @@
       <div class="form-subtext">Quick application. We verify and respond within 24 hours.</div>
 
       <form onsubmit="handleSubmit(event)" id="vip-form">
-        <div class="form-group">
-          <label>Full Name</label>
-          <input type="text" id="fullName" placeholder="Your full name" required />
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group" style="margin-bottom:0">
+            <label>First Name</label>
+            <input type="text" id="firstName" placeholder="First name" required />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Last Name</label>
+            <input type="text" id="lastName" placeholder="Last name" required />
+          </div>
         </div>
         <div class="form-group">
           <label>Email</label>
@@ -510,11 +516,12 @@
         }
 
         const payload = {
-          full_name: document.getElementById('fullName').value.trim(),
-          email: document.getElementById('email').value.trim(),
-          whatsapp: document.getElementById('whatsapp').value.trim(),
-          company: document.getElementById('company').value.trim(),
-          role: document.getElementById('role').value.trim()
+          first_name: document.getElementById('firstName').value.trim(),
+          last_name:  document.getElementById('lastName').value.trim(),
+          email:      document.getElementById('email').value.trim(),
+          whatsapp:   document.getElementById('whatsapp').value.trim(),
+          company:    document.getElementById('company').value.trim(),
+          role:       document.getElementById('role').value.trim()
         };
 
         const url = `${base.replace(/\/$/, '')}/concierge-apply`;

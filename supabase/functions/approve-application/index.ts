@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
 
       supabase
         .from("concierge_clients")
-        .select("id, name, email, whatsapp, company, role, status, approved_date, created_at")
+        .select("id, first_name, last_name, name, email, whatsapp, company, role, status, approved_date, created_at")
         .order("created_at", { ascending: false })
         .limit(200),
     ]);
@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
 
     const { data: client, error: fetchErr } = await supabase
       .from("concierge_clients")
-      .select("id, name, email, status")
+      .select("id, first_name, last_name, name, email, status")
       .eq("id", clientId)
       .single();
 
@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
     const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "TaskLeaders <info@task-leaders.com>";
 
     if (resendKey && client.email) {
-      const firstName = (client.name || "").split(" ")[0] || "there";
+      const firstName = client.first_name || (client.name || "").split(" ")[0] || "there";
       const html = [
         "<html><head><meta charset=\"utf-8\"></head>",
         `<body style="font-family:sans-serif;font-size:16px;color:#000000;line-height:1.6;">`,

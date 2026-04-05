@@ -529,7 +529,6 @@
         <!-- Filter tabs -->
         <div class="filter-bar" id="pipelineFilterBar">
           <button class="filter-tab active" data-filter="all"              onclick="setPipelineFilter(this)">All</button>
-          <button class="filter-tab"         data-filter="pending_onboarding" onclick="setPipelineFilter(this)">Onboarding Queue</button>
           <button class="filter-tab"         data-filter="in_progress"     onclick="setPipelineFilter(this)">In Progress</button>
           <button class="filter-tab"         data-filter="pending_approval" onclick="setPipelineFilter(this)">Pending Approval</button>
           <button class="filter-tab"         data-filter="active"          onclick="setPipelineFilter(this)">Active</button>
@@ -736,10 +735,8 @@
       const limit  = (pipelineFilter === 'all' && !q) ? 10 : Infinity;
       let filtered = allProviders;
 
-      // Status filter
-      if (pipelineFilter === 'pending_onboarding') {
-        filtered = filtered.filter(p => p.status === 'pending_onboarding');
-      } else if (pipelineFilter === 'in_progress') {
+      // Status filter — 10-record cap applies to "All" only; specific filters show all matches
+      if (pipelineFilter === 'in_progress') {
         filtered = filtered.filter(p => p.status !== 'active' && p.status !== 'pending_approval' && p.status !== 'pending_onboarding');
       } else if (pipelineFilter === 'pending_approval') {
         filtered = filtered.filter(p => p.status === 'pending_approval');
@@ -846,8 +843,10 @@
       }
 
       if (q) {
-        filtered = filtered.filter(c => (c.name || '').toLowerCase().includes(q) ||
-          (c.email || '').toLowerCase().includes(q));
+        filtered = filtered.filter(c => {
+          const fullName = (`${c.first_name || ''} ${c.last_name || ''}`).trim() || (c.name || '');
+          return fullName.toLowerCase().includes(q) || (c.email || '').toLowerCase().includes(q);
+        });
       }
 
       const visible = filtered.slice(0, limit);
@@ -867,21 +866,23 @@
       }
 
       const rows = clients.map(c => {
-        const date         = new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
-        const statusBadge  = c.status === 'active'
+        const date       = new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+        const displayName = (`${c.first_name || ''} ${c.last_name || ''}`).trim() || (c.name || '');
+        const statusBadge = c.status === 'active'
           ? `<span class="status-badge active">Active</span>`
           : `<span class="status-badge pending">Pending</span>`;
-        const approveBtn   = c.status !== 'active'
+        const approveBtn  = c.status !== 'active'
           ? `<button class="concierge-approve-btn" id="cbtn-${c.id}" onclick="approveConciergeClient('${escHtml(c.id)}',this)">Approve</button>`
-          : statusBadge;
+          : '';
 
         return `<tr>
-          <td><div class="concierge-name">${escHtml(c.name || '')}</div></td>
+          <td><div class="concierge-name">${escHtml(displayName)}</div></td>
           <td>${escHtml(c.role || '—')}</td>
           <td>${escHtml(c.company || '—')}</td>
           <td>${escHtml(c.email || '')}</td>
           <td>${escHtml(c.whatsapp || '')}</td>
           <td><span class="concierge-muted">${date}</span></td>
+          <td>${statusBadge}</td>
           <td>${approveBtn}</td>
         </tr>`;
       }).join('');
@@ -897,6 +898,7 @@
                 <th>Email</th>
                 <th>WhatsApp</th>
                 <th>Date Submitted</th>
+                <th>Status</th>
                 <th></th>
               </tr>
             </thead>
