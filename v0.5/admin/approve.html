@@ -147,7 +147,7 @@
 
     /* ── Main layout ── */
     main {
-      max-width: 900px;
+      max-width: 960px;
       margin: 0 auto;
       padding: 32px 24px 80px;
     }
@@ -156,9 +156,10 @@
       font-weight: 800;
       margin-bottom: 6px;
     }
+    .page-title .task { color: var(--blue); }
     .page-sub {
       font-size: 16px;
-      color: #fff;
+      color: var(--muted);
       margin-bottom: 32px;
     }
 
@@ -167,16 +168,13 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
     }
-    .section-title {
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .section-count {
-      font-size: 15px;
-      color: #fff;
-    }
+    .section-title { font-size: 16px; font-weight: 700; }
+    .section-count { font-size: 13px; color: var(--muted); }
+    .section-divider { margin-top: 52px; }
 
     /* ── Refresh btn ── */
     .refresh-btn {
@@ -193,18 +191,59 @@
     }
     .refresh-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
+    /* ── Filter tabs ── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .filter-tab {
+      padding: 5px 13px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filter-tab:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+    .filter-tab.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+    /* ── Search input ── */
+    .search-input {
+      width: 100%;
+      padding: 9px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+      margin-bottom: 14px;
+      transition: border-color 0.2s;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: rgba(255,255,255,0.25); }
+
     /* ── Loading / empty states ── */
     .loading-row {
       text-align: center;
       padding: 40px 20px;
-      color: #fff;
-      font-size: 16px;
+      color: var(--muted);
+      font-size: 15px;
     }
     .empty-row {
       text-align: center;
-      padding: 32px 20px;
-      color: #fff;
-      font-size: 16px;
+      padding: 28px 20px;
+      color: var(--muted);
+      font-size: 15px;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -227,45 +266,20 @@
       gap: 12px;
       margin-bottom: 12px;
     }
-    .app-name {
-      font-size: 17px;
-      font-weight: 700;
-    }
-    .app-business {
-      font-size: 15px;
-      color: #fff;
-      margin-top: 2px;
-    }
-    .app-date {
-      font-size: 14px;
-      color: #fff;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .app-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 14px;
-    }
+    .app-name { font-size: 17px; font-weight: 700; }
+    .app-business { font-size: 15px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+    .app-date { font-size: 14px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+    .app-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
     .app-tag {
       font-size: 13px;
       padding: 4px 10px;
       border-radius: 6px;
       background: rgba(255,255,255,0.06);
-      color: #fff;
+      color: rgba(255,255,255,0.75);
       font-weight: 500;
     }
-    .app-tag.service {
-      background: rgba(0,102,255,0.15);
-      color: var(--blue);
-    }
-    .app-desc {
-      font-size: 15px;
-      color: #fff;
-      line-height: 1.5;
-      margin-bottom: 16px;
-    }
+    .app-tag.service { background: rgba(0,102,255,0.15); color: var(--blue); }
+    .app-desc { font-size: 15px; color: rgba(255,255,255,0.75); line-height: 1.5; margin-bottom: 16px; }
     .approve-btn {
       padding: 10px 20px;
       border-radius: 10px;
@@ -282,38 +296,13 @@
     .approve-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ── Expand / collapse (Queue cards) ── */
-    .app-card-summary {
-      cursor: pointer;
-      user-select: none;
-    }
+    .app-card-summary { cursor: pointer; user-select: none; }
     .app-card-summary:hover .app-name { color: rgba(255,255,255,0.85); }
-    .expand-toggle {
-      font-size: 12px;
-      color: var(--blue);
-      font-weight: 600;
-      margin-top: 6px;
-      display: inline-block;
-    }
-    .app-card-detail {
-      display: none;
-      border-top: 1px solid var(--border);
-      margin-top: 14px;
-      padding-top: 14px;
-    }
+    .expand-toggle { font-size: 12px; color: var(--blue); font-weight: 600; margin-top: 6px; display: inline-block; }
+    .app-card-detail { display: none; border-top: 1px solid var(--border); margin-top: 14px; padding-top: 14px; }
     .app-card-detail.open { display: block; }
-    .detail-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-      font-size: 14px;
-      line-height: 1.4;
-    }
-    .detail-label {
-      color: rgba(255,255,255,0.5);
-      font-weight: 600;
-      flex-shrink: 0;
-      min-width: 110px;
-    }
+    .detail-row { display: flex; gap: 8px; margin-bottom: 10px; font-size: 14px; line-height: 1.4; }
+    .detail-label { color: var(--muted); font-weight: 600; flex-shrink: 0; min-width: 110px; }
     .detail-value { color: #fff; }
 
     /* ── Status badges ── */
@@ -325,18 +314,10 @@
       text-align: center;
       white-space: nowrap;
     }
-    .status-badge.in-progress {
-      background: rgba(0,102,255,0.18);
-      color: var(--blue);
-    }
-    .status-badge.pending-approval {
-      background: rgba(245,158,11,0.18);
-      color: var(--amber);
-    }
-    .status-badge.active {
-      background: rgba(0,200,83,0.15);
-      color: var(--green);
-    }
+    .status-badge.in-progress { background: rgba(0,102,255,0.18); color: var(--blue); }
+    .status-badge.pending-approval { background: rgba(245,158,11,0.18); color: var(--amber); }
+    .status-badge.active { background: rgba(0,200,83,0.15); color: var(--green); }
+    .status-badge.pending { background: rgba(255,184,0,0.15); color: var(--gold); }
 
     /* ── Pipeline section ── */
     .pipeline-section { margin-top: 48px; }
@@ -360,41 +341,20 @@
       cursor: pointer;
       user-select: none;
     }
-    .pipe-card-main {
-      flex: 1;
-      min-width: 0;
-    }
-    .pipe-name {
-      font-size: 15px;
-      font-weight: 700;
-    }
-    .pipe-slug {
-      font-size: 12px;
-      color: rgba(255,255,255,0.5);
-      font-family: 'Courier New', monospace;
-      margin-top: 2px;
-    }
+    .pipe-card-main { flex: 1; min-width: 0; }
+    .pipe-name { font-size: 15px; font-weight: 700; }
+    .pipe-slug { font-size: 12px; color: rgba(255,255,255,0.4); font-family: 'Courier New', monospace; margin-top: 2px; }
     .pipe-email {
       font-size: 14px;
-      color: rgba(255,255,255,0.65);
+      color: rgba(255,255,255,0.55);
       flex: 1;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .pipe-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
-    }
-    .pipe-chevron {
-      font-size: 11px;
-      color: rgba(255,255,255,0.35);
-      transition: transform 0.2s;
-      line-height: 1;
-    }
+    .pipe-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .pipe-chevron { font-size: 11px; color: rgba(255,255,255,0.3); transition: transform 0.2s; line-height: 1; }
     .pipe-card.open .pipe-chevron { transform: rotate(180deg); }
 
     /* ── Pipeline action buttons ── */
@@ -424,14 +384,10 @@
     .activate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ── Pipeline detail panel ── */
-    .pipe-detail {
-      display: none;
-      border-top: 1px solid var(--border);
-      padding: 16px 20px 18px;
-    }
+    .pipe-detail { display: none; border-top: 1px solid var(--border); padding: 16px 20px 18px; }
     .pipe-card.open .pipe-detail { display: block; }
 
-    /* ── Link result box (reused in Queue & Pipeline) ── */
+    /* ── Link result box ── */
     .link-result {
       display: none;
       margin-top: 14px;
@@ -440,14 +396,7 @@
       border: 1px solid rgba(0,200,83,0.25);
       border-radius: 10px;
     }
-    .link-result-label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--green);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
+    .link-result-label { font-size: 12px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
     .link-result-url {
       font-size: 14px;
       color: #fff;
@@ -473,8 +422,56 @@
     .copy-btn:hover { background: var(--blue-dark); }
     .copy-btn.copied { background: var(--green); }
 
-    @media (max-width: 560px) {
+    /* ── Concierge Queue section ── */
+    .concierge-section { margin-top: 52px; }
+    .concierge-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+    .concierge-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 700px;
+    }
+    .concierge-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .concierge-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.82);
+      vertical-align: middle;
+    }
+    .concierge-table tr:last-child td { border-bottom: none; }
+    .concierge-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+    .concierge-name { font-weight: 600; color: #fff; }
+    .concierge-muted { color: var(--muted); font-size: 12px; }
+    .concierge-approve-btn {
+      padding: 5px 13px;
+      border-radius: 7px;
+      background: rgba(0,200,83,0.12);
+      color: var(--green);
+      border: 1px solid rgba(0,200,83,0.3);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .concierge-approve-btn:hover { background: rgba(0,200,83,0.22); }
+    .concierge-approve-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    @media (max-width: 600px) {
       .pipe-email { display: none; }
+      .page-title { font-size: 22px; }
     }
   </style>
 </head>
@@ -509,10 +506,10 @@
     </header>
 
     <main>
-      <div class="page-title">TaskLeader Admin</div>
-      <p class="page-sub">Approve applications, generate welcome links, and activate providers.</p>
+      <div class="page-title"><span class="task">Task</span>Leader Admin</div>
+      <p class="page-sub">Approve applications, generate welcome links, and activate TaskLeaders.</p>
 
-      <!-- Onboarding Queue -->
+      <!-- ── Onboarding Queue ── -->
       <div class="section-head">
         <div class="section-title">Onboarding Queue</div>
         <div style="display:flex;align-items:center;gap:10px;">
@@ -520,16 +517,60 @@
           <button class="refresh-btn" onclick="loadData()">Refresh</button>
         </div>
       </div>
-
       <div id="pendingList"><div class="loading-row">Loading…</div></div>
 
-      <!-- TaskLeader Pipeline -->
-      <div class="pipeline-section">
+      <!-- ── TaskLeader Pipeline ── -->
+      <div class="pipeline-section section-divider">
         <div class="section-head">
           <div class="section-title">TaskLeader Pipeline</div>
           <span class="section-count" id="pipelineCount"></span>
         </div>
+
+        <!-- Filter tabs -->
+        <div class="filter-bar" id="pipelineFilterBar">
+          <button class="filter-tab active" data-filter="all"              onclick="setPipelineFilter(this)">All</button>
+          <button class="filter-tab"         data-filter="pending_onboarding" onclick="setPipelineFilter(this)">Onboarding Queue</button>
+          <button class="filter-tab"         data-filter="in_progress"     onclick="setPipelineFilter(this)">In Progress</button>
+          <button class="filter-tab"         data-filter="pending_approval" onclick="setPipelineFilter(this)">Pending Approval</button>
+          <button class="filter-tab"         data-filter="active"          onclick="setPipelineFilter(this)">Active</button>
+        </div>
+
+        <!-- Search -->
+        <input
+          type="text"
+          class="search-input"
+          id="pipelineSearch"
+          placeholder="Search by name…"
+          oninput="applyPipelineFilters()"
+        />
+
         <div id="pipelineList"><div class="loading-row">Loading…</div></div>
+      </div>
+
+      <!-- ── Concierge Queue ── -->
+      <div class="concierge-section section-divider">
+        <div class="section-head">
+          <div class="section-title">Concierge Queue</div>
+          <span class="section-count" id="conciergeCount"></span>
+        </div>
+
+        <!-- Filter tabs -->
+        <div class="filter-bar" id="conciergeFilterBar">
+          <button class="filter-tab active" data-filter="all"     onclick="setConciergeFilter(this)">All</button>
+          <button class="filter-tab"        data-filter="pending" onclick="setConciergeFilter(this)">Pending</button>
+          <button class="filter-tab"        data-filter="active"  onclick="setConciergeFilter(this)">Active</button>
+        </div>
+
+        <!-- Search -->
+        <input
+          type="text"
+          class="search-input"
+          id="conciergeSearch"
+          placeholder="Search by name…"
+          oninput="applyConciergeFilters()"
+        />
+
+        <div id="conciergeList"><div class="loading-row">Loading…</div></div>
       </div>
     </main>
   </div>
@@ -539,7 +580,13 @@
     const SESSION_KEY = 'tl_admin_pw';
     let adminPw = '';
 
-    // Canonical category display names — must match CATEGORY_META in edge functions
+    // Module-level data stores for client-side filtering
+    let allProviders       = [];
+    let allConciergeClients = [];
+    let pipelineFilter     = 'all';
+    let conciergeFilter    = 'all';
+
+    // Canonical category display names
     const CATEGORY_LABELS = {
       handyman:    'Handyman',
       cleaning:    'Cleaning',
@@ -595,36 +642,33 @@
       }
 
       try {
-        const res = await fetch(
+        const res  = await fetch(
           `${base.replace(/\/$/, '')}/approve-application?admin_password=${encodeURIComponent(adminPw)}`
         );
         const data = await res.json().catch(() => null);
 
-        if (res.status === 401 || (data && data.error?.code === 'unauthorized')) {
+        if (res.status === 401 || data?.error?.code === 'unauthorized') {
           showAuthError();
           return;
         }
 
-        if (!data || data.ok !== true) {
-          throw new Error(data?.error?.message || 'Failed to load data');
-        }
+        if (!data || data.ok !== true) throw new Error(data?.error?.message || 'Failed to load data');
 
         showApp();
-        renderPending(data.data.pending || []);
-        renderPipeline(data.data.approved || []);
+        renderPending(data.data.pending           || []);
+        renderPipeline(data.data.approved         || []);
+        renderConciergeQueue(data.data.concierge_clients || []);
 
       } catch (err) {
         document.getElementById('pendingList').innerHTML =
-          `<div class="empty-row">Error loading data: ${err.message}</div>`;
+          `<div class="empty-row">Error loading data: ${escHtml(err.message)}</div>`;
       }
     }
 
     async function loadPipelineOnly() {
       const base = window.TASKLEADERS_FUNCTIONS_BASE;
       try {
-        const res = await fetch(
-          `${base.replace(/\/$/, '')}/approve-application?admin_password=${encodeURIComponent(adminPw)}`
-        );
+        const res  = await fetch(`${base.replace(/\/$/, '')}/approve-application?admin_password=${encodeURIComponent(adminPw)}`);
         const data = await res.json().catch(() => null);
         if (data?.ok) renderPipeline(data.data.approved || []);
       } catch {}
@@ -632,7 +676,7 @@
 
     // ── Render Onboarding Queue ─────────────────────────────────────────────
     function renderPending(apps) {
-      const el = document.getElementById('pendingList');
+      const el    = document.getElementById('pendingList');
       const count = document.getElementById('pendingCount');
       count.textContent = `${apps.length} application${apps.length !== 1 ? 's' : ''}`;
 
@@ -642,11 +686,8 @@
       }
 
       el.innerHTML = apps.map(app => {
-        const date = new Date(app.created_at).toLocaleDateString('en-CA', {
-          month: 'short', day: 'numeric', year: 'numeric'
-        });
+        const date    = new Date(app.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
         const service = categoryLabel(app.category_slug);
-
         return `
         <div class="app-card" id="card-${app.id}">
           <div class="app-card-summary" onclick="toggleDetail('${app.id}')">
@@ -679,23 +720,64 @@
 
     // ── Render TaskLeader Pipeline ──────────────────────────────────────────
     function renderPipeline(providers) {
-      const el = document.getElementById('pipelineList');
+      allProviders = providers;
+      applyPipelineFilters();
+    }
+
+    function setPipelineFilter(btn) {
+      document.querySelectorAll('#pipelineFilterBar .filter-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      pipelineFilter = btn.dataset.filter;
+      applyPipelineFilters();
+    }
+
+    function applyPipelineFilters() {
+      const q      = (document.getElementById('pipelineSearch')?.value || '').toLowerCase().trim();
+      const limit  = (pipelineFilter === 'all' && !q) ? 10 : Infinity;
+      let filtered = allProviders;
+
+      // Status filter
+      if (pipelineFilter === 'pending_onboarding') {
+        filtered = filtered.filter(p => p.status === 'pending_onboarding');
+      } else if (pipelineFilter === 'in_progress') {
+        filtered = filtered.filter(p => p.status !== 'active' && p.status !== 'pending_approval' && p.status !== 'pending_onboarding');
+      } else if (pipelineFilter === 'pending_approval') {
+        filtered = filtered.filter(p => p.status === 'pending_approval');
+      } else if (pipelineFilter === 'active') {
+        filtered = filtered.filter(p => p.status === 'active');
+      }
+
+      // Search filter
+      if (q) {
+        filtered = filtered.filter(p =>
+          `${p.first_name || ''} ${p.last_name || ''}`.toLowerCase().includes(q) ||
+          (p.email || '').toLowerCase().includes(q)
+        );
+      }
+
+      const visible = filtered.slice(0, limit);
+      renderPipelineCards(visible, filtered.length, allProviders.length);
+    }
+
+    function renderPipelineCards(providers, filteredTotal, total) {
+      const el    = document.getElementById('pipelineList');
       const count = document.getElementById('pipelineCount');
-      count.textContent = `${providers.length} record${providers.length !== 1 ? 's' : ''}`;
+      count.textContent = pipelineFilter === 'all' && !document.getElementById('pipelineSearch')?.value
+        ? `${total} record${total !== 1 ? 's' : ''} — showing ${Math.min(10, total)} most recent`
+        : `${filteredTotal} record${filteredTotal !== 1 ? 's' : ''}`;
 
       if (providers.length === 0) {
-        el.innerHTML = '<div class="empty-row">No providers in pipeline yet.</div>';
+        el.innerHTML = '<div class="empty-row">No records match the current filter.</div>';
         return;
       }
 
       el.innerHTML = providers.map(p => {
         const { cls, label } = pipelineStatus(p.status);
         const actionBtn = p.status === 'pending_onboarding'
-          ? `<button class="action-btn resend-btn" onclick="event.stopPropagation();resendLink('${escHtml(p.slug)}', this)" title="Show welcome link">Resend Link</button>`
+          ? `<button class="action-btn resend-btn" onclick="event.stopPropagation();resendLink('${escHtml(p.slug)}',this)" title="Show welcome link">Resend Link</button>`
           : p.status === 'pending_approval'
-          ? `<button class="action-btn activate-btn" onclick="event.stopPropagation();activateProvider('${escHtml(p.slug)}', this)" title="Mark as Active">Activate</button>`
+          ? `<button class="action-btn activate-btn" onclick="event.stopPropagation();activateProvider('${escHtml(p.slug)}',this)" title="Activate TaskLeader">Activate</button>`
           : '';
-
         const welcomeUrl = `https://task-leaders.com/v0.5/welcome.html?slug=${escHtml(p.slug)}`;
 
         return `
@@ -712,10 +794,10 @@
             </div>
           </div>
           <div class="pipe-detail" id="pdetail-${p.slug}">
-            ${p.email ? `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${escHtml(p.email)}</span></div>` : ''}
+            ${p.email           ? `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${escHtml(p.email)}</span></div>` : ''}
             ${p.whatsapp_number ? `<div class="detail-row"><span class="detail-label">WhatsApp</span><span class="detail-value">${escHtml(p.whatsapp_number)}</span></div>` : ''}
-            ${p.business_name ? `<div class="detail-row"><span class="detail-label">Business</span><span class="detail-value">${escHtml(p.business_name)}</span></div>` : ''}
-            ${p.service_area ? `<div class="detail-row"><span class="detail-label">Service area</span><span class="detail-value">${escHtml(p.service_area)}</span></div>` : ''}
+            ${p.business_name   ? `<div class="detail-row"><span class="detail-label">Business</span><span class="detail-value">${escHtml(p.business_name)}</span></div>` : ''}
+            ${p.service_area    ? `<div class="detail-row"><span class="detail-label">Service area</span><span class="detail-value">${escHtml(p.service_area)}</span></div>` : ''}
             ${p.primary_service ? `<div class="detail-row"><span class="detail-label">Service</span><span class="detail-value">${escHtml(categoryLabel(p.primary_service))}</span></div>` : ''}
             ${p.short_description ? `<div class="detail-row"><span class="detail-label">Description</span><span class="detail-value">${escHtml(p.short_description)}</span></div>` : ''}
             <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -726,7 +808,7 @@
             <div class="link-result" id="resend-panel-${p.slug}" style="display:block;margin-top:12px;">
               <div class="link-result-label">Welcome link</div>
               <div class="link-result-url" id="resend-url-${p.slug}">${welcomeUrl}</div>
-              <button class="copy-btn" id="resend-copy-${p.slug}" onclick="copyText('resend-url-${p.slug}', 'resend-copy-${p.slug}')">Copy Link</button>
+              <button class="copy-btn" id="resend-copy-${p.slug}" onclick="copyText('resend-url-${p.slug}','resend-copy-${p.slug}')">Copy Link</button>
             </div>` : ''}
           </div>
         </div>`;
@@ -739,54 +821,138 @@
       return { cls: 'in-progress', label: 'In Progress' };
     }
 
+    // ── Render Concierge Queue ──────────────────────────────────────────────
+    function renderConciergeQueue(clients) {
+      allConciergeClients = clients;
+      applyConciergeFilters();
+    }
+
+    function setConciergeFilter(btn) {
+      document.querySelectorAll('#conciergeFilterBar .filter-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      conciergeFilter = btn.dataset.filter;
+      applyConciergeFilters();
+    }
+
+    function applyConciergeFilters() {
+      const q      = (document.getElementById('conciergeSearch')?.value || '').toLowerCase().trim();
+      const limit  = (conciergeFilter === 'all' && !q) ? 10 : Infinity;
+      let filtered = allConciergeClients;
+
+      if (conciergeFilter === 'pending') {
+        filtered = filtered.filter(c => c.status === 'pending');
+      } else if (conciergeFilter === 'active') {
+        filtered = filtered.filter(c => c.status === 'active');
+      }
+
+      if (q) {
+        filtered = filtered.filter(c => (c.name || '').toLowerCase().includes(q) ||
+          (c.email || '').toLowerCase().includes(q));
+      }
+
+      const visible = filtered.slice(0, limit);
+      renderConciergeTable(visible, filtered.length, allConciergeClients.length);
+    }
+
+    function renderConciergeTable(clients, filteredTotal, total) {
+      const el    = document.getElementById('conciergeList');
+      const count = document.getElementById('conciergeCount');
+      count.textContent = conciergeFilter === 'all' && !document.getElementById('conciergeSearch')?.value
+        ? `${total} record${total !== 1 ? 's' : ''} — showing ${Math.min(10, total)} most recent`
+        : `${filteredTotal} record${filteredTotal !== 1 ? 's' : ''}`;
+
+      if (clients.length === 0) {
+        el.innerHTML = '<div class="empty-row">No concierge clients match the current filter.</div>';
+        return;
+      }
+
+      const rows = clients.map(c => {
+        const date         = new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+        const statusBadge  = c.status === 'active'
+          ? `<span class="status-badge active">Active</span>`
+          : `<span class="status-badge pending">Pending</span>`;
+        const approveBtn   = c.status !== 'active'
+          ? `<button class="concierge-approve-btn" id="cbtn-${c.id}" onclick="approveConciergeClient('${escHtml(c.id)}',this)">Approve</button>`
+          : statusBadge;
+
+        return `<tr>
+          <td><div class="concierge-name">${escHtml(c.name || '')}</div></td>
+          <td>${escHtml(c.role || '—')}</td>
+          <td>${escHtml(c.company || '—')}</td>
+          <td>${escHtml(c.email || '')}</td>
+          <td>${escHtml(c.whatsapp || '')}</td>
+          <td><span class="concierge-muted">${date}</span></td>
+          <td>${approveBtn}</td>
+        </tr>`;
+      }).join('');
+
+      el.innerHTML = `
+        <div class="concierge-table-wrap">
+          <table class="concierge-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Company / Brokerage</th>
+                <th>Email</th>
+                <th>WhatsApp</th>
+                <th>Date Submitted</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
     // ── Toggle pipeline detail ───────────────────────────────────────────────
     function togglePipelineDetail(slug) {
       const card = document.getElementById(`pipe-${slug}`);
       if (card) card.classList.toggle('open');
     }
 
+    // ── Toggle queue card detail ─────────────────────────────────────────────
+    function toggleDetail(appId) {
+      const detail = document.getElementById(`detail-${appId}`);
+      const toggle = document.getElementById(`toggle-${appId}`);
+      const isOpen = detail.classList.contains('open');
+      detail.classList.toggle('open', !isOpen);
+      toggle.textContent = isOpen ? 'View full application ▾' : 'Hide details ▴';
+    }
+
     // ── Approve an application ───────────────────────────────────────────────
     async function approveApp(applicationId, btn) {
       btn.disabled = true;
       btn.textContent = 'Approving…';
-
       const base = window.TASKLEADERS_FUNCTIONS_BASE;
-
       try {
-        const res = await fetch(`${base.replace(/\/$/, '')}/approve-application`, {
+        const res  = await fetch(`${base.replace(/\/$/, '')}/approve-application`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ application_id: applicationId, admin_password: adminPw })
+          body: JSON.stringify({ application_id: applicationId, admin_password: adminPw }),
         });
         const data = await res.json().catch(() => null);
-
         if (!data || data.ok !== true) {
-          const msg = data?.error?.message || 'Failed to approve application.';
           btn.disabled = false;
           btn.textContent = 'Approve & Generate Link';
-          alert(msg);
+          alert(data?.error?.message || 'Failed to approve application.');
           return;
         }
-
-        // Build and display the welcome link inline in the queue card
         const welcomeUrl = `https://task-leaders.com/v0.5/welcome.html?slug=${data.data.slug}`;
-
         btn.style.display = 'none';
-
-        const detail = document.getElementById(`detail-${applicationId}`);
+        const detail  = document.getElementById(`detail-${applicationId}`);
         const linkDiv = document.createElement('div');
         linkDiv.className = 'link-result';
         linkDiv.style.display = 'block';
         linkDiv.innerHTML = `
-          <div class="link-result-label">Welcome link — send this to the provider</div>
+          <div class="link-result-label">Welcome link — send this to the TaskLeader</div>
           <div class="link-result-url" id="ql-url-${applicationId}">${escHtml(welcomeUrl)}</div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
             <button class="copy-btn" id="ql-copy-${applicationId}" onclick="copyText('ql-url-${applicationId}','ql-copy-${applicationId}')">Copy Link</button>
             <button class="copy-btn" style="background:rgba(255,255,255,0.1);" onclick="loadData()">Done — Move to Pipeline</button>
           </div>`;
         detail.appendChild(linkDiv);
-
-      } catch (err) {
+      } catch {
         btn.disabled = false;
         btn.textContent = 'Approve & Generate Link';
         alert('Network error. Please try again.');
@@ -794,48 +960,75 @@
     }
 
     // ── Resend link ──────────────────────────────────────────────────────────
-    function resendLink(slug, btn) {
-      // Expand the card and open the detail panel so the welcome link is visible
+    function resendLink(slug) {
       const card = document.getElementById(`pipe-${slug}`);
-      if (card && !card.classList.contains('open')) {
-        card.classList.add('open');
-      }
+      if (card && !card.classList.contains('open')) card.classList.add('open');
     }
 
-    // ── Activate provider ────────────────────────────────────────────────────
+    // ── Activate TaskLeader ──────────────────────────────────────────────────
     async function activateProvider(slug, btn) {
       btn.disabled = true;
       btn.textContent = 'Activating…';
-
       const base = window.TASKLEADERS_FUNCTIONS_BASE;
-
       try {
-        const res = await fetch(`${base.replace(/\/$/, '')}/approve-application`, {
+        const res  = await fetch(`${base.replace(/\/$/, '')}/approve-application`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ action: 'activate', slug, admin_password: adminPw })
+          body: JSON.stringify({ action: 'activate', slug, admin_password: adminPw }),
         });
         const data = await res.json().catch(() => null);
-
         if (!data || data.ok !== true) {
-          const msg = data?.error?.message || 'Failed to activate provider.';
           btn.disabled = false;
           btn.textContent = 'Activate';
-          alert(msg);
+          alert(data?.error?.message || 'Failed to activate TaskLeader.');
           return;
         }
-
         btn.textContent = 'Activated ✓';
+        // Welcome email is sent server-side by the activate action.
+        // TODO: WhatsApp welcome message to be wired during Twilio integration.
+        //       Operator should send this manually in the interim.
         setTimeout(() => loadPipelineOnly(), 800);
-
-      } catch (err) {
+      } catch {
         btn.disabled = false;
         btn.textContent = 'Activate';
         alert('Network error. Please try again.');
       }
     }
 
-    // ── Copy text from an element by id ─────────────────────────────────────
+    // ── Approve Concierge Client ─────────────────────────────────────────────
+    async function approveConciergeClient(clientId, btn) {
+      btn.disabled = true;
+      btn.textContent = 'Approving…';
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      try {
+        const res  = await fetch(`${base.replace(/\/$/, '')}/approve-application`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'approve_concierge_client', client_id: clientId, admin_password: adminPw }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!data || data.ok !== true) {
+          btn.disabled = false;
+          btn.textContent = 'Approve';
+          alert(data?.error?.message || 'Failed to approve client.');
+          return;
+        }
+        btn.textContent = 'Approved ✓';
+        // Welcome email is sent server-side.
+        // TODO: WhatsApp welcome message to be wired during Twilio integration.
+        //       Operator should send this manually in the interim.
+        setTimeout(() => applyConciergeFilters(), 800);
+        // Update local state so the button swaps to Active badge without reload
+        const rec = allConciergeClients.find(c => c.id === clientId);
+        if (rec) { rec.status = 'active'; rec.approved_date = new Date().toISOString(); }
+      } catch {
+        btn.disabled = false;
+        btn.textContent = 'Approve';
+        alert('Network error. Please try again.');
+      }
+    }
+
+    // ── Copy text from element ───────────────────────────────────────────────
     function copyText(sourceId, btnId) {
       const text = document.getElementById(sourceId).textContent.trim();
       const btn  = document.getElementById(btnId);
@@ -843,10 +1036,7 @@
       function markCopied() {
         btn.textContent = 'Copied!';
         btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = 'Copy Link';
-          btn.classList.remove('copied');
-        }, 2000);
+        setTimeout(() => { btn.textContent = 'Copy Link'; btn.classList.remove('copied'); }, 2000);
       }
 
       function fallbackCopy() {
@@ -861,22 +1051,11 @@
         markCopied();
       }
 
-      // navigator.clipboard is only available in secure contexts (HTTPS).
-      // On HTTP it is undefined, so we must guard before calling it.
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(markCopied).catch(fallbackCopy);
       } else {
         fallbackCopy();
       }
-    }
-
-    // ── Expand / collapse queue card ─────────────────────────────────────────
-    function toggleDetail(appId) {
-      const detail = document.getElementById(`detail-${appId}`);
-      const toggle = document.getElementById(`toggle-${appId}`);
-      const isOpen = detail.classList.contains('open');
-      detail.classList.toggle('open', !isOpen);
-      toggle.textContent = isOpen ? 'View full application ▾' : 'Hide details ▴';
     }
 
     // ── Utilities ────────────────────────────────────────────────────────────

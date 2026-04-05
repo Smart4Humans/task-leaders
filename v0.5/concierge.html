@@ -517,7 +517,7 @@
           role: document.getElementById('role').value.trim()
         };
 
-        const url = `${base.replace(/\/$/, '')}/vip-request`;
+        const url = `${base.replace(/\/$/, '')}/concierge-apply`;
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
