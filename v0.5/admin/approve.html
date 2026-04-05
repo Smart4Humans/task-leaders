@@ -355,11 +355,13 @@
     .pipe-col-area    { width: 90px; }
     .pipe-col-email   { width: 160px; }
     .pipe-col-wa      { width: 120px; }
-    .pipe-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .pipe-col-status  { width: 120px; flex-shrink: 0; }
+    .pipe-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; min-width: 22px; }
     .pipe-chevron { font-size: 11px; color: rgba(255,255,255,0.3); transition: transform 0.2s; line-height: 1; }
     .pipe-header {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 12px;
       padding: 4px 20px 8px;
       font-size: 10px;
@@ -370,7 +372,6 @@
     }
     .pipe-header .pipe-col { color: rgba(255,255,255,0.35); font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
     .pipe-header-main { flex: 1; min-width: 0; }
-    .pipe-header-status { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(255,255,255,0.35); flex-shrink: 0; }
     .pipe-card.open .pipe-chevron { transform: rotate(180deg); }
 
     /* ── Pipeline action buttons ── */
@@ -545,12 +546,30 @@
           <span class="section-count" id="pipelineCount"></span>
         </div>
 
-        <!-- Filter tabs -->
+        <!-- Status filter tabs -->
         <div class="filter-bar" id="pipelineFilterBar">
           <button class="filter-tab active" data-filter="all"              onclick="setPipelineFilter(this)">All</button>
           <button class="filter-tab"         data-filter="in_progress"     onclick="setPipelineFilter(this)">In Progress</button>
           <button class="filter-tab"         data-filter="pending_approval" onclick="setPipelineFilter(this)">Pending Approval</button>
           <button class="filter-tab"         data-filter="active"          onclick="setPipelineFilter(this)">Active</button>
+        </div>
+
+        <!-- Service filter tabs -->
+        <div class="filter-bar" id="pipelineServiceFilterBar">
+          <button class="filter-tab active"  data-filter="all"        onclick="setPipelineServiceFilter(this)">All Services</button>
+          <button class="filter-tab"         data-filter="handyman"   onclick="setPipelineServiceFilter(this)">Handyman</button>
+          <button class="filter-tab"         data-filter="cleaning"   onclick="setPipelineServiceFilter(this)">Cleaning</button>
+          <button class="filter-tab"         data-filter="painting"   onclick="setPipelineServiceFilter(this)">Painting</button>
+          <button class="filter-tab"         data-filter="electrical" onclick="setPipelineServiceFilter(this)">Electrical</button>
+          <button class="filter-tab"         data-filter="plumbing"   onclick="setPipelineServiceFilter(this)">Plumbing</button>
+          <button class="filter-tab"         data-filter="yard-work"  onclick="setPipelineServiceFilter(this)">Yard Work</button>
+          <button class="filter-tab"         data-filter="hvac"       onclick="setPipelineServiceFilter(this)">HVAC</button>
+          <button class="filter-tab"         data-filter="moving"     onclick="setPipelineServiceFilter(this)">Moving</button>
+        </div>
+
+        <!-- Area filter tabs (populated dynamically from data) -->
+        <div class="filter-bar" id="pipelineAreaFilterBar">
+          <button class="filter-tab active" data-filter="all" onclick="setPipelineAreaFilter(this)">All Areas</button>
         </div>
 
         <!-- Search -->
@@ -568,7 +587,8 @@
           <div class="pipe-col pipe-col-area">Area</div>
           <div class="pipe-col pipe-col-email">Email</div>
           <div class="pipe-col pipe-col-wa">WhatsApp</div>
-          <div class="pipe-header-status">Status</div>
+          <div class="pipe-col pipe-col-status">Status</div>
+          <div class="pipe-right" style="visibility:hidden;"><span class="pipe-chevron">▾</span></div>
         </div>
 
         <div id="pipelineList"><div class="loading-row">Loading…</div></div>
@@ -617,9 +637,11 @@
     // Module-level data stores for client-side filtering
     let allProviders       = [];
     let allConciergeClients = [];
-    let pipelineFilter      = 'all';
-    let conciergeFilter     = 'all';
-    let conciergeRoleFilter = 'all';
+    let pipelineFilter        = 'all';
+    let pipelineServiceFilter = 'all';
+    let pipelineAreaFilter    = 'all';
+    let conciergeFilter       = 'all';
+    let conciergeRoleFilter   = 'all';
 
     // Canonical category display names
     const CATEGORY_LABELS = {
@@ -756,6 +778,7 @@
     // ── Render TaskLeader Pipeline ──────────────────────────────────────────
     function renderPipeline(providers) {
       allProviders = providers;
+      buildPipelineAreaFilter();
       applyPipelineFilters();
     }
 
@@ -766,23 +789,56 @@
       applyPipelineFilters();
     }
 
+    function setPipelineServiceFilter(btn) {
+      document.querySelectorAll('#pipelineServiceFilterBar .filter-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      pipelineServiceFilter = btn.dataset.filter;
+      applyPipelineFilters();
+    }
+
+    function setPipelineAreaFilter(btn) {
+      document.querySelectorAll('#pipelineAreaFilterBar .filter-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      pipelineAreaFilter = btn.dataset.filter;
+      applyPipelineFilters();
+    }
+
+    function buildPipelineAreaFilter() {
+      const areas = [...new Set(allProviders.map(p => (p.service_area || '').trim()).filter(Boolean))].sort();
+      const bar = document.getElementById('pipelineAreaFilterBar');
+      if (!bar) return;
+      bar.innerHTML = `<button class="filter-tab active" data-filter="all" onclick="setPipelineAreaFilter(this)">All Areas</button>` +
+        areas.map(a => `<button class="filter-tab" data-filter="${escHtml(a.toLowerCase())}" onclick="setPipelineAreaFilter(this)">${escHtml(toTitleCase(a))}</button>`).join('');
+      pipelineAreaFilter = 'all';
+    }
+
     function toTitleCase(str) {
       return String(str || '').replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
     }
 
     function applyPipelineFilters() {
-      const q      = (document.getElementById('pipelineSearch')?.value || '').toLowerCase().trim();
-      const limit  = (pipelineFilter === 'all' && !q) ? 10 : Infinity;
-      let filtered = allProviders;
+      const q         = (document.getElementById('pipelineSearch')?.value || '').toLowerCase().trim();
+      const noFilters = pipelineFilter === 'all' && pipelineServiceFilter === 'all' && pipelineAreaFilter === 'all' && !q;
+      const limit     = noFilters ? 10 : Infinity;
+      let filtered    = allProviders;
 
-      // Status filter — 10-record cap applies to "All" only; specific filters show all matches
-      // "In Progress" = everything that is not active and not pending_approval (includes pending_onboarding)
+      // Status filter
       if (pipelineFilter === 'in_progress') {
         filtered = filtered.filter(p => p.status !== 'active' && p.status !== 'pending_approval');
       } else if (pipelineFilter === 'pending_approval') {
         filtered = filtered.filter(p => p.status === 'pending_approval');
       } else if (pipelineFilter === 'active') {
         filtered = filtered.filter(p => p.status === 'active');
+      }
+
+      // Service filter
+      if (pipelineServiceFilter !== 'all') {
+        filtered = filtered.filter(p => (p.primary_service || '').toLowerCase() === pipelineServiceFilter);
+      }
+
+      // Area filter
+      if (pipelineAreaFilter !== 'all') {
+        filtered = filtered.filter(p => (p.service_area || '').toLowerCase() === pipelineAreaFilter);
       }
 
       // Search filter — name, service, area, whatsapp
@@ -803,7 +859,8 @@
     function renderPipelineCards(providers, filteredTotal, total) {
       const el    = document.getElementById('pipelineList');
       const count = document.getElementById('pipelineCount');
-      count.textContent = pipelineFilter === 'all' && !document.getElementById('pipelineSearch')?.value
+      const _pq = document.getElementById('pipelineSearch')?.value || '';
+      count.textContent = pipelineFilter === 'all' && pipelineServiceFilter === 'all' && pipelineAreaFilter === 'all' && !_pq
         ? `${total} record${total !== 1 ? 's' : ''} — showing ${Math.min(10, total)} most recent`
         : `${filteredTotal} record${filteredTotal !== 1 ? 's' : ''}`;
 
@@ -831,11 +888,8 @@
             <div class="pipe-col pipe-col-area">${escHtml(toTitleCase(p.service_area || ''))}</div>
             <div class="pipe-col pipe-col-email">${escHtml(p.email || '')}</div>
             <div class="pipe-col pipe-col-wa">${escHtml(p.whatsapp_number || '')}</div>
-            <div class="pipe-right">
-              <span class="status-badge ${cls}">${label}</span>
-              ${actionBtn}
-              <span class="pipe-chevron">▾</span>
-            </div>
+            <div class="pipe-col pipe-col-status"><span class="status-badge ${cls}">${label}</span></div>
+            <div class="pipe-right">${actionBtn}<span class="pipe-chevron">▾</span></div>
           </div>
           <div class="pipe-detail" id="pdetail-${p.slug}">
             ${p.email           ? `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${escHtml(p.email)}</span></div>` : ''}
