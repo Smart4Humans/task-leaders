@@ -357,6 +357,20 @@
     .pipe-col-wa      { width: 120px; }
     .pipe-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .pipe-chevron { font-size: 11px; color: rgba(255,255,255,0.3); transition: transform 0.2s; line-height: 1; }
+    .pipe-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 20px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+    }
+    .pipe-header .pipe-col { color: rgba(255,255,255,0.35); font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+    .pipe-header-main { flex: 1; min-width: 0; }
+    .pipe-header-status { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(255,255,255,0.35); flex-shrink: 0; }
     .pipe-card.open .pipe-chevron { transform: rotate(180deg); }
 
     /* ── Pipeline action buttons ── */
@@ -544,9 +558,18 @@
           type="text"
           class="search-input"
           id="pipelineSearch"
-          placeholder="Search by name…"
+          placeholder="Search by name, service, area, or WhatsApp…"
           oninput="applyPipelineFilters()"
         />
+
+        <div class="pipe-header">
+          <div class="pipe-header-main">Name</div>
+          <div class="pipe-col pipe-col-service">Primary Service</div>
+          <div class="pipe-col pipe-col-area">Area</div>
+          <div class="pipe-col pipe-col-email">Email</div>
+          <div class="pipe-col pipe-col-wa">WhatsApp</div>
+          <div class="pipe-header-status">Status</div>
+        </div>
 
         <div id="pipelineList"><div class="loading-row">Loading…</div></div>
       </div>
@@ -558,11 +581,18 @@
           <span class="section-count" id="conciergeCount"></span>
         </div>
 
-        <!-- Filter tabs -->
+        <!-- Status filter tabs -->
         <div class="filter-bar" id="conciergeFilterBar">
           <button class="filter-tab active" data-filter="all"     onclick="setConciergeFilter(this)">All</button>
           <button class="filter-tab"        data-filter="pending" onclick="setConciergeFilter(this)">Pending</button>
           <button class="filter-tab"        data-filter="active"  onclick="setConciergeFilter(this)">Active</button>
+        </div>
+
+        <!-- Role filter tabs -->
+        <div class="filter-bar" id="conciergeRoleFilterBar">
+          <button class="filter-tab active" data-filter="all"              onclick="setConciergeRoleFilter(this)">All Roles</button>
+          <button class="filter-tab"        data-filter="realtor"          onclick="setConciergeRoleFilter(this)">Realtor</button>
+          <button class="filter-tab"        data-filter="property-manager" onclick="setConciergeRoleFilter(this)">Property Manager</button>
         </div>
 
         <!-- Search -->
@@ -587,8 +617,9 @@
     // Module-level data stores for client-side filtering
     let allProviders       = [];
     let allConciergeClients = [];
-    let pipelineFilter     = 'all';
-    let conciergeFilter    = 'all';
+    let pipelineFilter      = 'all';
+    let conciergeFilter     = 'all';
+    let conciergeRoleFilter = 'all';
 
     // Canonical category display names
     const CATEGORY_LABELS = {
@@ -840,6 +871,14 @@
       applyConciergeFilters();
     }
 
+    const ROLE_LABELS = {
+      'realtor':          'Realtor',
+      'property-manager': 'Property Manager',
+    };
+    function roleLabel(role) {
+      return ROLE_LABELS[String(role || '').toLowerCase()] || (role ? role.charAt(0).toUpperCase() + role.slice(1) : '—');
+    }
+
     function setConciergeFilter(btn) {
       document.querySelectorAll('#conciergeFilterBar .filter-tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
@@ -847,15 +886,27 @@
       applyConciergeFilters();
     }
 
+    function setConciergeRoleFilter(btn) {
+      document.querySelectorAll('#conciergeRoleFilterBar .filter-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      conciergeRoleFilter = btn.dataset.filter;
+      applyConciergeFilters();
+    }
+
     function applyConciergeFilters() {
       const q      = (document.getElementById('conciergeSearch')?.value || '').toLowerCase().trim();
-      const limit  = (conciergeFilter === 'all' && !q) ? 10 : Infinity;
+      const noFilters = conciergeFilter === 'all' && conciergeRoleFilter === 'all' && !q;
+      const limit  = noFilters ? 10 : Infinity;
       let filtered = allConciergeClients;
 
       if (conciergeFilter === 'pending') {
         filtered = filtered.filter(c => c.status === 'pending');
       } else if (conciergeFilter === 'active') {
         filtered = filtered.filter(c => c.status === 'active');
+      }
+
+      if (conciergeRoleFilter !== 'all') {
+        filtered = filtered.filter(c => (c.role || '').toLowerCase() === conciergeRoleFilter);
       }
 
       if (q) {
@@ -872,7 +923,8 @@
     function renderConciergeTable(clients, filteredTotal, total) {
       const el    = document.getElementById('conciergeList');
       const count = document.getElementById('conciergeCount');
-      count.textContent = conciergeFilter === 'all' && !document.getElementById('conciergeSearch')?.value
+      const _q = document.getElementById('conciergeSearch')?.value || '';
+      count.textContent = conciergeFilter === 'all' && conciergeRoleFilter === 'all' && !_q
         ? `${total} record${total !== 1 ? 's' : ''} — showing ${Math.min(10, total)} most recent`
         : `${filteredTotal} record${filteredTotal !== 1 ? 's' : ''}`;
 
@@ -893,7 +945,7 @@
 
         return `<tr>
           <td><div class="concierge-name">${escHtml(displayName)}</div></td>
-          <td>${escHtml(c.role || '—')}</td>
+          <td>${escHtml(roleLabel(c.role))}</td>
           <td>${escHtml(c.company || '—')}</td>
           <td>${escHtml(c.email || '')}</td>
           <td>${escHtml(c.whatsapp || '')}</td>
