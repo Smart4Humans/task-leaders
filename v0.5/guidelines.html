@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaskLeader Guidelines — TaskLeaders</title>
+  <style>
+    :root {
+      --blue: #0066ff;
+      --blue-dark: #0052cc;
+      --bg: #0a0a14;
+      --card: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --muted: rgba(255,255,255,0.55);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+    }
+    .back {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .back:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo .task   { color: var(--blue); }
+    .logo .leaders { color: #fff; }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+
+    .doc-header {
+      margin-bottom: 40px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    .doc-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 4px 0;
+      letter-spacing: -0.3px;
+    }
+    .doc-header .doc-subtitle {
+      font-size: 15px;
+      color: rgba(255,255,255,0.6);
+      margin: 0 0 10px 0;
+      font-weight: 500;
+    }
+    .doc-meta {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .doc-meta .version {
+      display: inline-block;
+      background: rgba(0,102,255,0.15);
+      color: var(--blue);
+      border: 1px solid rgba(0,102,255,0.3);
+      border-radius: 4px;
+      padding: 1px 7px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .doc-intro {
+      font-size: 15px;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.7;
+      margin-bottom: 36px;
+      padding: 20px 24px;
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 40px 0 12px;
+      color: #fff;
+    }
+    h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 28px 0 10px;
+      color: rgba(255,255,255,0.9);
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.75;
+      color: rgba(255,255,255,0.8);
+      margin: 0 0 14px;
+    }
+    ul, ol {
+      padding-left: 24px;
+      margin: 0 0 14px;
+    }
+    li {
+      font-size: 15px;
+      line-height: 1.75;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 6px;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 32px 0 0;
+    }
+
+    /* Fee table */
+    .fee-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 14px;
+      font-size: 14px;
+    }
+    .fee-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.7);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    .fee-table td {
+      padding: 10px 14px;
+      color: rgba(255,255,255,0.8);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .fee-table tr:last-child td { border-bottom: none; }
+    .fee-table-note {
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    /* Acknowledgment box */
+    .acknowledgment {
+      margin-top: 40px;
+      padding: 24px;
+      background: rgba(0,102,255,0.08);
+      border: 1px solid rgba(0,102,255,0.2);
+      border-radius: 10px;
+    }
+    .acknowledgment h2 {
+      margin-top: 0;
+      font-size: 16px;
+      color: rgba(255,255,255,0.95);
+    }
+    .acknowledgment p {
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+    footer p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: #fff; }
+
+    @media (max-width: 600px) {
+      header { padding: 14px 20px; }
+      main { padding: 32px 20px 60px; }
+      .doc-header h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="homepage.html" class="back">← Back</a>
+    <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
+  </header>
+
+  <main>
+    <div class="doc-header">
+      <h1>TaskLeader Guidelines</h1>
+      <p class="doc-subtitle">Service Provider Agreement</p>
+      <p class="doc-meta">
+        Last Updated: April 2, 2026
+        <span class="version">v1.8</span>
+      </p>
+    </div>
+
+    <div class="doc-intro">
+      These TaskLeader Guidelines ("Guidelines") govern your participation as an accepted TaskLeader ("Service Provider," "you," or "your") on the platform operated by TaskLeaders Network Inc. ("TaskLeaders," "we," "us," or "our"). By completing onboarding and joining the network, you agree to these Guidelines in full. These Guidelines are incorporated by reference into the TaskLeaders <a href="terms.html" target="_blank">Terms of Service</a>.
+    </div>
+
+    <h2>1. Who These Guidelines Apply To</h2>
+    <p>These Guidelines apply to all individuals and businesses accepted into the TaskLeaders network as Service Providers, whether operating as Tier 1 Concierge Service Providers or Tier 2 Marketplace Service Providers. The term "TaskLeader" is used colloquially to refer to accepted Service Providers within the platform and does not imply employment, partnership, or agency with TaskLeaders Network Inc.</p>
+
+    <hr class="section-divider">
+
+    <h2>2. Independent Contractor Status</h2>
+    <p>You are an independent contractor, not an employee, agent, or partner of TaskLeaders Network Inc. You are solely responsible for:</p>
+    <ul>
+      <li>Your own licensing, certifications, and insurance</li>
+      <li>The quality and safety of your work</li>
+      <li>Your own taxes, remittances, and regulatory compliance</li>
+      <li>Your tools, equipment, and personnel</li>
+    </ul>
+    <p>TaskLeaders does not supervise, control, or direct how you perform your work. We facilitate connections and track performance metrics only.</p>
+
+    <hr class="section-divider">
+
+    <h2>3. Eligibility and Onboarding</h2>
+
+    <h3>3.1 Eligibility Requirements</h3>
+    <p>To be accepted into the TaskLeaders network, you must:</p>
+    <ul>
+      <li>Be at least 18 years of age</li>
+      <li>Hold any required trade licenses or certifications for your service category</li>
+      <li>Carry appropriate liability insurance</li>
+      <li>Provide valid government-issued identification</li>
+      <li>Have a working WhatsApp-enabled phone number</li>
+      <li>Agree to these Guidelines in full</li>
+    </ul>
+
+    <h3>3.2 Onboarding Process</h3>
+    <p>All onboarding is completed through a direct founder call. During the call, you will be asked to provide:</p>
+    <ul>
+      <li>A photo of your government-issued ID</li>
+      <li>A personal profile photo</li>
+      <li>Copies of any relevant trade licenses</li>
+      <li>Confirmation of your base rates, service categories, and coverage area</li>
+    </ul>
+    <p>Following the call, you will receive a link to complete your public profile within 48 hours. Completing your profile on time is a reliability test and forms part of your initial performance record.</p>
+
+    <h3>3.3 Acceptance is at Our Discretion</h3>
+    <p>Submission of an application does not guarantee acceptance. TaskLeaders reserves the right to decline any applicant without explanation.</p>
+
+    <hr class="section-divider">
+
+    <h2>4. Service Provider Tiers</h2>
+
+    <h3>4.1 Tier 1 — Concierge Service Provider</h3>
+    <p>Concierge Service Providers have access to the realtor and property manager lead pipeline — the most exclusive and highest-quality leads on the platform. Concierge Service Providers pay a per-lead fee upon accepting each lead (see Section 5).</p>
+
+    <h3>4.2 Tier 2 — Marketplace Service Provider</h3>
+    <p>Marketplace Service Providers are listed publicly on the TaskLeaders Marketplace. Listing is supported by a monthly subscription fee (currently waived for the first 50 TaskLeaders for six months from their onboarding date). Marketplace leads are routed through the TaskLeaders system at no per-lead cost and are covered by the subscription.</p>
+    <p>The founding cohort of Concierge Service Providers is onboarded directly during the initial network build. Once the network is established, Tier 1 Concierge Service Provider status becomes invitation-only and is earned through demonstrated performance, including:</p>
+    <ul>
+      <li>A minimum Reliability Score (threshold communicated during invitation)</li>
+      <li>A minimum number of completed jobs with tracked outcomes</li>
+      <li>Consistent responsiveness and professionalism</li>
+      <li>No outstanding compliance issues</li>
+    </ul>
+    <p>Participation in the public Marketplace is optional for Concierge Service Providers, who receive a discounted or waived subscription as a perk.</p>
+
+    <hr class="section-divider">
+
+    <h2>5. Lead Fees and Payment</h2>
+
+    <h3>5.1 Lead Fee Schedule</h3>
+    <p>Concierge Service Providers pay a flat lead fee by service category before a lead is assigned. Current fees are as follows:</p>
+    <table class="fee-table">
+      <thead>
+        <tr>
+          <th>Service Category</th>
+          <th>Lead Fee (+ GST)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Cleaning</td><td>$15</td></tr>
+        <tr><td>Yard Work</td><td>$15</td></tr>
+        <tr><td>Handyman</td><td>$20</td></tr>
+        <tr><td>Moving / Transport</td><td>$25</td></tr>
+        <tr><td>Painting</td><td>$40</td></tr>
+        <tr><td>Plumbing</td><td>$50</td></tr>
+        <tr><td>Electrical</td><td>$50</td></tr>
+        <tr><td>HVAC</td><td>$60</td></tr>
+      </tbody>
+    </table>
+    <p class="fee-table-note">TaskLeaders reserves the right to update the lead fee schedule at any time with reasonable notice to active Concierge Service Providers.</p>
+
+    <h3>5.2 Lead Fee as a Gateway Condition</h3>
+    <p>Payment of the lead fee is a mandatory condition of lead assignment. A lead will not be released — and contact information will not be shared — until payment has been confirmed. Accepting a lead and failing to complete payment results in forfeiture of the lead and a negative impact on your Reliability Score.</p>
+
+    <h3>5.3 Payment Methods</h3>
+    <p>TaskLeaders strongly encourages all Concierge Providers to set up a pre-authorized payment card on file through Stripe at the time of onboarding.</p>
+    <p><strong>Pre-authorized card on file:</strong> Your card is charged instantly and automatically at the moment you accept a lead. No additional steps are required.</p>
+    <p><strong>No card on file (manual payment):</strong> A Stripe payment link will be delivered via WhatsApp. The payment link must be completed within 5 minutes of lead acceptance. If payment is not received within 5 minutes, the lead will be released to the next available provider and your Reliability Score will be negatively affected.</p>
+
+    <h3>5.4 Refund Policy</h3>
+    <p>Lead fees are non-refundable once payment has been made and lead contact information has been released, except as provided under the Lead Guarantee in Section 6.4.</p>
+    <p>Refund claim frequency is monitored. Patterns inconsistent with normal lead conversion rates may be reviewed at TaskLeaders' discretion.</p>
+
+    <h3>5.5 Taxes and Invoicing</h3>
+    <p>All lead fees and subscription fees charged by TaskLeaders Network Inc. are subject to applicable Canadian Goods and Services Tax (GST) at the prevailing rate. GST will be added to all fees and itemized on the receipt or invoice issued through Stripe for each transaction.</p>
+    <p>As a registered business operator, you may be eligible to claim lead fees and subscription fees paid to TaskLeaders as a business expense, and to recover the GST paid as an Input Tax Credit (ITC), subject to your own GST registration status and CRA eligibility rules. TaskLeaders strongly recommends consulting a qualified accountant to confirm your eligibility.</p>
+    <p>TaskLeaders Network Inc. is responsible solely for collecting and remitting GST on platform fees charged by TaskLeaders. TaskLeaders expressly disclaims responsibility for any of the following tax obligations, which remain solely yours as an independent contractor:</p>
+    <ul>
+      <li>Income tax on revenue earned through jobs arranged via the platform</li>
+      <li>Canada Pension Plan (CPP) contributions</li>
+      <li>Employment Insurance (EI) premiums</li>
+      <li>Workers' compensation premiums or assessments</li>
+      <li>GST or HST obligations arising from your own business activities and job revenue</li>
+      <li>Any provincial sales tax, payroll tax, employer training tax, or other applicable tax</li>
+    </ul>
+    <p>You are solely responsible for determining your own tax obligations, registering with the Canada Revenue Agency (CRA) as required, and remitting all applicable taxes on income earned through the platform. TaskLeaders strongly encourages you to consult a qualified accountant or tax advisor.</p>
+
+    <hr class="section-divider">
+
+    <h2>6. Lead Dispatch and Acceptance</h2>
+
+    <h3>6.1 Broadcast Model</h3>
+    <p>When a qualifying lead becomes available, TaskLeaders broadcasts the opportunity simultaneously to all Concierge Service Providers who are qualified for that service category and area. Every provider receives the same opportunity at the same time.</p>
+
+    <h3>6.2 First Responder Assignment</h3>
+    <p>The lead is assigned to the first qualified provider who responds with a confirmed commitment to accept the job and completes payment within the applicable time window. Speed of response is tracked and forms part of your performance record.</p>
+
+    <h3>6.3 Lead Exclusivity</h3>
+    <p>Every lead is exclusive. Once assigned, it is yours alone — the same lead will never be shared with another provider. If you forfeit the lead (by non-payment or non-response), it is released to the next available provider.</p>
+
+    <h3>6.4 Lead Guarantee</h3>
+    <p>TaskLeaders guarantees that every lead assigned through the Concierge network represents a real person with a confirmed, immediate service need, pre-screened through the Concierge intake process, and located within your confirmed coverage area.</p>
+    <p>If no work was performed on a lead, you are entitled to a full refund of the lead fee, subject to the following conditions:</p>
+    <ul>
+      <li>Both parties (you and the Client) confirm within the TaskLeaders WhatsApp group chat that no work took place</li>
+      <li>The claim is submitted within 30 days of lead assignment</li>
+      <li>Supporting confirmation is available within the group chat record</li>
+    </ul>
+    <p>A refund will not be issued where:</p>
+    <ul>
+      <li>Communication regarding the outcome occurred outside the TaskLeaders WhatsApp group chat</li>
+      <li>The claim was submitted after 30 days of lead assignment</li>
+    </ul>
+    <p>Approved refunds will be processed within 7 business days of claim approval.</p>
+
+    <hr class="section-divider">
+
+    <h2>7. Performance Metrics</h2>
+
+    <h3>7.1 How Your Performance is Measured</h3>
+    <p>TaskLeaders tracks two performance metrics for all Service Providers. These metrics inform your public profile, your standing on the category leaderboard, and your eligibility for Concierge tier access.</p>
+
+    <h3>7.2 Score Visibility</h3>
+    <p>Your Reliability Score (displayed as a percentage) and Response Time are visible on your public profile and on the TaskLeaders category leaderboard. New providers display "Building track record" until a minimum of five data points have been recorded.</p>
+
+    <h3>7.3 Score Impacts</h3>
+    <p>The following actions negatively affect your Reliability Score:</p>
+    <ul>
+      <li>Accepting a job and not showing up</li>
+      <li>Failing to send a day-of ETA update to the Client</li>
+      <li>Receiving a low post-job survey rating</li>
+      <li>Failing to pay the lead fee within the applicable time window after acceptance</li>
+      <li>Late or non-completion of your profile within the 48-hour onboarding window</li>
+    </ul>
+    <p>Refund claim frequency is also monitored. A pattern of refund claims inconsistent with normal lead conversion rates may be flagged for operator review.</p>
+
+    <h3>7.4 Consequences of Low Score</h3>
+    <p>Service Providers with consistently low Reliability Scores may be subject to:</p>
+    <ul>
+      <li>Reduced lead broadcast priority</li>
+      <li>Suspension from Concierge lead access</li>
+      <li>Removal from the TaskLeaders network</li>
+    </ul>
+
+    <hr class="section-divider">
+
+    <h2>8. Professional Standards</h2>
+
+    <h3>8.1 Conduct</h3>
+    <p>As a TaskLeader, you represent the standard of the network. You agree to:</p>
+    <ul>
+      <li>Treat all Clients with professionalism and respect</li>
+      <li>Respond to communications promptly</li>
+      <li>Arrive on time or provide advance notice of any delay</li>
+      <li>Perform work to a professional standard consistent with your trade</li>
+      <li>Honour the rates and scope confirmed at the time of job acceptance</li>
+    </ul>
+
+    <h3>8.2 Communication Protocol</h3>
+    <p>All lead coordination occurs through TaskLeaders' WhatsApp-based system. You agree to:</p>
+    <ul>
+      <li>Keep your WhatsApp number active and monitored during business hours</li>
+      <li>Send a confirmation message in the three-way group chat upon lead assignment</li>
+      <li>Send a day-of ETA update to the Client before arriving on site</li>
+      <li>Not contact Clients outside the TaskLeaders system to circumvent fees or tracking</li>
+    </ul>
+    <p>Automated systems, including AI-assisted messaging, may be used by TaskLeaders within WhatsApp group chats to facilitate coordination, reminders, and confirmations. By participating in a TaskLeaders group chat, you acknowledge and consent to the presence of automated participants.</p>
+
+    <h3>8.3 Brand Representation</h3>
+    <p>You may represent yourself as part of the TaskLeaders network when interacting with assigned Clients. You may not represent yourself as an employee of TaskLeaders Network Inc. or imply that TaskLeaders is responsible for the services you provide.</p>
+
+    <hr class="section-divider">
+
+    <h2>9. Prohibited Conduct</h2>
+    <p>The following conduct may result in immediate removal from the network without refund of any fees paid:</p>
+    <ul>
+      <li>Soliciting Clients outside the platform to avoid lead fees after being introduced through TaskLeaders</li>
+      <li>Providing false information during onboarding or in your profile</li>
+      <li>Performing unlicensed or uninsured work where licensing or insurance is required</li>
+      <li>Harassing, threatening, or engaging in discriminatory conduct toward any Client or TaskLeaders representative</li>
+      <li>Attempting to manipulate your Reliability Score through false reporting</li>
+      <li>Sharing Client contact information with third parties</li>
+    </ul>
+
+    <hr class="section-divider">
+
+    <h2>10. Suspension and Removal</h2>
+    <p>TaskLeaders reserves the right to suspend or permanently remove any Service Provider from the network at any time, with or without notice, for:</p>
+    <ul>
+      <li>Violation of these Guidelines</li>
+      <li>Conduct that damages the reputation of the TaskLeaders network</li>
+      <li>Failure to maintain minimum Reliability Score thresholds</li>
+      <li>Any reason at our sole discretion</li>
+    </ul>
+    <p>Upon removal, access to the platform, lead pipeline, and public profile listing will be revoked immediately. No refund of subscription fees or lead fees will be issued upon removal for cause.</p>
+
+    <hr class="section-divider">
+
+    <h2>11. Modifications to These Guidelines</h2>
+    <p>TaskLeaders reserves the right to update these Guidelines at any time. Active Service Providers will be notified of material changes via WhatsApp or email. Continued use of the platform following notification constitutes acceptance of the updated Guidelines.</p>
+
+    <hr class="section-divider">
+
+    <h2>12. Governing Law</h2>
+    <p>These Guidelines are governed by the laws of the Province of British Columbia and the federal laws of Canada applicable therein. Any disputes arising under these Guidelines shall be resolved in the courts of British Columbia.</p>
+
+    <hr class="section-divider">
+
+    <h2>13. Contact</h2>
+    <p>For questions regarding these Guidelines, please contact:</p>
+    <p>
+      TaskLeaders Network Inc.<br>
+      Email: <a href="mailto:info@task-leaders.com">info@task-leaders.com</a><br>
+      Website: <a href="https://task-leaders.com">task-leaders.com</a>
+    </p>
+
+    <div class="acknowledgment">
+      <h2>Acknowledgment</h2>
+      <p>Acceptance of these Guidelines is completed digitally at the time of onboarding. By checking the "I have read and agree to the TaskLeader Guidelines" checkbox on the Profile Setup form, you confirm that you have read, understood, and agree to these Guidelines in their entirety. The checkbox is linked directly to this document.</p>
+      <br>
+      <p>This electronic acceptance constitutes a valid and binding agreement under the laws of British Columbia.</p>
+    </div>
+  </main>
+
+  <footer>
+    <p><a href="homepage.html">← Back to TaskLeaders</a> &nbsp;&middot;&nbsp; <a href="terms.html">Terms of Service</a> &nbsp;&middot;&nbsp; <a href="privacy.html">Privacy Policy</a> &nbsp;&middot;&nbsp; &copy; 2026 TaskLeaders Network Inc.</p>
+  </footer>
+
+</body>
+</html>

@@ -785,7 +785,13 @@
         </div>
 
         <!-- Terms -->
-        <div class="terms-checkbox-row" onclick="document.getElementById('termsCheck').click()">
+        <div class="terms-checkbox-row" onclick="document.getElementById('guidelinesCheck').click()">
+          <input type="checkbox" id="guidelinesCheck" required onclick="event.stopPropagation()" />
+          <label for="guidelinesCheck" onclick="event.stopPropagation()">
+            I have read and agree to the <a href="guidelines.html" target="_blank">TaskLeader Guidelines</a>.
+          </label>
+        </div>
+        <div class="terms-checkbox-row" style="margin-top:12px" onclick="document.getElementById('termsCheck').click()">
           <input type="checkbox" id="termsCheck" required onclick="event.stopPropagation()" />
           <label for="termsCheck" onclick="event.stopPropagation()">
             I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>. I confirm that the information I've provided is accurate.
