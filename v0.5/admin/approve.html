@@ -474,21 +474,6 @@
     .status-badge.job-assigned   { background: rgba(0,102,255,0.18);  color: var(--blue); }
     .status-badge.job-in-progress { background: rgba(245,158,11,0.18); color: var(--amber); }
     .status-badge.job-completed  { background: rgba(0,200,83,0.15);   color: var(--green); }
-    .test-job-btn {
-      padding: 6px 14px;
-      border-radius: 8px;
-      border: 1px dashed rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.04);
-      color: rgba(255,255,255,0.45);
-      font-size: 11px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    .test-job-btn:hover { border-color: rgba(255,255,255,0.35); color: rgba(255,255,255,0.7); }
-    .test-job-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
     /* ── Concierge Queue section ── */
     .concierge-section { margin-top: 52px; }
     .concierge-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
@@ -649,7 +634,6 @@
         <div class="section-head">
           <div class="section-title">Active Jobs</div>
           <span class="section-count" id="jobsCount"></span>
-          <button class="test-job-btn" id="testJobBtn" onclick="createTestJob(this)" title="DEV TOOL — creates VAN-PLM test job">⚙ Create Test Job</button>
         </div>
 
         <!-- Status filter tabs -->
@@ -1112,40 +1096,6 @@
             <tbody>${rows}</tbody>
           </table>
         </div>`;
-    }
-
-    // ── Create Test Job (DEV) ────────────────────────────────────────────────
-    async function createTestJob(btn) {
-      btn.disabled = true;
-      btn.textContent = '⚙ Creating…';
-      const base = window.TASKLEADERS_FUNCTIONS_BASE;
-      try {
-        const res  = await fetch(`${base.replace(/\/$/, '')}/create-job`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            city_code:     'VAN',
-            category_code: 'PLM',
-            category_name: 'Plumbing',
-            address:       '123 Test St Vancouver',
-          }),
-        });
-        const data = await res.json().catch(() => null);
-        if (!data || data.ok !== true) {
-          alert('Test job failed: ' + (data?.error?.message || 'Unknown error'));
-          btn.disabled = false;
-          btn.textContent = '⚙ Create Test Job';
-          return;
-        }
-        const j = data.data;
-        btn.textContent = `✓ Created ${jobDisplayId(j.job_id)}`;
-        // Reload jobs
-        setTimeout(() => loadData(), 800);
-      } catch (err) {
-        alert('Network error: ' + err.message);
-        btn.disabled = false;
-        btn.textContent = '⚙ Create Test Job';
-      }
     }
 
     // ── Render Concierge Queue ──────────────────────────────────────────────
