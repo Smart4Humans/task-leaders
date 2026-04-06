@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     const pw  = url.searchParams.get("admin_password");
     if (pw !== adminPassword) return error("unauthorized", "Invalid admin password", 401);
 
-    const [pendingRes, approvedRes, conciergeRes] = await Promise.all([
+    const [pendingRes, approvedRes, conciergeRes, jobsRes] = await Promise.all([
       supabase
         .from("applications")
         .select("id, created_at, contact_name, business_name, email, whatsapp_e164, service_area, category_slug, description, status")
@@ -85,6 +85,12 @@ Deno.serve(async (req) => {
         .select("id, first_name, last_name, name, email, whatsapp, company, role, status, approved_date, created_at")
         .order("created_at", { ascending: false })
         .limit(200),
+
+      supabase
+        .from("jobs")
+        .select("id, job_id, city_code, category_code, category_name, status, client_id, address, description, created_at, assigned_at, completed_at")
+        .order("created_at", { ascending: false })
+        .limit(500),
     ]);
 
     return json({
@@ -93,6 +99,7 @@ Deno.serve(async (req) => {
         pending:           pendingRes.data  ?? [],
         approved:          approvedRes.data ?? [],
         concierge_clients: conciergeRes.data ?? [],
+        jobs:              jobsRes.data ?? [],
       },
     });
   }

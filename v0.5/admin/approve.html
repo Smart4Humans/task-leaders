@@ -439,6 +439,56 @@
     .copy-btn:hover { background: var(--blue-dark); }
     .copy-btn.copied { background: var(--green); }
 
+    /* ── Active Jobs section ── */
+    .jobs-section { margin-top: 52px; }
+    .jobs-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+    .jobs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 620px;
+    }
+    .jobs-table th {
+      text-align: left;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .jobs-table td {
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.82);
+      vertical-align: middle;
+    }
+    .jobs-table tr:last-child td { border-bottom: none; }
+    .jobs-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+    .job-id { font-weight: 700; color: #fff; font-family: 'Courier New', monospace; letter-spacing: 0.03em; }
+    .job-muted { color: var(--muted); font-size: 12px; }
+    .status-badge.job-pending    { background: rgba(255,184,0,0.15);  color: var(--gold); }
+    .status-badge.job-assigned   { background: rgba(0,102,255,0.18);  color: var(--blue); }
+    .status-badge.job-in-progress { background: rgba(245,158,11,0.18); color: var(--amber); }
+    .status-badge.job-completed  { background: rgba(0,200,83,0.15);   color: var(--green); }
+    .test-job-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px dashed rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.45);
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .test-job-btn:hover { border-color: rgba(255,255,255,0.35); color: rgba(255,255,255,0.7); }
+    .test-job-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
     /* ── Concierge Queue section ── */
     .concierge-section { margin-top: 52px; }
     .concierge-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
@@ -594,6 +644,35 @@
         <div id="pipelineList"><div class="loading-row">Loading…</div></div>
       </div>
 
+      <!-- ── Active Jobs ── -->
+      <div class="jobs-section section-divider">
+        <div class="section-head">
+          <div class="section-title">Active Jobs</div>
+          <span class="section-count" id="jobsCount"></span>
+          <button class="test-job-btn" id="testJobBtn" onclick="createTestJob(this)" title="DEV TOOL — creates VAN-PLM test job">⚙ Create Test Job</button>
+        </div>
+
+        <!-- Status filter tabs -->
+        <div class="filter-bar" id="jobsFilterBar">
+          <button class="filter-tab active" data-filter="all"         onclick="setJobsFilter(this)">All</button>
+          <button class="filter-tab"        data-filter="pending"     onclick="setJobsFilter(this)">Pending</button>
+          <button class="filter-tab"        data-filter="assigned"    onclick="setJobsFilter(this)">Assigned</button>
+          <button class="filter-tab"        data-filter="in_progress" onclick="setJobsFilter(this)">In Progress</button>
+          <button class="filter-tab"        data-filter="completed"   onclick="setJobsFilter(this)">Completed</button>
+        </div>
+
+        <!-- Search -->
+        <input
+          type="text"
+          class="search-input"
+          id="jobsSearch"
+          placeholder="Search by Job ID, category, address, or client…"
+          oninput="applyJobsFilters()"
+        />
+
+        <div id="jobsList"><div class="loading-row">Loading…</div></div>
+      </div>
+
       <!-- ── Concierge Queue ── -->
       <div class="concierge-section section-divider">
         <div class="section-head">
@@ -635,11 +714,13 @@
     let adminPw = '';
 
     // Module-level data stores for client-side filtering
-    let allProviders       = [];
+    let allProviders        = [];
     let allConciergeClients = [];
+    let allJobs             = [];
     let pipelineFilter        = 'all';
     let pipelineServiceFilter = 'all';
     let pipelineAreaFilter    = 'all';
+    let jobsFilter            = 'all';
     let conciergeFilter       = 'all';
     let conciergeRoleFilter   = 'all';
 
@@ -714,6 +795,7 @@
         showApp();
         renderPending(data.data.pending           || []);
         renderPipeline(data.data.approved         || []);
+        renderJobs(data.data.jobs                 || []);
         renderConciergeQueue(data.data.concierge_clients || []);
 
       } catch (err) {
@@ -917,6 +999,153 @@
       if (status === 'active')           return { cls: 'active',           label: 'Active' };
       if (status === 'pending_approval') return { cls: 'pending-approval', label: 'Pending Approval' };
       return { cls: 'in-progress', label: 'In Progress' };
+    }
+
+    // ── Active Jobs ─────────────────────────────────────────────────────────
+    function renderJobs(jobs) {
+      allJobs = jobs;
+      applyJobsFilters();
+    }
+
+    function setJobsFilter(btn) {
+      document.querySelectorAll('#jobsFilterBar .filter-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      jobsFilter = btn.dataset.filter;
+      applyJobsFilters();
+    }
+
+    function applyJobsFilters() {
+      const q       = (document.getElementById('jobsSearch')?.value || '').toLowerCase().trim();
+      const noFilters = jobsFilter === 'all' && !q;
+      const limit   = noFilters ? 10 : Infinity;
+
+      // Default view excludes completed; specific status filter overrides this
+      let filtered = jobsFilter === 'all'
+        ? allJobs.filter(j => j.status !== 'completed')
+        : allJobs;
+
+      if (jobsFilter !== 'all') {
+        const statusVal = jobsFilter === 'in_progress' ? 'in_progress' : jobsFilter;
+        filtered = filtered.filter(j => j.status === statusVal);
+      }
+
+      if (q) {
+        filtered = filtered.filter(j => {
+          const displayId = jobDisplayId(j.job_id);
+          const clientName = clientNameById(j.client_id);
+          return displayId.toLowerCase().includes(q) ||
+            (j.category_name || '').toLowerCase().includes(q) ||
+            (j.address || '').toLowerCase().includes(q) ||
+            clientName.toLowerCase().includes(q);
+        });
+      }
+
+      const visible = filtered.slice(0, limit);
+      renderJobsTable(visible, filtered.length, allJobs.length);
+    }
+
+    /** Strip city prefix for display: VAN-PLM-00042 → PLM-00042 */
+    function jobDisplayId(jobId) {
+      const parts = String(jobId || '').split('-');
+      return parts.length >= 3 ? parts.slice(1).join('-') : jobId;
+    }
+
+    /** Look up concierge client full name by UUID */
+    function clientNameById(clientId) {
+      if (!clientId) return '';
+      const c = allConciergeClients.find(c => c.id === clientId);
+      if (!c) return '';
+      return (`${c.first_name || ''} ${c.last_name || ''}`).trim() || (c.name || '');
+    }
+
+    function jobStatusBadge(status) {
+      const map = {
+        pending:     ['job-pending',     'Pending'],
+        assigned:    ['job-assigned',    'Assigned'],
+        in_progress: ['job-in-progress', 'In Progress'],
+        completed:   ['job-completed',   'Completed'],
+      };
+      const [cls, label] = map[status] || ['job-pending', status || 'Unknown'];
+      return `<span class="status-badge ${cls}">${label}</span>`;
+    }
+
+    function renderJobsTable(jobs, filteredTotal, total) {
+      const el    = document.getElementById('jobsList');
+      const count = document.getElementById('jobsCount');
+      const q     = document.getElementById('jobsSearch')?.value || '';
+      count.textContent = jobsFilter === 'all' && !q
+        ? `${allJobs.filter(j => j.status !== 'completed').length} active — showing ${Math.min(10, allJobs.filter(j => j.status !== 'completed').length)} most recent`
+        : `${filteredTotal} record${filteredTotal !== 1 ? 's' : ''}`;
+
+      if (jobs.length === 0) {
+        el.innerHTML = '<div class="empty-row">No jobs match the current filter.</div>';
+        return;
+      }
+
+      const rows = jobs.map(j => {
+        const date       = new Date(j.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+        const displayId  = jobDisplayId(j.job_id);
+        const clientName = clientNameById(j.client_id);
+        return `<tr>
+          <td><span class="job-id">${escHtml(displayId)}</span></td>
+          <td>${escHtml(j.category_name || j.category_code || '—')}</td>
+          <td>${escHtml(j.address || '—')}</td>
+          <td>${escHtml(clientName || '—')}</td>
+          <td>${jobStatusBadge(j.status)}</td>
+          <td><span class="job-muted">${date}</span></td>
+        </tr>`;
+      }).join('');
+
+      el.innerHTML = `
+        <div class="jobs-table-wrap">
+          <table class="jobs-table">
+            <thead>
+              <tr>
+                <th>Job ID</th>
+                <th>Category</th>
+                <th>Address</th>
+                <th>Client</th>
+                <th>Status</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // ── Create Test Job (DEV) ────────────────────────────────────────────────
+    async function createTestJob(btn) {
+      btn.disabled = true;
+      btn.textContent = '⚙ Creating…';
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      try {
+        const res  = await fetch(`${base.replace(/\/$/, '')}/create-job`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            city_code:     'VAN',
+            category_code: 'PLM',
+            category_name: 'Plumbing',
+            address:       '123 Test St Vancouver',
+          }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!data || data.ok !== true) {
+          alert('Test job failed: ' + (data?.error?.message || 'Unknown error'));
+          btn.disabled = false;
+          btn.textContent = '⚙ Create Test Job';
+          return;
+        }
+        const j = data.data;
+        btn.textContent = `✓ Created ${jobDisplayId(j.job_id)}`;
+        // Reload jobs
+        setTimeout(() => loadData(), 800);
+      } catch (err) {
+        alert('Network error: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = '⚙ Create Test Job';
+      }
     }
 
     // ── Render Concierge Queue ──────────────────────────────────────────────
