@@ -845,7 +845,7 @@
             providerSlug: r.provider_slug,
             name: r.display_name,
             photoUrl: r.profile_photo || null,
-            area: currentCityName,
+            area: r.service_area ? r.service_area.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : currentCityName,
             response,
             reliability,
             price,

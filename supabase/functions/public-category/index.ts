@@ -137,6 +137,7 @@ Deno.serve(async (req) => {
       provider_slug: p.slug,
       display_name: displayName,
       profile_photo: p.profile_photo || null,
+      service_area: p.service_area || null,
       response_time_minutes: metrics.response_time_minutes != null ? Number(metrics.response_time_minutes) : null,
       reliability_percent: metrics.reliability_percent != null ? Number(metrics.reliability_percent) : null,
       hourly_rate_cents: hourlyRateCents,
