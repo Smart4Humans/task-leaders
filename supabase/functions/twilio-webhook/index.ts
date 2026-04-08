@@ -380,11 +380,14 @@ async function handleConciergeIntake(
   }
   const categoryName = CATEGORY_NAMES[categoryCode];
 
-  // Detect address heuristic: digit + words
-  const addrMatch      = body.match(/\d+\s+[A-Za-z][\w\s,.]+/);
-  const detectedAddress = addrMatch?.[0]?.trim() ?? null;
+  // Address is always collected via the multi-step prompt flow (address → timing → dispatch).
+  // Do NOT attempt to extract an address from the first intake message.
+  // The previous regex /\d+\s+[A-Za-z][\w\s,.]+/ was too permissive: it matched
+  // quantities, ordinals, and any digit-preceded text (e.g. "1 plumber", "2nd floor"),
+  // producing false positives that bypassed address collection and sent execution
+  // directly to finalizeAndDispatch, leaving session_state = "idle" on first message.
 
-  const cityCode = "VAN"; // default — Phase 5: derive from client profile
+  const cityCode = "VAN"; // default — derive from client profile in a future phase
   const { data: jobIdData } = await supabase.rpc("generate_job_id", {
     p_city_code: cityCode, p_category_code: categoryCode,
   });
@@ -406,7 +409,7 @@ async function handleConciergeIntake(
     source:              "concierge",
     client_id:           client.id ?? null,
     client_whatsapp:     fromNumber,
-    address:             detectedAddress,
+    address:             null,   // always null on first intake — collected via address prompt
     description:         body,
     lead_fee_cents:      baseFee,
     gst_cents:           gst,
