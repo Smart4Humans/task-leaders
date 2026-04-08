@@ -67,3 +67,9 @@ verify_jwt = false
 # (lead released). Auth: x-cron-secret header (INTERNAL_CRON_SECRET).
 [functions.process-timeouts]
 verify_jwt = false
+
+# Marketplace Connect form handler. Called from profile.html Connect button.
+# Takes client details + request, creates marketplace job, notifies targeted provider.
+# All communication still routes through the TaskLeaders WhatsApp number.
+[functions.marketplace-connect]
+verify_jwt = false

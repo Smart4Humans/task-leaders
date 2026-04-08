@@ -1,53 +1,70 @@
 // TaskLeaders — Edge Function: twilio-webhook
-// Contract: POST /twilio-webhook (Twilio sends form-encoded inbound message data)
+// Contract: POST /twilio-webhook (Twilio form-encoded inbound message data)
 //
 // Handles ALL inbound WhatsApp messages to the TaskLeaders number.
 // Routes based on sender identity, job context, and session state.
 //
-// Ambiguity resolution order (§10 of brief):
-//   1. Explicit job ID in reply body
-//   2. Pending prompt for sender (conversation_sessions.last_prompt context)
-//   3. Single active job for sender
-//   4. Most recent active job if confidence high
-//   5. Escalate to admin
+// ── Job context resolution (§10, ordered) ────────────────────────────────────
+// 1. Explicit public job ID in reply body (e.g. "PLM-00001")
+// 2. Pending prompt context in conversation_sessions (last_prompt / session_state)
+// 3. Single active job_participants entry for this sender
+// 4. current_job_id from session if that job is still in an active state
+// 5. Escalate to admin as ambiguous
 //
-// ROUTING CONSTRAINT: All communication stays routed through the TaskLeaders
-// number. No direct number exchange between client and provider in this phase.
+// ── Multi-job relay safety ────────────────────────────────────────────────────
+// All relayed messages include the job header: [Job #PLM-00001 | 123 Main St]
+// so clients and providers can distinguish threads when multiple jobs are active.
+// When a sender has multiple active jobs and no explicit job ID, a disambiguation
+// prompt is sent rather than silently routing to the wrong job.
 //
-// State machine: Concierge and Marketplace flows are kept distinct.
-// Do not collapse them into a single generic path.
+// ── Routing constraint ────────────────────────────────────────────────────────
+// All messages route through the TaskLeaders WhatsApp number.
+// No direct number exchange. This applies to both Concierge and Marketplace.
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   validateTwilioSignature, getTwilioEnv, sendWhatsApp, logMessage,
-  buildWC1, buildWC2, buildWC3, buildWC4,
-  buildWT1, buildWT2, buildWT3, buildWT4, buildWT5, buildWT6, buildWT7,
-  SURVEY_QUESTIONS,
+  buildWC4, buildWC2, buildRelayToProvider, buildRelayToClient,
+  SURVEY_QUESTIONS, buildMKT2Declined,
 } from "../_shared/twilio.ts";
 import {
   normalizeKeyword,
   KW_ACCEPT, KW_PASS, KW_DECLINE, KW_HELP,
   KW_KEEP_OPEN, KW_CANCEL, KW_YES, KW_NO,
-  CATEGORY_NAMES, CATEGORY_LEAD_FEES_CENTS, calcGst,
+  CATEGORY_NAMES, CATEGORY_LEAD_FEES_CENTS, calcGst as calcGstFn,
   SLUG_TO_CATEGORY_CODE,
 } from "../_shared/constants.ts";
 import { toPublicJobId } from "../_shared/job-ids.ts";
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// Re-declare GST calc locally to keep import clean
+function calcGst(base: number) { return Math.round(base * 0.05); }
 
-function twilioResponse(body = "") {
-  // Return empty TwiML response (no auto-reply — we send via REST API instead)
+// ─── TwiML response (no auto-reply) ──────────────────────────────────────────
+
+function twilioResponse() {
   return new Response(
-    `<?xml version="1.0" encoding="UTF-8"?><Response>${body}</Response>`,
+    `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`,
     { headers: { "content-type": "text/xml; charset=utf-8" } },
   );
 }
-
 function jsonResp(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { "content-type": "application/json; charset=utf-8" },
   });
+}
+
+// ─── Context type ─────────────────────────────────────────────────────────────
+
+interface Ctx {
+  supabase:       ReturnType<typeof createClient>;
+  supabaseUrl:    string;
+  serviceRoleKey: string;
+  twilioEnv:      ReturnType<typeof getTwilioEnv>;
+  fromNumber:     string;
+  body:           string;
+  messageSid:     string;
+  session:        Record<string, unknown> | null;
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
@@ -59,50 +76,39 @@ Deno.serve(async (req) => {
   const supabaseUrl    = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("TASKLEADERS_SERVICE_ROLE_KEY");
   const twilioToken    = Deno.env.get("TWILIO_AUTH_TOKEN");
-  const webhookUrl     = Deno.env.get("TWILIO_WEBHOOK_URL"); // full URL of this function
+  const webhookUrl     = Deno.env.get("TWILIO_WEBHOOK_URL");
 
   if (!supabaseUrl || !serviceRoleKey || !twilioToken) {
     return new Response("Missing configuration", { status: 500 });
   }
 
-  // Parse Twilio form-encoded body
   const rawBody = await req.text();
   const params  = Object.fromEntries(new URLSearchParams(rawBody).entries());
 
-  // Validate Twilio signature (skip in sandbox/dev if TWILIO_SKIP_SIG=true)
-  const skipSig = Deno.env.get("TWILIO_SKIP_SIG") === "true";
-  if (!skipSig && webhookUrl) {
+  // Validate Twilio signature (set TWILIO_SKIP_SIG=true in dev/sandbox)
+  if (Deno.env.get("TWILIO_SKIP_SIG") !== "true" && webhookUrl) {
     const sig   = req.headers.get("x-twilio-signature") ?? "";
     const valid = await validateTwilioSignature(twilioToken, webhookUrl, params, sig);
     if (!valid) return new Response("Invalid signature", { status: 403 });
   }
 
-  // Extract core message fields
-  const rawFrom   = params["From"] ?? "";
-  const rawTo     = params["To"]   ?? "";
-  const body      = (params["Body"] ?? "").trim();
+  const fromNumber = (params["From"] ?? "").replace(/^whatsapp:/, "");
+  const body       = (params["Body"] ?? "").trim();
   const messageSid = params["MessageSid"] ?? "";
-
-  // Strip whatsapp: prefix — store numbers in plain E.164
-  const fromNumber = rawFrom.replace(/^whatsapp:/, "");
-  const toNumber   = rawTo.replace(/^whatsapp:/, "");
 
   if (!fromNumber) return twilioResponse();
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
+  const supabase  = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
   const twilioEnv = getTwilioEnv();
 
-  // Log inbound message immediately (job_id resolved later if possible)
-  // Fire-and-forget
-  const logPromise = supabase.from("message_log").insert({
+  // Log inbound immediately (job_id unknown at this point)
+  supabase.from("message_log").insert({
     direction:            "inbound",
     participant_whatsapp: fromNumber,
     twilio_message_sid:   messageSid,
     body,
     status: "received",
-  });
+  }).catch(() => {});
 
   // ── Identify sender ────────────────────────────────────────────────────────
   const [clientRes, providerRes] = await Promise.all([
@@ -121,7 +127,7 @@ Deno.serve(async (req) => {
   const client   = clientRes.data;
   const provider = providerRes.data;
 
-  // ── Load or create conversation session ───────────────────────────────────
+  // ── Load conversation session ─────────────────────────────────────────────
   const { data: session } = await supabase
     .from("conversation_sessions")
     .select("*")
@@ -134,43 +140,86 @@ Deno.serve(async (req) => {
       { onConflict: "whatsapp_e164" },
     );
 
-  // ── Route ─────────────────────────────────────────────────────────────────
+  const ctx: Ctx = { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body, messageSid, session };
 
+  // ── Route ─────────────────────────────────────────────────────────────────
   if (client && client.status === "active" && !client.suspended) {
-    await handleClientMessage(
-      { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body, messageSid, session },
-      client,
-      updateSession,
-      logPromise,
-    );
+    await handleClientMessage(ctx, client, updateSession);
   } else if (provider && provider.status === "active" && !provider.suspended) {
-    await handleProviderMessage(
-      { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body, messageSid, session },
-      provider,
-      updateSession,
-    );
+    await handleProviderMessage(ctx, provider, updateSession);
   } else {
-    await handleUnknownSender(
-      { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body, messageSid },
-      client,
-      provider,
-    );
+    await handleUnknownSender(ctx, client, provider);
   }
 
   return twilioResponse();
 });
 
-// ─── Context ─────────────────────────────────────────────────────────────────
+// ─── Job context resolution ───────────────────────────────────────────────────
+// Returns { jobId, address, confident } or null if unresolvable.
+// "confident" = false means we used a best-effort guess and should flag it.
 
-interface Ctx {
-  supabase:       ReturnType<typeof createClient>;
-  supabaseUrl:    string;
-  serviceRoleKey: string;
-  twilioEnv:      ReturnType<typeof getTwilioEnv>;
-  fromNumber:     string;
-  body:           string;
-  messageSid:     string;
-  session:        Record<string, unknown> | null;
+interface JobContext { jobId: string; address: string; source: string; confident: boolean; }
+
+async function resolveJobContext(
+  supabase: ReturnType<typeof createClient>,
+  fromNumber: string,
+  sessionJobId: string | undefined,
+  messageBody: string,
+): Promise<JobContext | "ambiguous" | null> {
+  // Step 1: Explicit public job ID in message body (e.g. "PLM-00001")
+  const match = messageBody.match(/\b([A-Z]{2,3}-\d{5})\b/);
+  if (match) {
+    const [cat, seq] = match[1].split("-");
+    // Search for matching internal job ID (city prefix varies; match by cat+seq)
+    const { data: jobs } = await supabase
+      .from("jobs")
+      .select("job_id, address, source")
+      .like("job_id", `%-${cat}-${seq}`)
+      .not("state", "in", '("closed","cancelled")')
+      .limit(2);
+    if (jobs && jobs.length === 1) {
+      return { jobId: jobs[0].job_id, address: jobs[0].address ?? "address on file", source: jobs[0].source, confident: true };
+    }
+    // Multiple matches unlikely but guard against it
+  }
+
+  // Step 2 + 4: Use session's current_job_id if still active
+  if (sessionJobId) {
+    const { data: job } = await supabase
+      .from("jobs")
+      .select("job_id, address, source, state")
+      .eq("job_id", sessionJobId)
+      .not("state", "in", '("closed","cancelled","survey_complete")')
+      .maybeSingle();
+    if (job) {
+      return { jobId: job.job_id, address: job.address ?? "address on file", source: job.source, confident: true };
+    }
+  }
+
+  // Step 3: Single active job_participants entry for this sender
+  const { data: parts } = await supabase
+    .from("job_participants")
+    .select("job_id")
+    .eq("whatsapp_e164", fromNumber)
+    .eq("session_state", "active");
+
+  if (!parts || parts.length === 0) return null;
+
+  if (parts.length === 1) {
+    const { data: job } = await supabase
+      .from("jobs")
+      .select("job_id, address, source")
+      .eq("job_id", parts[0].job_id)
+      .maybeSingle();
+    if (job) {
+      return { jobId: job.job_id, address: job.address ?? "address on file", source: job.source, confident: true };
+    }
+  }
+
+  // Step 5: Multiple active jobs — ambiguous
+  if (parts.length > 1) return "ambiguous";
+
+  return null;
 }
 
 // ─── Client message handler ───────────────────────────────────────────────────
@@ -178,18 +227,16 @@ interface Ctx {
 async function handleClientMessage(
   ctx: Ctx,
   client: Record<string, unknown>,
-  updateSession: (patch: Record<string, unknown>) => Promise<unknown>,
-  _logPromise: Promise<unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
 ) {
-  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body } = ctx;
-  const { session } = ctx;
-  const kw          = normalizeKeyword(body);
-  const sessionState = String(session?.session_state ?? "idle");
-  const currentJobId = session?.current_job_id as string | undefined;
+  const { twilioEnv, fromNumber, body } = ctx;
+  const sessionState  = String(ctx.session?.session_state ?? "idle");
+  const currentJobId  = ctx.session?.current_job_id as string | undefined;
+  const kw            = normalizeKeyword(body);
 
-  // ── Survey answer capture ─────────────────────────────────────────────────
+  // ── Survey answer ─────────────────────────────────────────────────────────
   if (sessionState.startsWith("awaiting_survey_q")) {
-    await handleSurveyAnswer(ctx, client, sessionState, currentJobId, kw, updateSession);
+    await handleSurveyAnswer(ctx, sessionState, currentJobId, kw, updateSession);
     return;
   }
 
@@ -201,18 +248,70 @@ async function handleClientMessage(
 
   // ── No-match decision ──────────────────────────────────────────────────────
   if (sessionState === "awaiting_no_match_decision") {
-    await handleNoMatchDecision(ctx, client, currentJobId, kw, updateSession);
+    await handleNoMatchDecision(ctx, currentJobId, kw, updateSession);
     return;
   }
 
-  // ── Active thread: relay message to provider ───────────────────────────────
-  if ((sessionState === "open" || sessionState === "active") && currentJobId) {
-    await relayClientToProvider(ctx, currentJobId, updateSession);
+  // ── Active thread: relay to provider ──────────────────────────────────────
+  if (sessionState === "open" || sessionState === "active") {
+    const jctx = await resolveJobContext(ctx.supabase, fromNumber, currentJobId, body);
+    if (jctx === "ambiguous") {
+      await sendDisambiguationPrompt(ctx, updateSession);
+      return;
+    }
+    if (jctx) {
+      await relayClientToProvider(ctx, jctx, updateSession);
+      return;
+    }
+    // Session says open but no active job — fall through to intake
+  }
+
+  // ── New intake ─────────────────────────────────────────────────────────────
+  await handleConciergeIntake(ctx, client, updateSession);
+}
+
+// ─── Disambiguation prompt ────────────────────────────────────────────────────
+
+async function sendDisambiguationPrompt(
+  ctx: Ctx,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
+
+  // List active jobs for this sender
+  const { data: parts } = await supabase
+    .from("job_participants")
+    .select("job_id")
+    .eq("whatsapp_e164", fromNumber)
+    .eq("session_state", "active");
+
+  if (!parts || parts.length === 0) {
+    // No active jobs — treat as new intake
+    await handleConciergeIntake(ctx, {}, updateSession);
     return;
   }
 
-  // ── New intake: client has no active session ───────────────────────────────
-  await handleConciergeIntake(ctx, client, session, updateSession);
+  const jobLines: string[] = [];
+  for (const p of parts) {
+    const { data: job } = await supabase
+      .from("jobs")
+      .select("job_id, category_name, category_code")
+      .eq("job_id", p.job_id)
+      .maybeSingle();
+    if (job) {
+      const catName = CATEGORY_NAMES[job.category_code] ?? job.category_name ?? job.category_code;
+      jobLines.push(`• ${catName} — reply with ${toPublicJobId(job.job_id)}`);
+    }
+  }
+
+  const prompt = (
+    `You have multiple active jobs. To route your message correctly, please include the job ID.\n\n` +
+    jobLines.join("\n") + `\n\nExample: "${toPublicJobId(parts[0].job_id)}: your message here"`
+  );
+
+  if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, prompt);
+  logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", participantWhatsapp: fromNumber, body: prompt, status: "sent" });
+  await updateSession({ session_state: "open", last_prompt: prompt });
 }
 
 // ─── Concierge intake ─────────────────────────────────────────────────────────
@@ -220,245 +319,179 @@ async function handleClientMessage(
 async function handleConciergeIntake(
   ctx: Ctx,
   client: Record<string, unknown>,
-  session: Record<string, unknown> | null,
-  updateSession: (patch: Record<string, unknown>) => Promise<unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
 ) {
-  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body } = ctx;
+  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body, session } = ctx;
   const sessionState = String(session?.session_state ?? "idle");
-  const firstName    = String(client.first_name ?? (client.name as string ?? "").split(" ")[0] ?? "there");
+  const currentJobId = session?.current_job_id as string | undefined;
 
   // ── Awaiting address ───────────────────────────────────────────────────────
-  if (sessionState === "awaiting_address") {
-    const jobId = session?.current_job_id as string | undefined;
-    if (!jobId) { await startFreshIntake(ctx, client, body, updateSession); return; }
-
-    // Store address on job
-    await supabase.from("jobs").update({ address: body }).eq("job_id", jobId);
-
-    // Check if we also need timing
-    const { data: job } = await supabase.from("jobs")
-      .select("description").eq("job_id", jobId).single();
-
+  if (sessionState === "awaiting_address" && currentJobId) {
+    await supabase.from("jobs").update({ address: body }).eq("job_id", currentJobId);
+    const { data: job } = await supabase.from("jobs").select("description").eq("job_id", currentJobId).single();
     if (!job?.description) {
-      const prompt = `Thank you. When do you need this done? (e.g. "tomorrow morning" or "ASAP")`;
+      const prompt = `Thank you. When do you need this done? (e.g. "tomorrow morning", "ASAP")`;
       if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, prompt);
-      logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: prompt, status: "sent" });
-      await updateSession({ session_state: "awaiting_timing", current_job_id: jobId, last_prompt: prompt });
+      logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: currentJobId, participantWhatsapp: fromNumber, body: prompt, status: "sent" });
+      await updateSession({ session_state: "awaiting_timing", current_job_id: currentJobId, last_prompt: prompt });
     } else {
-      await finalizeIntakeAndDispatch(ctx, jobId, updateSession);
+      await finalizeAndDispatch(ctx, currentJobId, updateSession);
     }
     return;
   }
 
   // ── Awaiting timing ────────────────────────────────────────────────────────
-  if (sessionState === "awaiting_timing") {
-    const jobId = session?.current_job_id as string | undefined;
-    if (!jobId) { await startFreshIntake(ctx, client, body, updateSession); return; }
-
-    await supabase.from("jobs").update({ description: body }).eq("job_id", jobId);
-    await finalizeIntakeAndDispatch(ctx, jobId, updateSession);
+  if (sessionState === "awaiting_timing" && currentJobId) {
+    await supabase.from("jobs").update({ description: body }).eq("job_id", currentJobId);
+    await finalizeAndDispatch(ctx, currentJobId, updateSession);
     return;
   }
 
-  // ── Fresh request ──────────────────────────────────────────────────────────
-  await startFreshIntake(ctx, client, body, updateSession);
-}
-
-async function startFreshIntake(
-  ctx: Ctx,
-  client: Record<string, unknown>,
-  requestBody: string,
-  updateSession: (patch: Record<string, unknown>) => Promise<unknown>,
-) {
-  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
-
-  // Try to parse service type from message
-  // Simple keyword scan for category — more sophisticated NLP is Phase 5
-  const bodyLower = requestBody.toLowerCase();
-  let categoryCode: string | null = null;
-  let categoryName: string | null = null;
-
-  const keywordMap: Record<string, string> = {
-    "plumb": "PLM", "pipe": "PLM",
-    "clean": "CLN",
-    "handyman": "HND", "repair": "HND", "fix": "HND",
-    "electric": "ELC",
-    "paint": "PLT",
-    "hvac": "HVC", "heat": "HVC", "furnace": "HVC", "air condition": "HVC",
-    "mov": "MVG", "transport": "MVG",
-    "yard": "YRD", "lawn": "YRD", "garden": "YRD",
-  };
-
-  for (const [kw, code] of Object.entries(keywordMap)) {
-    if (bodyLower.includes(kw)) {
-      categoryCode = code;
-      categoryName = CATEGORY_NAMES[code];
-      break;
-    }
+  // ── Parse fresh request ────────────────────────────────────────────────────
+  const bodyLower = body.toLowerCase();
+  const keywordMap: [string[], string][] = [
+    [["plumb", "pipe", "leak", "drain"],               "PLM"],
+    [["clean"],                                         "CLN"],
+    [["handyman", "repair", "fix", "install"],          "HND"],
+    [["electric", "outlet", "wiring", "breaker"],       "ELC"],
+    [["paint"],                                         "PLT"],
+    [["hvac", "heat", "furnace", "air condition", "ac"],"HVC"],
+    [["mov", "transport", "haul"],                      "MVG"],
+    [["yard", "lawn", "garden", "snow"],                "YRD"],
+  ];
+  let categoryCode = "HND"; // default if undetected
+  for (const [keywords, code] of keywordMap) {
+    if (keywords.some((kw) => bodyLower.includes(kw))) { categoryCode = code; break; }
   }
+  const categoryName = CATEGORY_NAMES[categoryCode];
 
-  // Try to detect address (heuristic: contains a number followed by words)
-  const addressMatch = requestBody.match(/\d+\s+[A-Za-z][\w\s,]+/);
-  const detectedAddress = addressMatch?.[0]?.trim() ?? null;
+  // Detect address heuristic: digit + words
+  const addrMatch      = body.match(/\d+\s+[A-Za-z][\w\s,.]+/);
+  const detectedAddress = addrMatch?.[0]?.trim() ?? null;
 
-  // Load client's city context — default to VAN for MVP
-  // TODO Phase 5: derive city from client profile or WhatsApp geolocation
-  const cityCode = "VAN";
-
-  // Create job record
-  // We call the generate_job_id RPC directly from here
-  const { data: jobIdData } = await supabase
-    .rpc("generate_job_id", { p_city_code: cityCode, p_category_code: categoryCode ?? "HND" });
-
+  const cityCode = "VAN"; // default — Phase 5: derive from client profile
+  const { data: jobIdData } = await supabase.rpc("generate_job_id", {
+    p_city_code: cityCode, p_category_code: categoryCode,
+  });
   if (!jobIdData) {
-    if (twilioEnv) {
-      await sendWhatsApp(twilioEnv, fromNumber, "We're having trouble processing your request. Please try again in a moment.");
-    }
+    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, "We're having trouble processing your request right now. Please try again in a moment.");
     return;
   }
 
-  const baseFee  = categoryCode ? (CATEGORY_LEAD_FEES_CENTS[categoryCode] ?? 0) : 0;
-  const gst      = calcGst(baseFee);
+  const baseFee = CATEGORY_LEAD_FEES_CENTS[categoryCode] ?? 0;
+  const gst     = calcGst(baseFee);
 
   const { data: job } = await supabase.from("jobs").insert({
-    job_id:          jobIdData,
-    city_code:       cityCode,
-    category_code:   categoryCode ?? "HND",
-    category_name:   categoryName ?? "General",
-    status:          "pending",
-    state:           "intake_started",
-    source:          "concierge",
-    client_id:       client.id ?? null,
-    client_whatsapp: fromNumber,
-    address:         detectedAddress,
-    description:     requestBody,
-    lead_fee_cents:  baseFee,
-    gst_cents:       gst,
+    job_id:              jobIdData,
+    city_code:           cityCode,
+    category_code:       categoryCode,
+    category_name:       categoryName,
+    status:              "pending",
+    state:               "intake_started",
+    source:              "concierge",
+    client_id:           client.id ?? null,
+    client_whatsapp:     fromNumber,
+    address:             detectedAddress,
+    description:         body,
+    lead_fee_cents:      baseFee,
+    gst_cents:           gst,
     total_charged_cents: baseFee + gst,
   }).select("job_id, address, description").single();
 
   if (!job) return;
 
-  // If we're missing address, ask for it
   if (!job.address) {
-    const prompt = `Got it — we'll find you a ${categoryName ?? "TaskLeader"}. What's the service address?`;
+    const prompt = `Got it — we'll find you a ${categoryName}. What's the service address?`;
     if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, prompt);
     logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id, participantWhatsapp: fromNumber, body: prompt, status: "sent" });
     await updateSession({ session_state: "awaiting_address", current_job_id: job.job_id, sender_type: "client", last_prompt: prompt });
     return;
   }
 
-  // If we're missing timing, ask for it
-  if (!job.description || job.description === requestBody) {
-    // Description = original message. That's fine for timing.
-    // Check if timing is implied in the message
-    const hasTimingKeyword = /asap|today|tomorrow|morning|afternoon|evening|monday|tuesday|wednesday|thursday|friday|weekend/i.test(requestBody);
-    if (!hasTimingKeyword) {
-      const prompt = `Thanks — and when do you need this? (e.g. "tomorrow morning", "ASAP")`;
-      if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, prompt);
-      logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id, participantWhatsapp: fromNumber, body: prompt, status: "sent" });
-      await updateSession({ session_state: "awaiting_timing", current_job_id: job.job_id, sender_type: "client", last_prompt: prompt });
-      return;
-    }
+  const hasTimingKeyword = /asap|today|tomorrow|morning|afternoon|evening|mon|tue|wed|thu|fri|sat|sun|weekend/i.test(body);
+  if (!hasTimingKeyword) {
+    const prompt = `Thanks — when do you need this? (e.g. "tomorrow morning", "ASAP")`;
+    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, prompt);
+    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id, participantWhatsapp: fromNumber, body: prompt, status: "sent" });
+    await updateSession({ session_state: "awaiting_timing", current_job_id: job.job_id, sender_type: "client", last_prompt: prompt });
+    return;
   }
 
-  // All details collected — confirm and dispatch
-  await finalizeIntakeAndDispatch(ctx, job.job_id, updateSession);
+  await finalizeAndDispatch(ctx, job.job_id, updateSession);
 }
 
-async function finalizeIntakeAndDispatch(
+async function finalizeAndDispatch(
   ctx: Ctx,
   jobId: string,
-  updateSession: (patch: Record<string, unknown>) => Promise<unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
 ) {
   const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
 
-  // Confirm to client
-  const confirm = `We've received your request and we're finding you a match now. We'll be in touch shortly.`;
+  const confirm = `We've received your request and we're finding you a match. We'll be in touch shortly.`;
   if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, confirm);
   logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: confirm, status: "sent" });
 
-  // Advance job state
-  await supabase.from("jobs")
-    .update({ state: "intake_confirmed" })
-    .eq("job_id", jobId);
-
+  await supabase.from("jobs").update({ state: "intake_confirmed" }).eq("job_id", jobId);
   await updateSession({ session_state: "idle", current_job_id: jobId, sender_type: "client" });
 
-  // Trigger dispatch (call job-dispatch function internally)
-  const dispatchUrl  = Deno.env.get("SUPABASE_URL")?.replace("supabase.co", "supabase.co") ?? "";
-  const cronSecret   = Deno.env.get("INTERNAL_CRON_SECRET");
-  const fnBase       = `${dispatchUrl.replace("https://", "https://").split(".supabase.co")[0]}.supabase.co/functions/v1`;
-
-  fetch(`${fnBase}/job-dispatch`, {
+  // Trigger dispatch
+  const cronSecret = Deno.env.get("INTERNAL_CRON_SECRET");
+  const fnBase     = (Deno.env.get("SUPABASE_URL") ?? "").split(".supabase.co")[0].replace("https://", "");
+  fetch(`https://${fnBase}.supabase.co/functions/v1/job-dispatch`, {
     method: "POST",
-    headers: {
-      "Content-Type":      "application/json",
-      "x-internal-secret": cronSecret ?? "",
-    },
+    headers: { "Content-Type": "application/json", "x-internal-secret": cronSecret ?? "" },
     body: JSON.stringify({ job_id: jobId }),
-  }).catch(() => {}); // fire-and-forget
+  }).catch(() => {});
 }
 
 // ─── Survey answer handler ────────────────────────────────────────────────────
 
 async function handleSurveyAnswer(
   ctx: Ctx,
-  client: Record<string, unknown>,
   sessionState: string,
   jobId: string | undefined,
   kw: string,
-  updateSession: (patch: Record<string, unknown>) => Promise<unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
 ) {
   const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
   if (!jobId) return;
 
   const score = parseInt(kw, 10);
   if (isNaN(score) || score < 1 || score > 5) {
-    if (twilioEnv) {
-      await sendWhatsApp(twilioEnv, fromNumber, "Please reply with a number from 1 to 5.");
-    }
+    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, "Please reply with a number from 1 to 5.");
     return;
   }
 
-  let nextState: string;
-  let updateField: string;
-  let nextPrompt: string | null = null;
+  const fieldMap: Record<string, string> = {
+    awaiting_survey_q1: "punctuality_score",
+    awaiting_survey_q2: "communication_score",
+    awaiting_survey_q3: "quality_score",
+  };
+  const nextMap: Record<string, string> = {
+    awaiting_survey_q1: "awaiting_survey_q2",
+    awaiting_survey_q2: "awaiting_survey_q3",
+    awaiting_survey_q3: "idle",
+  };
 
-  if (sessionState === "awaiting_survey_q1") {
-    updateField = "punctuality_score";
-    nextState   = "awaiting_survey_q2";
-    nextPrompt  = SURVEY_QUESTIONS.q2;
-  } else if (sessionState === "awaiting_survey_q2") {
-    updateField = "communication_score";
-    nextState   = "awaiting_survey_q3";
-    nextPrompt  = SURVEY_QUESTIONS.q3;
+  const field    = fieldMap[sessionState];
+  const nextState = nextMap[sessionState];
+  const isLast   = nextState === "idle";
+
+  await supabase.from("survey_responses").upsert({
+    job_id:          jobId,
+    client_whatsapp: fromNumber,
+    [field]:         score,
+    ...(sessionState === "awaiting_survey_q1" ? { survey_started_at: new Date().toISOString() } : {}),
+    ...(isLast ? { survey_completed_at: new Date().toISOString() } : {}),
+  }, { onConflict: "job_id,client_whatsapp" });
+
+  if (!isLast) {
+    const nextQ = nextState === "awaiting_survey_q2" ? SURVEY_QUESTIONS.q2 : SURVEY_QUESTIONS.q3;
+    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, nextQ);
+    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: nextQ, status: "sent" });
+    await updateSession({ session_state: nextState, current_job_id: jobId, last_prompt: nextQ });
   } else {
-    // q3
-    updateField = "quality_score";
-    nextState   = "idle";
-  }
-
-  // Upsert survey_responses
-  await supabase.from("survey_responses")
-    .upsert({
-      job_id:          jobId,
-      client_whatsapp: fromNumber,
-      [updateField]:   score,
-      ...(sessionState === "awaiting_survey_q1" ? { survey_started_at: new Date().toISOString() } : {}),
-      ...(nextState === "idle" ? { survey_completed_at: new Date().toISOString() } : {}),
-    }, { onConflict: "job_id,client_whatsapp" });
-
-  if (nextPrompt && twilioEnv) {
-    await sendWhatsApp(twilioEnv, fromNumber, nextPrompt);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: nextPrompt, status: "sent" });
-    await updateSession({ session_state: nextState, current_job_id: jobId, last_prompt: nextPrompt });
-  } else {
-    // Survey complete
-    await supabase.from("jobs")
-      .update({ state: "survey_complete", survey_completed_at: new Date().toISOString() })
-      .eq("job_id", jobId);
-
+    await supabase.from("jobs").update({ state: "survey_complete", survey_completed_at: new Date().toISOString() }).eq("job_id", jobId);
     const thanks = "Thank you for your feedback. We appreciate it.";
     if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, thanks);
     logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: thanks, status: "sent" });
@@ -472,7 +505,7 @@ async function handleGuaranteeConfirmation(
   ctx: Ctx,
   jobId: string | undefined,
   kw: string,
-  updateSession: (patch: Record<string, unknown>) => Promise<unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
 ) {
   const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
   if (!jobId) return;
@@ -484,31 +517,25 @@ async function handleGuaranteeConfirmation(
   }
 
   const nextClaimState = response === "YES" ? "client_confirmed_yes" : "client_confirmed_no";
-  await supabase.from("guarantee_claims")
-    .update({
-      client_response:     response,
-      client_responded_at: new Date().toISOString(),
-      claim_state:         nextClaimState,
-    })
-    .eq("job_id", jobId)
-    .eq("client_whatsapp", fromNumber);
+  await supabase.from("guarantee_claims").update({
+    client_response:     response,
+    client_responded_at: new Date().toISOString(),
+    claim_state:         nextClaimState,
+  }).eq("job_id", jobId).eq("client_whatsapp", fromNumber);
 
-  const replyMsg = response === "YES"
+  const reply = response === "YES"
     ? "Thank you. We'll continue reviewing this request and will be in touch."
     : "Thank you for confirming. We'll update this claim accordingly.";
 
-  if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, replyMsg);
-  logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: replyMsg, status: "sent" });
+  if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, reply);
+  logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: reply, status: "sent" });
 
   await supabase.from("admin_alerts").insert({
-    alert_type:          "guarantee_claim",
-    priority:            "high",
-    job_id:              jobId,
+    alert_type: "guarantee_claim", priority: "high", job_id: jobId,
     participant_whatsapp: fromNumber,
-    description:         `Client responded ${response} to guarantee claim confirmation.`,
-    status:              "open",
+    description: `Client responded ${response} to guarantee claim confirmation.`,
+    status: "open",
   });
-
   await updateSession({ session_state: "idle", current_job_id: null });
 }
 
@@ -516,10 +543,9 @@ async function handleGuaranteeConfirmation(
 
 async function handleNoMatchDecision(
   ctx: Ctx,
-  client: Record<string, unknown>,
   jobId: string | undefined,
   kw: string,
-  updateSession: (patch: Record<string, unknown>) => Promise<unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
 ) {
   const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
   if (!jobId) return;
@@ -537,53 +563,88 @@ async function handleNoMatchDecision(
     await supabase.from("jobs").update({ state: "closed", status: "completed" }).eq("job_id", jobId);
     await updateSession({ session_state: "idle", current_job_id: null });
   } else {
-    // Unrecognized reply to no-match prompt
-    if (twilioEnv) {
-      await sendWhatsApp(twilioEnv, fromNumber, "Please reply KEEP OPEN or CANCEL.");
-    }
+    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, "Please reply KEEP OPEN or CANCEL.");
   }
 }
 
-// ─── Relay client message to provider ────────────────────────────────────────
-// Routes message through the TaskLeaders number to the assigned provider.
-// This is the routed thread model — no direct number exchange.
+// ─── Relay: client → provider ─────────────────────────────────────────────────
 
 async function relayClientToProvider(
   ctx: Ctx,
-  jobId: string,
-  updateSession: (patch: Record<string, unknown>) => Promise<unknown>,
+  jctx: JobContext,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
 ) {
   const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body } = ctx;
 
   const { data: participant } = await supabase
     .from("job_participants")
     .select("whatsapp_e164")
-    .eq("job_id", jobId)
+    .eq("job_id", jctx.jobId)
     .eq("participant_type", "provider")
     .eq("session_state", "active")
     .maybeSingle();
 
   if (!participant?.whatsapp_e164) {
-    // No provider in thread yet — log for admin
     await supabase.from("admin_alerts").insert({
-      alert_type:          "escalation",
-      priority:            "normal",
-      job_id:              jobId,
-      participant_whatsapp: fromNumber,
-      description:         "Client sent message but no provider in thread yet.",
-      status:              "open",
+      alert_type: "escalation", priority: "normal",
+      job_id: jctx.jobId, participant_whatsapp: fromNumber,
+      description: "Client sent message but no active provider in thread.",
+      status: "open",
     });
     return;
   }
 
-  // Prefix with [Client] so provider knows who sent it
-  const relayBody = `[Client] ${body}`;
+  // Always include job header so provider can distinguish jobs if they have multiple
+  const relayBody = buildRelayToProvider(jctx.jobId, jctx.address, body);
   if (twilioEnv) {
     const result = await sendWhatsApp(twilioEnv, participant.whatsapp_e164, relayBody);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: participant.whatsapp_e164, body: relayBody, status: result.ok ? "sent" : "failed" });
+    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: jctx.jobId, participantWhatsapp: participant.whatsapp_e164, body: relayBody, status: result.ok ? "sent" : "failed" });
   }
 
-  await updateSession({ session_state: "open", current_job_id: jobId });
+  // Update job-level message log with inbound as well
+  logMessage({ supabaseUrl, serviceRoleKey, direction: "inbound", jobId: jctx.jobId, participantWhatsapp: fromNumber, body, status: "received" });
+
+  await updateSession({ session_state: "open", current_job_id: jctx.jobId });
+}
+
+// ─── Relay: provider → client ─────────────────────────────────────────────────
+
+async function relayProviderToClient(
+  ctx: Ctx,
+  jctx: JobContext,
+  provider: Record<string, unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body } = ctx;
+
+  const { data: participant } = await supabase
+    .from("job_participants")
+    .select("whatsapp_e164")
+    .eq("job_id", jctx.jobId)
+    .eq("participant_type", "client")
+    .eq("session_state", "active")
+    .maybeSingle();
+
+  if (!participant?.whatsapp_e164) return;
+
+  const firstName = String(provider.first_name ?? "Your TaskLeader");
+  // Always include job header so client can distinguish jobs if they have multiple
+  const relayBody = buildRelayToClient(jctx.jobId, jctx.address, firstName, body);
+
+  if (twilioEnv) {
+    const result = await sendWhatsApp(twilioEnv, participant.whatsapp_e164, relayBody);
+    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: jctx.jobId, participantWhatsapp: participant.whatsapp_e164, body: relayBody, status: result.ok ? "sent" : "failed" });
+  }
+
+  logMessage({ supabaseUrl, serviceRoleKey, direction: "inbound", jobId: jctx.jobId, participantWhatsapp: fromNumber, body, status: "received" });
+
+  // Update both sides of session with this job as current
+  await updateSession({ session_state: "open", current_job_id: jctx.jobId });
+  await supabase.from("conversation_sessions").upsert({
+    whatsapp_e164:   participant.whatsapp_e164,
+    current_job_id:  jctx.jobId,
+    last_activity_at: new Date().toISOString(),
+  }, { onConflict: "whatsapp_e164" });
 }
 
 // ─── Provider message handler ─────────────────────────────────────────────────
@@ -591,67 +652,126 @@ async function relayClientToProvider(
 async function handleProviderMessage(
   ctx: Ctx,
   provider: Record<string, unknown>,
-  updateSession: (patch: Record<string, unknown>) => Promise<unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
 ) {
-  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body } = ctx;
-  const { session } = ctx;
-  const kw          = normalizeKeyword(body);
+  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body, session } = ctx;
+  const kw           = normalizeKeyword(body);
   const sessionState = String(session?.session_state ?? "idle");
   const currentJobId = session?.current_job_id as string | undefined;
 
-  // ── HELP keyword ───────────────────────────────────────────────────────────
+  // ── HELP ──────────────────────────────────────────────────────────────────
   if (kw === KW_HELP) {
     await supabase.from("admin_alerts").insert({
-      alert_type:          "escalation",
-      priority:            "normal",
-      provider_slug:       String(provider.slug),
+      alert_type: "escalation", priority: "normal",
+      provider_slug: String(provider.slug),
       participant_whatsapp: fromNumber,
-      description:         "Provider requested HELP.",
-      status:              "open",
+      description: "Provider requested HELP.",
+      status: "open",
     });
-    if (twilioEnv) {
-      await sendWhatsApp(twilioEnv, fromNumber, "We've received your support request. Our team will be in touch shortly.");
-    }
+    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, "We've received your support request. Our team will be in touch shortly.");
     return;
   }
 
   // ── ACCEPT ────────────────────────────────────────────────────────────────
-  if (kw === KW_ACCEPT && (sessionState === "awaiting_accept" || currentJobId)) {
-    const jobId = resolveJobId(body, currentJobId);
-    if (!jobId) {
-      await escalateAmbiguousReply(ctx, provider, "ACCEPT");
-      return;
-    }
+  if (kw === KW_ACCEPT && sessionState === "awaiting_accept") {
+    const jobId = await resolveAcceptJobId(ctx, provider);
+    if (!jobId) { await escalateAmbiguousReply(ctx, provider, "ACCEPT"); return; }
     await handleProviderAccept(ctx, provider, jobId, updateSession);
     return;
   }
 
   // ── PASS or DECLINE ───────────────────────────────────────────────────────
-  if ((kw === KW_PASS || kw === KW_DECLINE) && currentJobId) {
-    const jobId = resolveJobId(body, currentJobId);
-    if (jobId) {
-      await supabase.from("broadcast_responses")
-        .update({ response: kw, responded_at: new Date().toISOString() })
-        .eq("job_id", jobId)
-        .eq("provider_slug", String(provider.slug));
-
-      await updateSession({ session_state: "idle", current_job_id: null, sender_type: "provider" });
-
-      const ack = "Understood — you've passed on this job.";
-      if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, ack);
-      logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: ack, status: "sent" });
+  if (kw === KW_PASS || kw === KW_DECLINE) {
+    const jctx = await resolveJobContext(supabase, fromNumber, currentJobId, body);
+    if (jctx && jctx !== "ambiguous") {
+      // Check if this is a Marketplace decline
+      if (jctx.source === "marketplace") {
+        await handleMarketplaceDecline(ctx, jctx, provider, updateSession);
+      } else {
+        // Concierge pass
+        await supabase.from("broadcast_responses").update({
+          response: kw, responded_at: new Date().toISOString(),
+        }).eq("job_id", jctx.jobId).eq("provider_slug", String(provider.slug));
+        const ack = "Understood — you've passed on this job.";
+        if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, ack);
+        logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: jctx.jobId, participantWhatsapp: fromNumber, body: ack, status: "sent" });
+      }
+      await updateSession({ session_state: "idle", current_job_id: null });
+    } else {
+      await escalateAmbiguousReply(ctx, provider, kw);
     }
     return;
   }
 
   // ── Active thread: relay to client ────────────────────────────────────────
-  if ((sessionState === "open" || sessionState === "active") && currentJobId) {
-    await relayProviderToClient(ctx, currentJobId, provider, updateSession);
-    return;
+  if (sessionState === "open" || sessionState === "active") {
+    const jctx = await resolveJobContext(supabase, fromNumber, currentJobId, body);
+    if (jctx === "ambiguous") {
+      await sendDisambiguationPrompt(ctx, updateSession);
+      return;
+    }
+    if (jctx) {
+      await relayProviderToClient(ctx, jctx, provider, updateSession);
+      return;
+    }
   }
 
-  // ── Unrecognized / no context ─────────────────────────────────────────────
+  // ── Unrecognized ──────────────────────────────────────────────────────────
   await escalateAmbiguousReply(ctx, provider, body);
+}
+
+// ─── Resolve job ID for ACCEPT ────────────────────────────────────────────────
+// Handles both Concierge (broadcast_sent state) and Marketplace (sent_to_provider).
+
+async function resolveAcceptJobId(
+  ctx: Ctx,
+  provider: Record<string, unknown>,
+): Promise<string | null> {
+  const { supabase, fromNumber, body, session } = ctx;
+  const currentJobId = session?.current_job_id as string | undefined;
+
+  // Explicit job ID in message
+  const match = body.match(/\b([A-Z]{2,3}-\d{5})\b/);
+  if (match) {
+    const [cat, seq] = match[1].split("-");
+    const { data: jobs } = await supabase
+      .from("jobs")
+      .select("job_id")
+      .like("job_id", `%-${cat}-${seq}`)
+      .in("state", ["broadcast_sent", "sent_to_provider"])
+      .limit(1);
+    if (jobs?.[0]) return jobs[0].job_id;
+  }
+
+  // Session current_job_id
+  if (currentJobId) {
+    const { data: job } = await supabase.from("jobs")
+      .select("job_id, state")
+      .eq("job_id", currentJobId)
+      .in("state", ["broadcast_sent", "sent_to_provider"])
+      .maybeSingle();
+    if (job) return job.job_id;
+  }
+
+  // Single pending broadcast for this provider (Concierge)
+  const { data: brs } = await supabase.from("broadcast_responses")
+    .select("job_id")
+    .eq("provider_slug", String(provider.slug))
+    .is("response", null)
+    .limit(2);
+
+  if (brs && brs.length === 1) return brs[0].job_id;
+
+  // Single pending Marketplace job for this provider
+  const { data: mkJobs } = await supabase.from("jobs")
+    .select("job_id")
+    .eq("marketplace_provider_slug", String(provider.slug))
+    .eq("state", "sent_to_provider")
+    .limit(2);
+
+  if (mkJobs && mkJobs.length === 1) return mkJobs[0].job_id;
+
+  return null;
 }
 
 // ─── Provider ACCEPT handler ──────────────────────────────────────────────────
@@ -660,18 +780,39 @@ async function handleProviderAccept(
   ctx: Ctx,
   provider: Record<string, unknown>,
   jobId: string,
-  updateSession: (patch: Record<string, unknown>) => Promise<unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
 ) {
   const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
 
-  // Atomic claim via Postgres function (handles race condition)
+  // Load job to determine flow (Concierge vs Marketplace)
+  const { data: job } = await supabase.from("jobs")
+    .select("job_id, source, state, address, category_code, category_name, client_whatsapp, client_id, assigned_provider_slug")
+    .eq("job_id", jobId)
+    .single();
+
+  if (!job) {
+    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, `We couldn't find that job. Please contact support.`);
+    return;
+  }
+
+  // ── Marketplace ACCEPT: direct path, no payment ───────────────────────────
+  if (job.source === "marketplace") {
+    if (job.state !== "sent_to_provider" || job.marketplace_provider_slug !== String(provider.slug)) {
+      const msg = `[Job #${toPublicJobId(jobId)}] This request is no longer available.`;
+      if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, msg);
+      return;
+    }
+    await handleMarketplaceAccept(ctx, provider, job, updateSession);
+    return;
+  }
+
+  // ── Concierge ACCEPT: atomic claim → payment ──────────────────────────────
   const { data: claimed } = await supabase.rpc("claim_lead", {
     p_job_id:        jobId,
     p_provider_slug: String(provider.slug),
   });
 
   if (!claimed) {
-    // Another provider got there first
     const lostMsg = `[Job #${toPublicJobId(jobId)}] This job has already been claimed. Keep an eye out for the next one.`;
     if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, lostMsg);
     logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: lostMsg, status: "sent" });
@@ -679,64 +820,118 @@ async function handleProviderAccept(
     return;
   }
 
-  // Claim successful — trigger payment
   await updateSession({ session_state: "idle", current_job_id: jobId, sender_type: "provider" });
 
-  // Call create-payment-link internally
+  // Trigger payment
   const cronSecret = Deno.env.get("INTERNAL_CRON_SECRET");
-  const supabaseUrl2 = Deno.env.get("SUPABASE_URL") ?? "";
-  const fnBase = supabaseUrl2.includes("supabase.co")
-    ? supabaseUrl2.replace("https://", "").split(".supabase.co")[0]
-    : "";
-  const paymentUrl = `https://${fnBase}.supabase.co/functions/v1/create-payment-link`;
-
-  fetch(paymentUrl, {
+  const fnBase     = (Deno.env.get("SUPABASE_URL") ?? "").split(".supabase.co")[0].replace("https://", "");
+  fetch(`https://${fnBase}.supabase.co/functions/v1/create-payment-link`, {
     method: "POST",
-    headers: {
-      "Content-Type":      "application/json",
-      "x-internal-secret": cronSecret ?? "",
-    },
+    headers: { "Content-Type": "application/json", "x-internal-secret": cronSecret ?? "" },
     body: JSON.stringify({ job_id: jobId, provider_slug: String(provider.slug) }),
   }).catch(() => {});
 
-  // Send acknowledgment to provider
   const ackMsg = `[Job #${toPublicJobId(jobId)}] Your claim has been received. ${
     provider.card_on_file
       ? "Your card on file will be charged now to confirm your assignment."
-      : "Please complete payment using the link we're sending you."
+      : "Please complete payment using the link we're sending you now."
   }`;
   if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, ackMsg);
   logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: ackMsg, status: "sent" });
 }
 
-// ─── Relay provider message to client ─────────────────────────────────────────
+// ─── Marketplace: provider ACCEPT ────────────────────────────────────────────
 
-async function relayProviderToClient(
+async function handleMarketplaceAccept(
   ctx: Ctx,
-  jobId: string,
   provider: Record<string, unknown>,
-  updateSession: (patch: Record<string, unknown>) => Promise<unknown>,
+  job: Record<string, unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
 ) {
-  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body } = ctx;
+  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
+  const jobId        = String(job.job_id);
+  const categoryName = CATEGORY_NAMES[String(job.category_code)] ?? String(job.category_name ?? job.category_code);
+  const address      = String(job.address ?? "address TBD");
+  const clientWa     = String(job.client_whatsapp ?? "");
 
-  const { data: participant } = await supabase
-    .from("job_participants")
-    .select("whatsapp_e164")
-    .eq("job_id", jobId)
-    .eq("participant_type", "client")
-    .eq("session_state", "active")
-    .maybeSingle();
+  // Advance job state — no payment required for Marketplace
+  await supabase.from("jobs").update({
+    state:                 "thread_live",
+    status:                "assigned",
+    assigned_provider_slug: String(provider.slug),
+    assigned_at:           new Date().toISOString(),
+    payment_status:        "n/a",
+  }).eq("job_id", jobId);
 
-  if (!participant?.whatsapp_e164) return;
+  // Provider name for messages
+  const providerName = String(provider.first_name ?? "Your TaskLeader");
 
-  const firstName    = String(provider.first_name ?? "Your TaskLeader");
-  const relayBody    = `[${firstName}] ${body}`;
-  if (twilioEnv) {
-    const result = await sendWhatsApp(twilioEnv, participant.whatsapp_e164, relayBody);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: participant.whatsapp_e164, body: relayBody, status: result.ok ? "sent" : "failed" });
+  // Acknowledge to provider
+  const ack = `[Job #${toPublicJobId(jobId)}] You've accepted this ${categoryName} request. We'll open the job thread now.`;
+  if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, ack);
+  logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: ack, status: "sent" });
+
+  // Add job_participants
+  const participants: Record<string, unknown>[] = [
+    { job_id: jobId, participant_type: "provider", whatsapp_e164: fromNumber, provider_slug: String(provider.slug) },
+  ];
+  if (clientWa) {
+    participants.push({ job_id: jobId, participant_type: "client", whatsapp_e164: clientWa, client_id: job.client_id ?? null });
+  }
+  await supabase.from("job_participants").upsert(participants, { onConflict: "job_id,whatsapp_e164" });
+
+  // Send WC-2 to client (Marketplace uses same assignment template)
+  if (twilioEnv && clientWa) {
+    const wc2 = buildWC2(jobId, address, providerName, categoryName);
+    const result = await sendWhatsApp(twilioEnv, clientWa, wc2);
+    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: clientWa, templateName: "WC-2", body: wc2, status: result.ok ? "sent" : "failed" });
+
+    // Update client session
+    await supabase.from("conversation_sessions").upsert({
+      whatsapp_e164:   clientWa,
+      sender_type:     "client",
+      session_state:   "open",
+      current_job_id:  jobId,
+      last_activity_at: new Date().toISOString(),
+    }, { onConflict: "whatsapp_e164" });
   }
 
-  await updateSession({ session_state: "open", current_job_id: jobId });
+  await updateSession({ session_state: "open", current_job_id: jobId, sender_type: "provider" });
+}
+
+// ─── Marketplace: provider DECLINE ───────────────────────────────────────────
+
+async function handleMarketplaceDecline(
+  ctx: Ctx,
+  jctx: JobContext,
+  provider: Record<string, unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
+
+  await supabase.from("jobs").update({
+    state:  "provider_declined",
+    status: "pending",
+  }).eq("job_id", jctx.jobId);
+
+  // Acknowledge to provider
+  const ack = `[Job #${toPublicJobId(jctx.jobId)}] Understood — you've declined this request.`;
+  if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, ack);
+  logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: jctx.jobId, participantWhatsapp: fromNumber, body: ack, status: "sent" });
+
+  // Load client WhatsApp
+  const { data: job } = await supabase.from("jobs")
+    .select("client_whatsapp, category_code, category_name")
+    .eq("job_id", jctx.jobId).single();
+
+  if (job?.client_whatsapp && twilioEnv) {
+    const catName = CATEGORY_NAMES[job.category_code] ?? job.category_name ?? job.category_code;
+    const notif   = buildMKT2Declined(jctx.jobId, jctx.address, catName);
+    await sendWhatsApp(twilioEnv, job.client_whatsapp, notif);
+    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: jctx.jobId, participantWhatsapp: job.client_whatsapp, templateName: "MKT-2-DECLINED", body: notif, status: "sent" });
+  }
+
+  await updateSession({ session_state: "idle", current_job_id: null });
 }
 
 // ─── Ambiguous reply escalation ───────────────────────────────────────────────
@@ -746,14 +941,14 @@ async function escalateAmbiguousReply(
   senderRecord: Record<string, unknown>,
   keyword: string,
 ) {
-  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, session } = ctx;
+  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
 
   await supabase.from("admin_alerts").insert({
     alert_type:          "ambiguous_reply",
     priority:            "normal",
     participant_whatsapp: fromNumber,
     provider_slug:       senderRecord.slug as string ?? null,
-    description:         `Ambiguous reply '${keyword}' with no resolvable job context.`,
+    description:         `Ambiguous reply '${keyword.substring(0, 100)}' — no resolvable job context.`,
     status:              "open",
   });
 
@@ -771,33 +966,29 @@ async function handleUnknownSender(
   ctx: Ctx,
   client: Record<string, unknown> | null,
   provider: Record<string, unknown> | null,
-  _unused?: unknown,
 ) {
   const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body } = ctx;
 
-  // Suspended check
   if (client?.suspended || provider?.suspended) {
     if (twilioEnv) {
-      await sendWhatsApp(
-        twilioEnv, fromNumber,
-        "Your access has been temporarily suspended. Please contact us at info@task-leaders.com for assistance.",
-      );
+      await sendWhatsApp(twilioEnv, fromNumber,
+        "Your access has been temporarily suspended. Please contact info@task-leaders.com for assistance.");
     }
     return;
   }
 
-  // Pending (awaiting approval)
-  if (client?.status === "pending" || provider?.status === "pending_onboarding" || provider?.status === "pending_approval") {
+  if (
+    client?.status === "pending" ||
+    provider?.status === "pending_onboarding" ||
+    provider?.status === "pending_approval"
+  ) {
     if (twilioEnv) {
-      await sendWhatsApp(
-        twilioEnv, fromNumber,
-        "Your account is currently under review. We'll reach out once it's approved.",
-      );
+      await sendWhatsApp(twilioEnv, fromNumber,
+        "Your account is currently under review. We'll reach out once it's approved.");
     }
     return;
   }
 
-  // Truly unknown sender
   await supabase.from("admin_alerts").insert({
     alert_type:          "escalation",
     priority:            "normal",
@@ -807,28 +998,7 @@ async function handleUnknownSender(
   });
 
   if (twilioEnv) {
-    await sendWhatsApp(
-      twilioEnv, fromNumber,
-      "Hi — we don't have a record matching your number. If you'd like to learn more about TaskLeaders, visit task-leaders.com.",
-    );
+    await sendWhatsApp(twilioEnv, fromNumber,
+      "Hi — we don't have a record matching your number. If you'd like to learn more about TaskLeaders, visit task-leaders.com.");
   }
-}
-
-// ─── Job ID resolution helper ─────────────────────────────────────────────────
-
-/**
- * Attempts to extract an explicit public job ID from the reply body.
- * Falls back to currentJobId from session.
- * Returns internal job_id format or null.
- */
-function resolveJobId(body: string, currentJobId: string | undefined): string | null {
-  // Match public format: PLM-00001 (in body)
-  const match = body.match(/\b([A-Z]{2,3}-\d{5})\b/);
-  if (match) {
-    // We have a public ID — resolve back to full job_id via session context
-    // For now return the public ID as-is; the DB stores full IDs but
-    // generate_public_job_id() strips city — we check both formats in query
-    return currentJobId ?? null; // Phase 5: full reverse-lookup from public ID
-  }
-  return currentJobId ?? null;
 }

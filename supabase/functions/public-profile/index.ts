@@ -1,7 +1,14 @@
 // TaskLeaders — Edge Function: public-profile
 // Contract: GET /public-profile?city=vancouver&provider=sam-fixit
 // Returns approved + active provider profile data for the given city + provider.
-// IMPORTANT: Connect handoff remains gated for MVP until consent/Terms/Privacy checkpoint is finalized.
+//
+// Phase 3: Connect handoff is now ACTIVE.
+// Returns connect.status = "active" and connect.endpoint pointing to marketplace-connect.
+// The frontend profile.html Connect button should POST the form to connect.endpoint.
+// Required form fields: provider_slug, city, client_name, client_whatsapp, description, consent.
+//
+// Routing: All Marketplace communication routes through the TaskLeaders WhatsApp number.
+// The whatsapp_e164 field is returned for reference only — it is NOT a direct handoff number.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -110,15 +117,16 @@ Deno.serve(async (req) => {
         hero_photo_url: row.hero_photo_url,
       },
       connect: {
-        status: "gated",
+        status:   "active",
         requires_consent: true,
+        // POST to this endpoint with: provider_slug, city, client_name,
+        // client_whatsapp, description, consent (boolean).
+        // All communication routes through the TaskLeaders number — not a direct handoff.
+        endpoint: `${(Deno.env.get("SUPABASE_URL") ?? "").split(".supabase.co")[0].replace("https://", "https://")}.supabase.co/functions/v1/marketplace-connect`,
         handoff: {
-          channel: "whatsapp",
-          whatsapp_e164: row.whatsapp_e164,
-          deeplink_url: null,
+          channel:  "whatsapp",
+          mode:     "routed",   // through TaskLeaders number — not direct
         },
-        message:
-          "Direct WhatsApp connect is not enabled yet. We’re finalizing the consent / Terms / Privacy checkpoint for launch.",
       },
       generated_at: new Date().toISOString(),
     },

@@ -310,5 +310,76 @@ export function buildWT7(
   );
 }
 
+// ─── Routed-thread relay helpers ─────────────────────────────────────────────
+// Every relayed message includes the job header so recipients can distinguish
+// threads when multiple jobs are active simultaneously.
+// Format: [Job #PLM-00001 | 123 Main St]\n[Sender] original message
+
+/**
+ * Wraps a client's free-form message for relay to the assigned provider.
+ * Always prefixes with job header to maintain thread context.
+ */
+export function buildRelayToProvider(
+  jobId: string,
+  address: string,
+  clientMessage: string,
+): string {
+  return `${jobHeader(jobId, address)}\n[Client] ${clientMessage}`;
+}
+
+/**
+ * Wraps a provider's free-form message for relay to the client.
+ * Always prefixes with job header to maintain thread context.
+ */
+export function buildRelayToClient(
+  jobId: string,
+  address: string,
+  providerFirstName: string,
+  providerMessage: string,
+): string {
+  return `${jobHeader(jobId, address)}\n[${providerFirstName}] ${providerMessage}`;
+}
+
+// ─── Marketplace templates ────────────────────────────────────────────────────
+
+/**
+ * MKT-1 — Marketplace provider notification
+ * Sent to the specific provider selected from the public profile.
+ * No lead fee — Marketplace providers receive direct requests.
+ */
+export function buildMKT1(
+  jobId: string,
+  address: string,
+  clientName: string,
+  categoryName: string,
+  description: string,
+): string {
+  const hdr = jobHeader(jobId, address);
+  return (
+    `${hdr} New request via your TaskLeaders profile.\n\n` +
+    `Client: ${clientName}\n` +
+    `Service: ${categoryName}\n` +
+    `Details: ${description}\n\n` +
+    `Reply ACCEPT to confirm this job. Reply DECLINE to pass.\n\n` +
+    `This is a direct request from a client who selected your profile.`
+  );
+}
+
+/**
+ * MKT-2 — Client notification: provider declined or no response
+ * Sent to the Marketplace client when the targeted provider declines or doesn't respond.
+ */
+export function buildMKT2Declined(
+  jobId: string,
+  address: string,
+  categoryName: string,
+): string {
+  const hdr = jobHeader(jobId, address);
+  return (
+    `${hdr} The TaskLeader you selected is unable to take your ${categoryName} request at this time.\n\n` +
+    `Browse more TaskLeaders at task-leaders.com to find another match.`
+  );
+}
+
 // Re-export for convenience
 export { toPublicJobId, jobHeader };
