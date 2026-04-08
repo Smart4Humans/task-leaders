@@ -25,12 +25,17 @@ import {
 import { OPERATIONAL_EVENT_WEIGHTS } from "../_shared/constants.ts";
 
 // ── triggerApplyReliability ───────────────────────────────────────────────────
-// Fire-and-forget call to apply-reliability after a payment_failure is recorded.
-// Keeps the score current without waiting for an unrelated survey or admin call.
+// Triggers apply-reliability after a payment_failure is recorded.
+// Failures are NOT silently discarded — any HTTP error or network failure
+// writes an admin_alerts row (escalation / high) so the stale unapplied
+// reliability_inputs row is visible without manual SQL checking.
+// The escalation email arm of this same function picks it up on the next run.
 function triggerApplyReliability(
   supabaseUrl:    string,
   providerSlug:   string,
+  jobId:          string,
   cronSecret:     string | undefined,
+  supabase:       ReturnType<typeof createClient>,
 ) {
   const fnBase = supabaseUrl.split(".supabase.co")[0].replace("https://", "");
   fetch(`https://${fnBase}.supabase.co/functions/v1/apply-reliability`, {
@@ -40,7 +45,36 @@ function triggerApplyReliability(
       "x-internal-secret": cronSecret ?? "",
     },
     body: JSON.stringify({ provider_slug: providerSlug }),
-  }).catch(() => {});
+  }).then(async (res) => {
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "unreadable");
+      await supabase.from("admin_alerts").insert({
+        alert_type:    "escalation",
+        priority:      "high",
+        provider_slug: providerSlug,
+        job_id:        jobId,
+        description:
+          `apply-reliability HTTP ${res.status} after recording payment_failure for ` +
+          `provider ${providerSlug} / job ${jobId}. Response: ${errText}. ` +
+          `reliability_inputs row exists (applied = false) — score NOT updated. ` +
+          `Manually POST to apply-reliability with provider_slug to resolve.`,
+        status: "open",
+      }).catch(() => {});
+    }
+  }).catch(async (networkErr) => {
+    await supabase.from("admin_alerts").insert({
+      alert_type:    "escalation",
+      priority:      "high",
+      provider_slug: providerSlug,
+      job_id:        jobId,
+      description:
+        `apply-reliability network/timeout error after recording payment_failure for ` +
+        `provider ${providerSlug} / job ${jobId}. Error: ${String(networkErr)}. ` +
+        `reliability_inputs row exists (applied = false) — score NOT updated. ` +
+        `Manually POST to apply-reliability with provider_slug to resolve.`,
+      status: "open",
+    }).catch(() => {});
+  });
 }
 
 function json(body: unknown, status = 200) {
@@ -194,8 +228,8 @@ Deno.serve(async (req) => {
       }).throwOnError()
         .then(() => {
           // Trigger apply-reliability promptly after recording.
-          // Fire-and-forget — does not block timeout processing.
-          triggerApplyReliability(supabaseUrl!, alert.provider_slug, cronSecret);
+          // Failures are logged to admin_alerts — not silently discarded.
+          triggerApplyReliability(supabaseUrl!, alert.provider_slug, alert.job_id, cronSecret, supabase);
         })
         .catch(() => {
           // Unique constraint violation = already recorded (idempotent). Silently continue.

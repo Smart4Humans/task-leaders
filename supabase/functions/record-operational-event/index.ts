@@ -267,11 +267,16 @@ Deno.serve(async (req) => {
 
   // ── Trigger apply-reliability promptly ───────────────────────────────────
   // Operational events should not sit unapplied waiting for an unrelated
-  // survey or admin call. We fire-and-forget apply-reliability immediately
-  // after recording so the score stays current.
-  // Async — does not block this response.
+  // survey or admin call. We trigger apply-reliability immediately after
+  // recording so the score stays current.
+  //
+  // Failures are NOT silently discarded. Any HTTP error or network failure
+  // writes an admin_alerts row (type: escalation, priority: high) so the
+  // stale unapplied input is visible without manual SQL checking.
+  // The process-timeouts escalation arm picks these up and emails admin.
   const cronSecret = Deno.env.get("INTERNAL_CRON_SECRET");
   const fnBase     = (supabaseUrl ?? "").split(".supabase.co")[0].replace("https://", "");
+
   fetch(`https://${fnBase}.supabase.co/functions/v1/apply-reliability`, {
     method: "POST",
     headers: {
@@ -279,7 +284,36 @@ Deno.serve(async (req) => {
       "x-internal-secret": cronSecret ?? "",
     },
     body: JSON.stringify({ provider_slug: providerSlug }),
-  }).catch(() => {}); // fire-and-forget; apply failure should not fail event recording
+  }).then(async (res) => {
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "unreadable");
+      await supabase.from("admin_alerts").insert({
+        alert_type:    "escalation",
+        priority:      "high",
+        provider_slug: providerSlug,
+        job_id:        jobId,
+        description:
+          `apply-reliability HTTP ${res.status} after recording '${eventType}' for ` +
+          `provider ${providerSlug} / job ${jobId}. Response: ${errText}. ` +
+          `reliability_inputs row exists (applied = false) — score NOT updated. ` +
+          `Manually POST to apply-reliability with provider_slug to resolve.`,
+        status: "open",
+      }).catch(() => {});
+    }
+  }).catch(async (networkErr) => {
+    await supabase.from("admin_alerts").insert({
+      alert_type:    "escalation",
+      priority:      "high",
+      provider_slug: providerSlug,
+      job_id:        jobId,
+      description:
+        `apply-reliability network/timeout error after recording '${eventType}' for ` +
+        `provider ${providerSlug} / job ${jobId}. Error: ${String(networkErr)}. ` +
+        `reliability_inputs row exists (applied = false) — score NOT updated. ` +
+        `Manually POST to apply-reliability with provider_slug to resolve.`,
+      status: "open",
+    }).catch(() => {});
+  });
 
   // ── Audit trail: admin_alert for this event ───────────────────────────────
   // Records the event in admin_alerts for visibility and audit.
