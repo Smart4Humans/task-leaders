@@ -59,22 +59,24 @@ function err(code: string, message: string, status = 400) {
 // PROVISIONAL — adjust with product approval.
 const BASE_RELIABILITY_SCORE = 80;
 
-// Approved negative input types and their provisional weights.
-// Positive = improves score. Negative = reduces score.
+// Provisional weights for factual negative event types.
+// These MUST stay in sync with OPERATIONAL_EVENT_WEIGHTS in _shared/constants.ts,
+// which is the canonical source of truth.
 // Do NOT add new types here without product approval.
+//
+// manual_positive and manual_negative are intentionally absent.
+// They are internal-only signals excluded from the public reliability score
+// in v1. apply-reliability marks them applied with zero score contribution.
+// If this policy changes, add them here and reset their applied flags.
 const APPROVED_INPUT_WEIGHTS: Record<string, number> = {
-  // Survey inputs are stored with individual weights in the DB (see migration).
+  // Survey inputs: weight is stored per-record in DB (set at recording time).
   // survey: <from DB>
 
-  // Negative inputs (approved from Guidelines):
-  payment_failure:      -10,  // claimed lead, did not pay within window
-  accepted_no_proceed:  -15,  // accepted job, then disengaged
-  no_show:              -20,  // confirmed job, did not appear
-  poor_eta:              -5,  // failed to send ETA (admin-flagged)
-
-  // Manual admin inputs — weight comes from DB, no override here
-  // manual_positive: <from DB>
-  // manual_negative: <from DB>
+  // Factual negative inputs (admin-confirmed, predefined weights):
+  payment_failure:      -10,  // claimed lead, payment window expired unpaid
+  accepted_no_proceed:  -15,  // accepted, failed to proceed before appointment
+  no_show:              -20,  // had appointment commitment, failed to appear
+  poor_eta:              -5,  // ETA reminder sent; admin confirms no ETA given
 };
 
 Deno.serve(async (req) => {
@@ -145,11 +147,24 @@ Deno.serve(async (req) => {
   for (const input of inputs) {
     let weight: number;
 
-    if (input.input_type === "survey" || input.input_type === "manual_positive" || input.input_type === "manual_negative") {
-      // Weight is stored per-record in the DB (set at recording time)
+    // ── Internal-only signals: excluded from public score ────────────────────
+    // manual_positive and manual_negative are admin-recorded internal signals.
+    // They are NOT applied to the public reliability_percent in v1.
+    // We mark them applied here so they do not accumulate in the pending queue.
+    // Zero weight contribution. If this policy changes, update APPROVED_INPUT_WEIGHTS
+    // and run a backfill to reset applied = false for existing records.
+    if (input.input_type === "manual_positive" || input.input_type === "manual_negative") {
+      appliedIds.push(input.id);
+      inputLog.push(`INTERNAL-ONLY (not applied to public score): ${input.input_type}`);
+      continue;
+    }
+
+    if (input.input_type === "survey") {
+      // Weight is stored per-record in the DB (set by apply_survey_to_reliability)
       weight = Number(input.weight);
     } else if (Object.prototype.hasOwnProperty.call(APPROVED_INPUT_WEIGHTS, input.input_type)) {
-      // Use the provisionally defined weight for this type
+      // Use the provisionally defined weight for this type.
+      // Weight from DB field is ignored for these types — the code constant applies.
       weight = APPROVED_INPUT_WEIGHTS[input.input_type];
     } else {
       // Unknown input type — log and skip (do not silently apply unknown rules)

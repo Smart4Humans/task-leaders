@@ -221,6 +221,43 @@ export function normalizeToCategoryCode(raw: string): string | null {
   return null;
 }
 
+// ─── Operational event weights (provisional) ────────────────────────────────
+//
+// Predefined weights for admin-confirmed factual negative reliability events.
+//
+// Policy (locked for v1):
+//   Admin CONFIRMS whether an event occurred.
+//   Admin does NOT set or vary the weight — weights are code-defined here.
+//   This enforces structured, non-arbitrary reliability impact.
+//
+// manual_positive and manual_negative are NOT in this map.
+// They are internal-only signals, excluded from the public reliability score
+// path in v1. They are recorded in reliability_inputs but apply-reliability
+// skips them with zero score contribution.
+//
+// apply-reliability also maintains its own copy of these constants.
+// The two MUST remain in sync. This shared file is the single source of truth.
+//
+// PROVISIONAL: weights must be reviewed and approved before treating as
+// locked business rules. The formula is designed for easy recalibration.
+export const OPERATIONAL_EVENT_WEIGHTS: Readonly<Record<string, number>> = {
+  payment_failure:      -10,  // claimed lead, payment window expired unpaid
+  accepted_no_proceed:  -15,  // accepted, failed to proceed before appointment
+  no_show:              -20,  // had appointment commitment, failed to appear
+  poor_eta:              -5,  // ETA reminder was sent; admin confirms no ETA given
+};
+
+// These two event types are mutually exclusive per provider/job.
+// accepted_no_proceed = disengaged before any appointment was established.
+// no_show             = failed to appear after appointment was established.
+// Only one may be recorded per (provider_slug, job_id).
+// Enforced at both the application layer (record-operational-event) and
+// the DB layer (reliability_inputs_mutually_exclusive_events_idx).
+export const MUTUALLY_EXCLUSIVE_NEGATIVE_EVENTS: ReadonlySet<string> = new Set([
+  "accepted_no_proceed",
+  "no_show",
+]);
+
 // ─── Inbound keyword constants ───────────────────────────────────────────────
 export const KW_ACCEPT    = "ACCEPT";
 export const KW_PASS      = "PASS";

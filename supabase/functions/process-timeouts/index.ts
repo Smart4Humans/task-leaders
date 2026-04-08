@@ -22,6 +22,26 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   getTwilioEnv, sendWhatsApp, logMessage, buildWT6, buildWT7,
 } from "../_shared/twilio.ts";
+import { OPERATIONAL_EVENT_WEIGHTS } from "../_shared/constants.ts";
+
+// ── triggerApplyReliability ───────────────────────────────────────────────────
+// Fire-and-forget call to apply-reliability after a payment_failure is recorded.
+// Keeps the score current without waiting for an unrelated survey or admin call.
+function triggerApplyReliability(
+  supabaseUrl:    string,
+  providerSlug:   string,
+  cronSecret:     string | undefined,
+) {
+  const fnBase = supabaseUrl.split(".supabase.co")[0].replace("https://", "");
+  fetch(`https://${fnBase}.supabase.co/functions/v1/apply-reliability`, {
+    method: "POST",
+    headers: {
+      "Content-Type":      "application/json",
+      "x-internal-secret": cronSecret ?? "",
+    },
+    body: JSON.stringify({ provider_slug: providerSlug }),
+  }).catch(() => {});
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -36,7 +56,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
 
-  const cronSecret     = Deno.env.get("INTERNAL_CRON_SECRET");
+  const cronSecret     = Deno.env.get("INTERNAL_CRON_SECRET") ?? undefined;
   const supabaseUrl    = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("TASKLEADERS_SERVICE_ROLE_KEY");
 
@@ -148,6 +168,39 @@ Deno.serve(async (req) => {
         resolved_at:   new Date().toISOString(),
       })
       .eq("id", alert.id);
+
+    // ── payment_failure reliability input ─────────────────────────────────
+    // Only for payment_released (full timeout expired), not payment_warning.
+    // Canonical proof of actual winning claimant: payment_records row exists for
+    // this (job_id, provider_slug). Payment records are only created after
+    // claim_lead() succeeds — losers never receive a payment record.
+    // Note: broadcast_responses.claim_successful is reset to false by
+    // check_payment_timeouts() before this edge function runs, so we cannot
+    // use it as the post-hoc check. The payment_records row is the canonical source.
+    //
+    // The unique DB index (reliability_inputs_negative_event_dedup_idx) handles
+    // idempotency if this fires twice — the second insert is silently ignored.
+    if (alert.alert_type === "payment_released" && paymentRec) {
+      await supabase.from("reliability_inputs").insert({
+        provider_slug: alert.provider_slug,
+        job_id:        alert.job_id,
+        input_type:    "payment_failure",
+        weight:        OPERATIONAL_EVENT_WEIGHTS.payment_failure,
+        notes:
+          `[Auto-recorded] payment_failure: lead claimed but payment window expired unpaid. ` +
+          `Job ${alert.job_id} released at ${new Date().toISOString()}. ` +
+          `Provisional weight: ${OPERATIONAL_EVENT_WEIGHTS.payment_failure}.`,
+        applied: false,
+      }).throwOnError()
+        .then(() => {
+          // Trigger apply-reliability promptly after recording.
+          // Fire-and-forget — does not block timeout processing.
+          triggerApplyReliability(supabaseUrl!, alert.provider_slug, cronSecret);
+        })
+        .catch(() => {
+          // Unique constraint violation = already recorded (idempotent). Silently continue.
+        });
+    }
 
     processed++;
   }
