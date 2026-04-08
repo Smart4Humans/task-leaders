@@ -67,6 +67,80 @@ interface Ctx {
   session:        Record<string, unknown> | null;
 }
 
+// ─── sendAndLog ───────────────────────────────────────────────────────────────
+// Wraps sendWhatsApp + logMessage so the actual Twilio result is always captured.
+//
+// Previously, sendWhatsApp was called with its return value discarded, and
+// logMessage was always called with status: "sent" regardless of outcome.
+// If Twilio returned an error (wrong number format, sandbox join required,
+// bad credentials, permission denied, etc.) there was zero visibility.
+//
+// This helper:
+//   1. Calls sendWhatsApp and captures { ok, messageSid, error }
+//   2. Writes the actual status to message_log ("sent" | "failed" | "no_twilio_env")
+//   3. If !ok, inserts an admin_alerts row (escalation / high) with the Twilio error
+//      so failures surface without manual SQL inspection
+//   4. Returns the ok boolean so callers can branch if needed
+
+async function sendAndLog(
+  ctx:          Ctx,
+  to:           string,
+  messageBody:  string,
+  opts: {
+    jobId?:        string | null;
+    templateName?: string | null;
+  } = {},
+): Promise<boolean> {
+  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv } = ctx;
+
+  let ok         = false;
+  let messageSid: string | null = null;
+  let sendError:  string | null = null;
+
+  if (twilioEnv) {
+    const result = await sendWhatsApp(twilioEnv, to, messageBody);
+    ok         = result.ok;
+    messageSid = result.messageSid;
+    sendError  = result.error;
+
+    if (!result.ok) {
+      // Write failure to admin_alerts so it's visible without manual SQL checking.
+      // The process-timeouts escalation email arm picks this up on its next run.
+      try {
+        await supabase.from("admin_alerts").insert({
+          alert_type:           "escalation",
+          priority:             "high",
+          job_id:               opts.jobId ?? null,
+          participant_whatsapp: to,
+          description:
+            `sendWhatsApp FAILED. To: ${to}. ` +
+            `Twilio error: ${result.error ?? "unknown"}. ` +
+            `Template: ${opts.templateName ?? "(none)"}. ` +
+            `Body preview: ${messageBody.substring(0, 100)}.`,
+          status: "open",
+        });
+      } catch { /* non-fatal: alert insert failure does not block flow */ }
+    }
+  }
+
+  // Log with actual send status — never hardcode "sent".
+  logMessage({
+    supabaseUrl,
+    serviceRoleKey,
+    direction:           "outbound",
+    jobId:               opts.jobId ?? null,
+    participantWhatsapp: to,
+    messageSid,
+    templateName:        opts.templateName ?? null,
+    body:                messageBody,
+    status:              !twilioEnv ? "no_twilio_env"
+                       : ok        ? "sent"
+                       :             "failed",
+  });
+
+  return ok;
+}
+
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -420,8 +494,7 @@ async function handleConciergeIntake(
 
   if (!job.address) {
     const prompt = `Got it — we'll find you a ${categoryName}. What's the service address?`;
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, prompt);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id, participantWhatsapp: fromNumber, body: prompt, status: "sent" });
+    await sendAndLog(ctx, fromNumber, prompt, { jobId: job.job_id, templateName: "INTAKE_ADDRESS_PROMPT" });
     await updateSession({ session_state: "awaiting_address", current_job_id: job.job_id, sender_type: "client", last_prompt: prompt });
     return;
   }
@@ -429,8 +502,7 @@ async function handleConciergeIntake(
   const hasTimingKeyword = /asap|today|tomorrow|morning|afternoon|evening|mon|tue|wed|thu|fri|sat|sun|weekend/i.test(body);
   if (!hasTimingKeyword) {
     const prompt = `Thanks — when do you need this? (e.g. "tomorrow morning", "ASAP")`;
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, prompt);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id, participantWhatsapp: fromNumber, body: prompt, status: "sent" });
+    await sendAndLog(ctx, fromNumber, prompt, { jobId: job.job_id, templateName: "INTAKE_TIMING_PROMPT" });
     await updateSession({ session_state: "awaiting_timing", current_job_id: job.job_id, sender_type: "client", last_prompt: prompt });
     return;
   }
@@ -446,8 +518,7 @@ async function finalizeAndDispatch(
   const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
 
   const confirm = `We've received your request and we're finding you a match. We'll be in touch shortly.`;
-  if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, confirm);
-  logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: confirm, status: "sent" });
+  await sendAndLog(ctx, fromNumber, confirm, { jobId, templateName: "INTAKE_CONFIRM" });
 
   await supabase.from("jobs").update({ state: "intake_confirmed" }).eq("job_id", jobId);
   await updateSession({ session_state: "idle", current_job_id: jobId, sender_type: "client" });
