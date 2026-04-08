@@ -1,11 +1,17 @@
 // TaskLeaders — Edge Function: process-timeouts
 // Contract: POST /process-timeouts
-// Called by pg_cron (via pg_net) every minute.
-// Reads open admin_alerts queued by check_payment_timeouts() and sends
-// WT-6 (payment warning) or WT-7 (lead released) to the relevant provider.
+// Called by pg_cron (via pg_net) every minute. Two responsibilities:
 //
-// Also runs check_payment_timeouts() via RPC before processing alerts,
-// ensuring the queue is always fresh within the same minute window.
+// 1. Payment timeouts (existing):
+//    Reads open admin_alerts of type payment_warning / payment_released.
+//    Sends WT-6 (5 min remaining) and WT-7 (lead released) via Twilio.
+//
+// 2. Admin escalation emails (Phase 4):
+//    Reads open admin_alerts of type: escalation, ambiguous_reply, risk_flag,
+//    no_match, no_provider_response, guarantee_claim — for any with priority=high
+//    or that have been open > 30 minutes.
+//    Sends email to TASKLEADERS_ADMIN_EMAIL via Resend.
+//    Marks email_sent = true. Does not mark resolved (admin resolves manually).
 //
 // Auth: x-cron-secret header must match INTERNAL_CRON_SECRET env var.
 //
@@ -146,30 +152,95 @@ Deno.serve(async (req) => {
     processed++;
   }
 
-  // Step 3: Send email for any open non-payment alerts (escalation + risk_flag)
-  // For Phase 2: just flag them — full email escalation is Phase 4.
+  // Step 3: Admin escalation email arm
+  // Sends email via Resend for:
+  //   - Any open alert with priority = 'high' that has not had email sent
+  //   - Any open alert open > 30 minutes (regardless of priority) that has not had email sent
+  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+
   const { data: escalations } = await supabase
     .from("admin_alerts")
-    .select("id, alert_type, job_id, provider_slug, participant_whatsapp, description, priority")
-    .in("alert_type", ["escalation", "ambiguous_reply", "risk_flag", "no_match", "no_provider_response"])
+    .select("id, alert_type, job_id, provider_slug, participant_whatsapp, description, priority, created_at")
+    .in("alert_type", ["escalation", "ambiguous_reply", "risk_flag", "no_match",
+                       "no_provider_response", "guarantee_claim"])
     .eq("status", "open")
     .eq("email_sent", false)
+    .or(`priority.eq.high,created_at.lte.${thirtyMinutesAgo}`)
+    .order("priority", { ascending: false }) // high first
+    .order("created_at", { ascending: true })
     .limit(20);
 
-  // Mark as acknowledged (email pipeline is Phase 4)
+  let emailsSent = 0;
+
   if (escalations && escalations.length > 0) {
-    const ids = escalations.map((e) => e.id);
-    await supabase.from("admin_alerts")
-      .update({ status: "acknowledged" })
-      .in("id", ids);
+    const resendKey    = Deno.env.get("RESEND_API_KEY");
+    const adminEmail   = Deno.env.get("TASKLEADERS_ADMIN_EMAIL") ?? "info@task-leaders.com";
+    const fromEmail    = Deno.env.get("RESEND_FROM_EMAIL") ?? "TaskLeaders <info@task-leaders.com>";
+
+    if (resendKey) {
+      // Batch into a single digest email to avoid flooding the inbox
+      const alertLines = escalations.map((a) => (
+        `• [${a.priority.toUpperCase()}] ${a.alert_type}` +
+        (a.job_id ? ` | Job: ${a.job_id}` : "") +
+        (a.provider_slug ? ` | Provider: ${a.provider_slug}` : "") +
+        (a.participant_whatsapp ? ` | Number: ${a.participant_whatsapp}` : "") +
+        `\n  ${a.description ?? "No description"}`
+      ));
+
+      const subject  = `[TaskLeaders Admin] ${escalations.length} alert${escalations.length > 1 ? "s" : ""} require attention`;
+      const textBody = `TaskLeaders Admin Alerts\n\n${alertLines.join("\n\n")}\n\nReview in the Admin Panel.`;
+      const htmlBody = `
+        <html><head><meta charset="utf-8"></head>
+        <body style="font-family:sans-serif;font-size:15px;color:#111;line-height:1.6;">
+        <p><strong>TaskLeaders Admin Alerts</strong></p>
+        <ul style="list-style:none;padding:0;">
+          ${escalations.map((a) => `
+            <li style="margin-bottom:12px;padding:10px;background:#f8f8f8;border-radius:6px;">
+              <strong>[${a.priority.toUpperCase()}] ${a.alert_type}</strong>
+              ${a.job_id ? ` &mdash; Job: <code>${a.job_id}</code>` : ""}
+              ${a.provider_slug ? ` &mdash; Provider: <code>${a.provider_slug}</code>` : ""}
+              ${a.participant_whatsapp ? ` &mdash; Number: <code>${a.participant_whatsapp}</code>` : ""}
+              <br>${a.description ?? "No description"}
+            </li>`).join("")}
+        </ul>
+        <p><a href="https://task-leaders.com/v0.5/admin/approve.html">Review in Admin Panel</a></p>
+        </body></html>`;
+
+      const emailRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${resendKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: fromEmail,
+          to:   [adminEmail],
+          subject,
+          html: htmlBody,
+          text: textBody,
+        }),
+      });
+
+      if (emailRes.ok) {
+        const ids = escalations.map((e) => e.id);
+        await supabase.from("admin_alerts")
+          .update({ email_sent: true })
+          .in("id", ids);
+        emailsSent = escalations.length;
+      }
+    } else {
+      // No Resend key — mark acknowledged to prevent queue buildup
+      const ids = escalations.map((e) => e.id);
+      await supabase.from("admin_alerts")
+        .update({ status: "acknowledged" })
+        .in("id", ids);
+    }
   }
 
   return json({
     ok: true,
     data: {
       processed,
-      check_result:       checkResult,
-      escalations_queued: escalations?.length ?? 0,
+      check_result:    checkResult,
+      emails_sent:     emailsSent,
+      escalations_found: escalations?.length ?? 0,
     },
   });
 });

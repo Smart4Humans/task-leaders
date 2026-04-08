@@ -73,3 +73,17 @@ verify_jwt = false
 # All communication still routes through the TaskLeaders WhatsApp number.
 [functions.marketplace-connect]
 verify_jwt = false
+
+# ── Phase 4 — Survey, reliability, escalation ────────────────────────────────
+
+# Admin endpoint to trigger WC-3 (post-job survey) or WT-3 (ETA reminder).
+# WT-3 checks: thread active, not already sent, no recent provider message.
+# Auth: admin_password in body.
+[functions.trigger-survey]
+verify_jwt = false
+
+# Processes pending reliability_inputs and updates providers.reliability_percent.
+# Reliability is separate from response_time_minutes (updated via record_response_time RPC).
+# Called internally after survey completion and by admin for recomputation.
+[functions.apply-reliability]
+verify_jwt = false

@@ -491,11 +491,30 @@ async function handleSurveyAnswer(
     logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: nextQ, status: "sent" });
     await updateSession({ session_state: nextState, current_job_id: jobId, last_prompt: nextQ });
   } else {
-    await supabase.from("jobs").update({ state: "survey_complete", survey_completed_at: new Date().toISOString() }).eq("job_id", jobId);
+    // Survey complete — advance job state
+    await supabase.from("jobs").update({
+      state:                "survey_complete",
+      survey_completed_at:  new Date().toISOString(),
+    }).eq("job_id", jobId);
+
     const thanks = "Thank you for your feedback. We appreciate it.";
     if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, thanks);
     logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: thanks, status: "sent" });
     await updateSession({ session_state: "idle", current_job_id: null });
+
+    // Trigger reliability pipeline (fire-and-forget).
+    // Loads assigned_provider_slug from job, converts survey to reliability_input,
+    // updates providers.reliability_percent.
+    // Response time is NOT touched here — it was recorded when provider first responded.
+    const { data: completedJob } = await supabase
+      .from("jobs")
+      .select("assigned_provider_slug")
+      .eq("job_id", jobId)
+      .maybeSingle();
+
+    if (completedJob?.assigned_provider_slug) {
+      triggerApplyReliability(completedJob.assigned_provider_slug, jobId);
+    }
   }
 }
 
@@ -688,7 +707,8 @@ async function handleProviderMessage(
       if (jctx.source === "marketplace") {
         await handleMarketplaceDecline(ctx, jctx, provider, updateSession);
       } else {
-        // Concierge pass
+        // Concierge pass — record first response time before updating DB
+        await recordProviderResponseTime(supabase, provider, jctx.jobId, jctx.source);
         await supabase.from("broadcast_responses").update({
           response: kw, responded_at: new Date().toISOString(),
         }).eq("job_id", jctx.jobId).eq("provider_slug", String(provider.slug));
@@ -797,6 +817,9 @@ async function handleProviderAccept(
 
   // ── Marketplace ACCEPT: direct path, no payment ───────────────────────────
   if (job.source === "marketplace") {
+    // Record response time (marketplace: notified_at → first response)
+    await recordProviderResponseTime(supabase, provider, jobId, "marketplace");
+
     if (job.state !== "sent_to_provider" || job.marketplace_provider_slug !== String(provider.slug)) {
       const msg = `[Job #${toPublicJobId(jobId)}] This request is no longer available.`;
       if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, msg);
@@ -807,6 +830,9 @@ async function handleProviderAccept(
   }
 
   // ── Concierge ACCEPT: atomic claim → payment ──────────────────────────────
+  // Record response time before claim — measures time from broadcast to ACCEPT.
+  await recordProviderResponseTime(supabase, provider, jobId, "concierge");
+
   const { data: claimed } = await supabase.rpc("claim_lead", {
     p_job_id:        jobId,
     p_provider_slug: String(provider.slug),
@@ -1001,4 +1027,77 @@ async function handleUnknownSender(
     await sendWhatsApp(twilioEnv, fromNumber,
       "Hi — we don't have a record matching your number. If you'd like to learn more about TaskLeaders, visit task-leaders.com.");
   }
+}
+
+// ─── Response time recording ─────────────────────────────────────────────────
+// Response time is SEPARATE from reliability. Tracked and stored independently.
+// Called when a provider makes their first meaningful response (ACCEPT/PASS/DECLINE).
+// Does NOT write to reliability_inputs or affect reliability_percent.
+
+async function recordProviderResponseTime(
+  supabase: ReturnType<typeof createClient>,
+  provider: Record<string, unknown>,
+  jobId: string,
+  source: string,
+) {
+  const respondedAt = new Date().toISOString();
+
+  if (source === "concierge") {
+    // Concierge: measured from broadcast_sent_at → first provider response
+    const { data: job } = await supabase
+      .from("jobs")
+      .select("broadcast_sent_at")
+      .eq("job_id", jobId)
+      .maybeSingle();
+
+    if (job?.broadcast_sent_at) {
+      const broadcastMs = new Date(job.broadcast_sent_at).getTime();
+      const responseMs  = new Date(respondedAt).getTime();
+      const responseMins = Math.round((responseMs - broadcastMs) / 60000 * 10) / 10;
+
+      // Rolling average update via Postgres function (70/30 weight)
+      await supabase.rpc("record_response_time", {
+        p_provider_slug:     String(provider.slug),
+        p_response_time_min: responseMins,
+      });
+    }
+  } else if (source === "marketplace") {
+    // Marketplace: measured from marketplace_notified_at → first provider response
+    const { data: job } = await supabase
+      .from("jobs")
+      .select("marketplace_notified_at, first_provider_response_at")
+      .eq("job_id", jobId)
+      .maybeSingle();
+
+    if (job?.marketplace_notified_at && !job.first_provider_response_at) {
+      const notifiedMs  = new Date(job.marketplace_notified_at).getTime();
+      const responseMs  = new Date(respondedAt).getTime();
+      const responseMins = Math.round((responseMs - notifiedMs) / 60000 * 10) / 10;
+
+      await supabase.from("jobs")
+        .update({ first_provider_response_at: respondedAt })
+        .eq("job_id", jobId);
+
+      await supabase.rpc("record_response_time", {
+        p_provider_slug:     String(provider.slug),
+        p_response_time_min: responseMins,
+      });
+    }
+  }
+}
+
+// ─── Trigger apply-reliability after survey complete ─────────────────────────
+// Called from handleSurveyAnswer when the last question (q3) is answered.
+// Fire-and-forget — survey record already written; this converts it to a
+// reliability_input and updates providers.reliability_percent.
+
+function triggerApplyReliability(providerSlug: string, jobId: string) {
+  const cronSecret  = Deno.env.get("INTERNAL_CRON_SECRET");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const fnBase      = supabaseUrl.split(".supabase.co")[0].replace("https://", "");
+  fetch(`https://${fnBase}.supabase.co/functions/v1/apply-reliability`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-internal-secret": cronSecret ?? "" },
+    body: JSON.stringify({ provider_slug: providerSlug, job_id: jobId }),
+  }).catch(() => {});
 }
