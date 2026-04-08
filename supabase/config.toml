@@ -31,3 +31,39 @@ verify_jwt = false
 
 [functions.approve-application]
 verify_jwt = false
+
+# ── Messaging engine functions (Phase 2) ────────────────────────────────────
+
+# Outbound WhatsApp dispatcher. Internal admin-triggered sends.
+# Auth: x-internal-secret header (INTERNAL_CRON_SECRET) or admin_password in body.
+[functions.send-whatsapp]
+verify_jwt = false
+
+# Inbound Twilio webhook. Receives all messages to the TaskLeaders WhatsApp number.
+# Routes by sender identity + session state. State machine entry point.
+# Configured in Twilio Console as the webhook URL for the TaskLeaders number.
+[functions.twilio-webhook]
+verify_jwt = false
+
+# Concierge broadcast engine. Sends WT-2 to all eligible Concierge TaskLeaders.
+# Eligibility: concierge_eligible=true, category match, city match, not suspended.
+# Auth: x-internal-secret or admin_password.
+[functions.job-dispatch]
+verify_jwt = false
+
+# Stripe payment link / auto-charge. Called after a provider claims a job (ACCEPT).
+# Handles both card_on_file (auto-charge) and payment_link paths.
+# Auth: x-internal-secret or admin_password.
+[functions.create-payment-link]
+verify_jwt = false
+
+# Stripe webhook receiver. Processes payment_intent.succeeded / failed,
+# checkout.session.completed. Registered in Stripe Dashboard > Webhooks.
+[functions.stripe-webhook]
+verify_jwt = false
+
+# pg_cron target. Runs every minute via pg_net. Processes open payment_warning
+# and payment_released admin_alerts. Sends WT-6 (5 min remaining) and WT-7
+# (lead released). Auth: x-cron-secret header (INTERNAL_CRON_SECRET).
+[functions.process-timeouts]
+verify_jwt = false

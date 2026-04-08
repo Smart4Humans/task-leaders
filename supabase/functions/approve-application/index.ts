@@ -143,9 +143,52 @@ Deno.serve(async (req) => {
 
     if (updateError) return error("server_error", updateError.message, 500);
 
+    // Send WT-1 WhatsApp welcome to provider
+    // Template WT-1: TaskLeader profile activation / Concierge welcome
+    // Only sent if the provider is concierge_eligible; Marketplace-only providers
+    // receive a different email-only welcome for now.
+    const twilioAccountSid   = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const twilioAuthToken    = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const twilioWaNumber     = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
+    const internalSecret     = Deno.env.get("INTERNAL_CRON_SECRET");
+    const supabaseUrlForFn   = Deno.env.get("SUPABASE_URL") ?? "";
+    const fnProject          = supabaseUrlForFn.replace("https://", "").split(".supabase.co")[0];
+
+    if (acct.whatsapp_number && twilioAccountSid && twilioAuthToken && twilioWaNumber) {
+      const firstName = acct.first_name || "there";
+      // WT-1 body (all 11 templates defined in _shared/twilio.ts)
+      const wt1Body = (
+        `Hi ${firstName} — welcome to TaskLeaders Concierge.\n\n` +
+        `Your profile is now active.\n\n` +
+        `When a matching Concierge lead comes in, we'll message you here. ` +
+        `The first qualified TaskLeader to accept and complete lead fee payment gets the job.\n\n` +
+        `Reply HELP any time if you need support.`
+      );
+      const twilioMsgUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+      fetch(twilioMsgUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type":  "application/x-www-form-urlencoded",
+          "Authorization": "Basic " + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
+        },
+        body: new URLSearchParams({
+          From: `whatsapp:${twilioWaNumber}`,
+          To:   `whatsapp:${acct.whatsapp_number}`,
+          Body: wt1Body,
+        }),
+      }).catch(() => {}); // fire-and-forget
+
+      // Log to message_log via send-whatsapp (also fire-and-forget)
+      if (fnProject && internalSecret) {
+        fetch(`https://${fnProject}.supabase.co/functions/v1/send-whatsapp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-internal-secret": internalSecret },
+          body: JSON.stringify({ to: acct.whatsapp_number, body: wt1Body }),
+        }).catch(() => {});
+      }
+    }
+
     // Send welcome email via Resend
-    // TODO: Also send a WhatsApp welcome message once Twilio integration is complete.
-    //       In the interim, the operator should send this WhatsApp message manually.
     const resendKey = Deno.env.get("RESEND_API_KEY");
     const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "TaskLeaders <info@task-leaders.com>";
 
@@ -241,9 +284,39 @@ Deno.serve(async (req) => {
 
     if (updateErr) return error("server_error", updateErr.message, 500);
 
+    // Send WC-1 WhatsApp welcome to approved Concierge client
+    // Template WC-1: Client welcome / Concierge approval
+    const twilioAccountSid2  = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const twilioAuthToken2   = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const twilioWaNumber2    = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
+
+    // Concierge clients table stores WhatsApp number in the `whatsapp` column
+    const clientWhatsapp = (client as Record<string, unknown>).whatsapp as string | undefined;
+    if (clientWhatsapp && twilioAccountSid2 && twilioAuthToken2 && twilioWaNumber2) {
+      const firstName2 = client.first_name || (client.name || "").split(" ")[0] || "there";
+      // WC-1 body
+      const wc1Body = (
+        `Hi ${firstName2} — you're approved for TaskLeaders Concierge.\n\n` +
+        `Save this number. When you need help, just message us here and we'll take it from there.\n\n` +
+        `No login. No account setup each time. Just send your request with details when you need a TaskLeader.\n\n` +
+        `— TaskLeaders Concierge`
+      );
+      const twilioMsgUrl2 = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid2}/Messages.json`;
+      fetch(twilioMsgUrl2, {
+        method: "POST",
+        headers: {
+          "Content-Type":  "application/x-www-form-urlencoded",
+          "Authorization": "Basic " + btoa(`${twilioAccountSid2}:${twilioAuthToken2}`),
+        },
+        body: new URLSearchParams({
+          From: `whatsapp:${twilioWaNumber2}`,
+          To:   `whatsapp:${clientWhatsapp}`,
+          Body: wc1Body,
+        }),
+      }).catch(() => {}); // fire-and-forget
+    }
+
     // Send welcome email via Resend
-    // TODO: Also send a WhatsApp welcome message once Twilio integration is complete.
-    //       In the interim, the operator should send this WhatsApp message manually.
     const resendKey = Deno.env.get("RESEND_API_KEY");
     const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "TaskLeaders <info@task-leaders.com>";
 
