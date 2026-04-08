@@ -195,19 +195,22 @@ Deno.serve(async (req) => {
   );
 
   // ── Admin alert for audit trail ───────────────────────────────────────────
-  await supabase.from("admin_alerts").insert({
-    alert_type:           "guarantee_claim",
-    priority:             "high",
-    job_id:               jobId,
-    provider_slug:        providerSlug,
-    participant_whatsapp: job.client_whatsapp,
-    description:
-      `Guarantee claim initiated by admin for provider ${providerSlug}. ` +
-      `WT-4 ${messageSent ? "sent" : "FAILED to send"} to client ${job.client_whatsapp}. ` +
-      `Client session set to awaiting_guarantee_confirm. ` +
-      (adminNotes ? `Notes: ${adminNotes}` : ""),
-    status: "open",
-  }).catch(() => {});
+  // Awaited with try/catch — PostgrestFilterBuilder does not support .catch().
+  try {
+    await supabase.from("admin_alerts").insert({
+      alert_type:           "guarantee_claim",
+      priority:             "high",
+      job_id:               jobId,
+      provider_slug:        providerSlug,
+      participant_whatsapp: job.client_whatsapp,
+      description:
+        `Guarantee claim initiated by admin for provider ${providerSlug}. ` +
+        `WT-4 ${messageSent ? "sent" : "FAILED to send"} to client ${job.client_whatsapp}. ` +
+        `Client session set to awaiting_guarantee_confirm. ` +
+        (adminNotes ? `Notes: ${adminNotes}` : ""),
+      status: "open",
+    });
+  } catch { /* audit alert failure is non-fatal; claim and WT-4 already succeeded */ }
 
   return json({
     ok: true,

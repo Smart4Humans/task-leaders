@@ -287,49 +287,56 @@ Deno.serve(async (req) => {
   }).then(async (res) => {
     if (!res.ok) {
       const errText = await res.text().catch(() => "unreadable");
+      try {
+        await supabase.from("admin_alerts").insert({
+          alert_type:    "escalation",
+          priority:      "high",
+          provider_slug: providerSlug,
+          job_id:        jobId,
+          description:
+            `apply-reliability HTTP ${res.status} after recording '${eventType}' for ` +
+            `provider ${providerSlug} / job ${jobId}. Response: ${errText}. ` +
+            `reliability_inputs row exists (applied = false) — score NOT updated. ` +
+            `Manually POST to apply-reliability with provider_slug to resolve.`,
+          status: "open",
+        });
+      } catch { /* alert insert failure is non-fatal */ }
+    }
+  }).catch(async (networkErr) => {
+    try {
       await supabase.from("admin_alerts").insert({
         alert_type:    "escalation",
         priority:      "high",
         provider_slug: providerSlug,
         job_id:        jobId,
         description:
-          `apply-reliability HTTP ${res.status} after recording '${eventType}' for ` +
-          `provider ${providerSlug} / job ${jobId}. Response: ${errText}. ` +
+          `apply-reliability network/timeout error after recording '${eventType}' for ` +
+          `provider ${providerSlug} / job ${jobId}. Error: ${String(networkErr)}. ` +
           `reliability_inputs row exists (applied = false) — score NOT updated. ` +
           `Manually POST to apply-reliability with provider_slug to resolve.`,
         status: "open",
-      }).catch(() => {});
-    }
-  }).catch(async (networkErr) => {
-    await supabase.from("admin_alerts").insert({
-      alert_type:    "escalation",
-      priority:      "high",
-      provider_slug: providerSlug,
-      job_id:        jobId,
-      description:
-        `apply-reliability network/timeout error after recording '${eventType}' for ` +
-        `provider ${providerSlug} / job ${jobId}. Error: ${String(networkErr)}. ` +
-        `reliability_inputs row exists (applied = false) — score NOT updated. ` +
-        `Manually POST to apply-reliability with provider_slug to resolve.`,
-      status: "open",
-    }).catch(() => {});
+      });
+    } catch { /* alert insert failure is non-fatal */ }
   });
 
   // ── Audit trail: admin_alert for this event ───────────────────────────────
   // Records the event in admin_alerts for visibility and audit.
   // Does not require admin action — informational only.
-  await supabase.from("admin_alerts").insert({
-    alert_type:           "risk_flag",
-    priority:             "normal",
-    job_id:               jobId,
-    provider_slug:        providerSlug,
-    description:
-      `[Operational event recorded] ${eventType} — ` +
-      (notes ?? `admin confirmed for job ${jobId}`) +
-      `. Reliability input recorded (applied = false). ` +
-      `Provisional weight: ${weight}. apply-reliability triggered asynchronously.`,
-    status:               "acknowledged", // informational — no action needed
-  }).catch(() => {}); // fire-and-forget; audit log failure should not fail the response
+  // Awaited with try/catch — PostgrestFilterBuilder does not support .catch().
+  try {
+    await supabase.from("admin_alerts").insert({
+      alert_type:    "risk_flag",
+      priority:      "normal",
+      job_id:        jobId,
+      provider_slug: providerSlug,
+      description:
+        `[Operational event recorded] ${eventType} — ` +
+        (notes ?? `admin confirmed for job ${jobId}`) +
+        `. Reliability input recorded (applied = false). ` +
+        `Provisional weight: ${weight}. apply-reliability triggered asynchronously.`,
+      status: "acknowledged", // informational — no action needed
+    });
+  } catch { /* audit log failure is non-fatal; does not block the response */ }
 
   return json({
     ok: true,

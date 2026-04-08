@@ -48,32 +48,36 @@ function triggerApplyReliability(
   }).then(async (res) => {
     if (!res.ok) {
       const errText = await res.text().catch(() => "unreadable");
+      try {
+        await supabase.from("admin_alerts").insert({
+          alert_type:    "escalation",
+          priority:      "high",
+          provider_slug: providerSlug,
+          job_id:        jobId,
+          description:
+            `apply-reliability HTTP ${res.status} after recording payment_failure for ` +
+            `provider ${providerSlug} / job ${jobId}. Response: ${errText}. ` +
+            `reliability_inputs row exists (applied = false) — score NOT updated. ` +
+            `Manually POST to apply-reliability with provider_slug to resolve.`,
+          status: "open",
+        });
+      } catch { /* alert insert failure is non-fatal */ }
+    }
+  }).catch(async (networkErr) => {
+    try {
       await supabase.from("admin_alerts").insert({
         alert_type:    "escalation",
         priority:      "high",
         provider_slug: providerSlug,
         job_id:        jobId,
         description:
-          `apply-reliability HTTP ${res.status} after recording payment_failure for ` +
-          `provider ${providerSlug} / job ${jobId}. Response: ${errText}. ` +
+          `apply-reliability network/timeout error after recording payment_failure for ` +
+          `provider ${providerSlug} / job ${jobId}. Error: ${String(networkErr)}. ` +
           `reliability_inputs row exists (applied = false) — score NOT updated. ` +
           `Manually POST to apply-reliability with provider_slug to resolve.`,
         status: "open",
-      }).catch(() => {});
-    }
-  }).catch(async (networkErr) => {
-    await supabase.from("admin_alerts").insert({
-      alert_type:    "escalation",
-      priority:      "high",
-      provider_slug: providerSlug,
-      job_id:        jobId,
-      description:
-        `apply-reliability network/timeout error after recording payment_failure for ` +
-        `provider ${providerSlug} / job ${jobId}. Error: ${String(networkErr)}. ` +
-        `reliability_inputs row exists (applied = false) — score NOT updated. ` +
-        `Manually POST to apply-reliability with provider_slug to resolve.`,
-      status: "open",
-    }).catch(() => {});
+      });
+    } catch { /* alert insert failure is non-fatal */ }
   });
 }
 
@@ -215,7 +219,9 @@ Deno.serve(async (req) => {
     // The unique DB index (reliability_inputs_negative_event_dedup_idx) handles
     // idempotency if this fires twice — the second insert is silently ignored.
     if (alert.alert_type === "payment_released" && paymentRec) {
-      await supabase.from("reliability_inputs").insert({
+      // Use await + { error } — PostgrestFilterBuilder does not support .catch().
+      // A unique constraint violation (code 23505) means already recorded — silently continue.
+      const { error: riErr } = await supabase.from("reliability_inputs").insert({
         provider_slug: alert.provider_slug,
         job_id:        alert.job_id,
         input_type:    "payment_failure",
@@ -225,15 +231,14 @@ Deno.serve(async (req) => {
           `Job ${alert.job_id} released at ${new Date().toISOString()}. ` +
           `Provisional weight: ${OPERATIONAL_EVENT_WEIGHTS.payment_failure}.`,
         applied: false,
-      }).throwOnError()
-        .then(() => {
-          // Trigger apply-reliability promptly after recording.
-          // Failures are logged to admin_alerts — not silently discarded.
-          triggerApplyReliability(supabaseUrl!, alert.provider_slug, alert.job_id, cronSecret, supabase);
-        })
-        .catch(() => {
-          // Unique constraint violation = already recorded (idempotent). Silently continue.
-        });
+      });
+      if (!riErr) {
+        // Insert succeeded — trigger apply-reliability promptly.
+        // Failures are logged to admin_alerts — not silently discarded.
+        triggerApplyReliability(supabaseUrl!, alert.provider_slug, alert.job_id, cronSecret, supabase);
+      }
+      // If riErr: unique constraint (23505) = already recorded, idempotent — no action needed.
+      // Other errors are visible via the returned alert resolution flow.
     }
 
     processed++;

@@ -101,14 +101,18 @@ Deno.serve(async (req) => {
   const supabase  = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
   const twilioEnv = getTwilioEnv();
 
-  // Log inbound immediately (job_id unknown at this point)
-  supabase.from("message_log").insert({
-    direction:            "inbound",
-    participant_whatsapp: fromNumber,
-    twilio_message_sid:   messageSid,
-    body,
-    status: "received",
-  }).catch(() => {});
+  // Log inbound immediately (job_id unknown at this point).
+  // Awaited with try/catch — PostgrestFilterBuilder does not have .catch().
+  // A log failure is non-fatal; the webhook continues regardless.
+  try {
+    await supabase.from("message_log").insert({
+      direction:            "inbound",
+      participant_whatsapp: fromNumber,
+      twilio_message_sid:   messageSid,
+      body,
+      status: "received",
+    });
+  } catch { /* non-fatal: log insert failure does not block webhook processing */ }
 
   // ── Identify sender ────────────────────────────────────────────────────────
   const [clientRes, providerRes] = await Promise.all([
