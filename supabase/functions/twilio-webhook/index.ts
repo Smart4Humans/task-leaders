@@ -92,11 +92,19 @@ Deno.serve(async (req) => {
     if (!valid) return new Response("Invalid signature", { status: 403 });
   }
 
-  const fromNumber = (params["From"] ?? "").replace(/^whatsapp:/, "");
+  // Strip the "whatsapp:" prefix Twilio prepends to From/To fields.
+  const fromRaw    = (params["From"] ?? "").replace(/^whatsapp:/, "");
   const body       = (params["Body"] ?? "").trim();
   const messageSid = params["MessageSid"] ?? "";
 
-  if (!fromNumber) return twilioResponse();
+  if (!fromRaw) return twilioResponse();
+
+  // Normalize to E.164 (e.g. "+16041234567").
+  // Twilio always sends the + prefix; stored numbers in concierge_clients / provider_accounts
+  // may have been entered without it. We derive both forms and use an OR lookup so a
+  // format mismatch in the DB never silently misroutes the sender.
+  const fromNumber       = fromRaw.startsWith("+") ? fromRaw : `+${fromRaw.replace(/\D/g, "")}`;
+  const fromNumberDigits = fromNumber.replace(/^\+/, ""); // e.g. "16041234567" — no + prefix
 
   const supabase  = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
   const twilioEnv = getTwilioEnv();
@@ -115,16 +123,19 @@ Deno.serve(async (req) => {
   } catch { /* non-fatal: log insert failure does not block webhook processing */ }
 
   // ── Identify sender ────────────────────────────────────────────────────────
+  // Both lookups use OR to match the stored number in either +E164 or plain-digits
+  // format. concierge-apply and provider onboarding do not normalize phone numbers
+  // before storage, so both formats may exist in production.
   const [clientRes, providerRes] = await Promise.all([
     supabase
       .from("concierge_clients")
       .select("id, first_name, last_name, name, status, suspended, risk_flags")
-      .eq("whatsapp", fromNumber)
+      .or(`whatsapp.eq.${fromNumber},whatsapp.eq.${fromNumberDigits}`)
       .maybeSingle(),
     supabase
       .from("provider_accounts")
       .select("slug, first_name, last_name, status, suspended, concierge_eligible, card_on_file")
-      .eq("whatsapp_number", fromNumber)
+      .or(`whatsapp_number.eq.${fromNumber},whatsapp_number.eq.${fromNumberDigits}`)
       .maybeSingle(),
   ]);
 
