@@ -59,41 +59,6 @@
     .logo .task { color: var(--blue); }
     .logo .leaders { color: #fff; }
     
-    /* Sticky Header (appears on scroll) */
-    .sticky-header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(10,10,20,0.98);
-      backdrop-filter: blur(10px);
-      padding: 12px 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      z-index: 99;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transform: translateY(-100%);
-      transition: transform 0.3s ease;
-    }
-    .sticky-header.visible {
-      transform: translateY(0);
-    }
-    .sticky-header .sticky-name {
-      font-weight: 600;
-      font-size: 16px;
-    }
-    .sticky-header .sticky-connect {
-      background: var(--success);
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    
     /* Main Container */
     main {
       max-width: 600px;
@@ -685,12 +650,6 @@
   </style>
 </head>
 <body>
-  <!-- Sticky Header (appears on scroll) -->
-  <div class="sticky-header" id="stickyHeader">
-    <span class="sticky-name" id="providerNameSticky">Mike Johnson</span>
-    <button class="sticky-connect" onclick="openModal()">Connect</button>
-  </div>
-
   <!-- Main Header -->
   <header>
     <a href="category.html" class="back">←</a>
@@ -1020,7 +979,6 @@
       // Use first name only for the "Connect with …" prompts
       const firstName = (safeName.split(' ')[0] || safeName).trim();
       setText('providerNameHero', safeName);
-      setText('providerNameSticky', safeName);
       setText('connectModalTitle', 'Connect with ' + firstName);
       setText('connectModalSub', `Tell us about your job so ${firstName} can respond quickly.`);
       setText('connectBtnName', firstName);
@@ -1157,14 +1115,7 @@
       if (services) services.style.display = 'none';
     }
 
-    // Sticky header behavior (keep existing behavior)
-    const stickyHeader = document.getElementById('stickyHeader');
-    const hero = document.querySelector('.hero');
-    window.addEventListener('scroll', () => {
-      const heroBottom = hero.getBoundingClientRect().bottom;
-      if (heroBottom < 0) stickyHeader.classList.add('visible');
-      else stickyHeader.classList.remove('visible');
-    });
+    // (Sticky header removed — primary and secondary CTAs are sufficient.)
 
     // Modal controls
     function setLegalReturnLinks() {
