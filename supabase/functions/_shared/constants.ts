@@ -15,6 +15,19 @@ export const CATEGORY_NAMES: Record<string, string> = {
   YRD: "Yard Work",
 };
 
+// Public-facing provider noun used in client-visible copy (e.g. intake prompts).
+// Matches CATEGORY_NAMES codes. Keep internal codes/labels unchanged.
+export const CATEGORY_PROVIDER_NOUNS: Record<string, string> = {
+  PLM: "plumber",
+  CLN: "cleaner",
+  HND: "handyman",
+  ELC: "electrician",
+  PLT: "painter",
+  HVC: "HVAC technician",
+  MVG: "mover",
+  YRD: "yard work help",
+};
+
 // Slug (from provider_accounts.primary_service) → category code
 export const SLUG_TO_CATEGORY_CODE: Record<string, string> = {
   "plumbing":    "PLM",
@@ -57,9 +70,140 @@ export const PAYMENT_WARNING_OFFSET_MS =  5 * 60 * 1000; // warn at: timeout_at 
 // After this, the job moves to provider_no_response and the client is notified.
 export const MARKETPLACE_RESPONSE_TIMEOUT_HOURS = 24;
 
-// ─── City codes ─────────────────────────────────────────────────────────────
+// ─── Market codes (operating regions) ───────────────────────────────────────
+// A market is a broad geographic region used for internal routing and job ID
+// generation. market_code is the successor to the overloaded city_code field.
+// city_code is kept on jobs and continues to feed generate_job_id() until
+// formally deprecated in a later migration.
 export const VALID_CITY_CODES     = new Set(["VAN", "VIC", "YYC", "YEG", "YYZ", "MTL"]);
 export const VALID_CATEGORY_CODES = new Set(Object.keys(CATEGORY_NAMES));
+
+// ─── Municipality codes (per-market) ────────────────────────────────────────
+// Municipalities are the specific geographic units used for provider matching.
+// These are NOT exposed in public job IDs (which suppress all geography prefixes).
+//
+// Metro Vancouver (VAN market) — extend as service area grows.
+export const MUNICIPALITY_NAMES: Record<string, string> = {
+  VANCOUVER: "Vancouver",
+  NVAN:      "North Vancouver",
+  WVAN:      "West Vancouver",
+  BBY:       "Burnaby",
+  RMD:       "Richmond",
+  SRY:       "Surrey",
+  COQ:       "Coquitlam",
+  NWS:       "New Westminster",
+  PMD:       "Port Moody",
+  PRC:       "Port Coquitlam",
+};
+
+// municipality_code → market_code — used to verify a municipality belongs to
+// the job's market, and to drive the market-fallback in dispatch matching.
+export const MUNICIPALITY_TO_MARKET: Record<string, string> = {
+  VANCOUVER: "VAN",
+  NVAN:      "VAN",
+  WVAN:      "VAN",
+  BBY:       "VAN",
+  RMD:       "VAN",
+  SRY:       "VAN",
+  COQ:       "VAN",
+  NWS:       "VAN",
+  PMD:       "VAN",
+  PRC:       "VAN",
+};
+
+// municipality_code → free-text aliases for matching against service_cities[].
+// Used as the compatibility layer while providers still have free-text entries
+// instead of structured municipality_codes[].
+export const MUNICIPALITY_ALIASES: Record<string, string[]> = {
+  VANCOUVER: ["Vancouver", "City of Vancouver"],
+  NVAN:      ["North Vancouver", "North Van"],
+  WVAN:      ["West Vancouver", "West Van"],
+  BBY:       ["Burnaby"],
+  RMD:       ["Richmond"],
+  SRY:       ["Surrey"],
+  COQ:       ["Coquitlam"],
+  NWS:       ["New Westminster", "New West"],
+  PMD:       ["Port Moody"],
+  PRC:       ["Port Coquitlam", "Port Coq", "PoCo"],
+};
+
+export interface MunicipalityResult {
+  code: string; // e.g. "NVAN"
+  name: string; // e.g. "North Vancouver"
+}
+
+// Ordered patterns — specific/longer names must precede shorter ambiguous ones.
+// "West Vancouver" before "Vancouver"; "Port Coquitlam" before "Coquitlam".
+const MUNICIPALITY_PATTERNS: Array<[RegExp, string, string]> = [
+  [/\bwest\s*vancouver\b/i,   "WVAN",      "West Vancouver"],
+  [/\bnorth\s*vancouver\b/i,  "NVAN",      "North Vancouver"],
+  [/\bnew\s*westminster\b/i,  "NWS",       "New Westminster"],
+  [/\bport\s*coquitlam\b/i,   "PRC",       "Port Coquitlam"],
+  [/\bpoco\b/i,               "PRC",       "Port Coquitlam"],
+  [/\bport\s*moody\b/i,       "PMD",       "Port Moody"],
+  [/\bcoquitlam\b/i,          "COQ",       "Coquitlam"],
+  [/\bburnaby\b/i,            "BBY",       "Burnaby"],
+  [/\brichmond\b/i,           "RMD",       "Richmond"],
+  [/\bsurrey\b/i,             "SRY",       "Surrey"],
+  [/\bvancouver\b/i,          "VANCOUVER", "Vancouver"],
+];
+
+/**
+ * Extracts a municipality from a free-text address string.
+ * Returns { code, name } if a known municipality is detected, null otherwise.
+ * Safe to call on any input — returns null rather than throwing.
+ * Used in the intake address collection step to populate jobs.municipality_code.
+ */
+export function extractMunicipalityFromAddress(address: string): MunicipalityResult | null {
+  if (!address || typeof address !== "string") return null;
+  for (const [pattern, code, name] of MUNICIPALITY_PATTERNS) {
+    if (pattern.test(address)) return { code, name };
+  }
+  return null;
+}
+
+/**
+ * Returns true if a provider covers the given municipality.
+ *
+ * Matching order (stops at first match):
+ *   1. Exact code match in municipality_codes[] (structured — preferred going forward)
+ *   2. Free-text match in service_cities[] against MUNICIPALITY_ALIASES
+ *      (backward compat for providers who don't yet have municipality_codes)
+ *
+ * Does NOT fall back to market-level matching. Callers must combine this with
+ * providerCoversCityWithFallback() for the full compatibility chain.
+ */
+export function providerCoversMunicipality(
+  municipalityCodes: string[] | null | undefined,
+  serviceCities:     string[] | null | undefined,
+  municipalityCode:  string,
+): boolean {
+  // 1. Structured municipality_codes — exact code match
+  if (Array.isArray(municipalityCodes) && municipalityCodes.length > 0) {
+    const target = municipalityCode.toUpperCase();
+    if (municipalityCodes.some((c) => typeof c === "string" && c.toUpperCase() === target)) return true;
+  }
+
+  // 2. Free-text service_cities against municipality aliases
+  const aliases = MUNICIPALITY_ALIASES[municipalityCode];
+  if (aliases && Array.isArray(serviceCities) && serviceCities.length > 0) {
+    return serviceCities.some((city) => {
+      const cityLower = (city ?? "").toLowerCase().trim();
+      if (!cityLower) return false;
+      return aliases.some((alias) => {
+        const aliasLower = alias.toLowerCase();
+        if (cityLower === aliasLower) return true;
+        if (aliasLower.length >= 5) {
+          if (cityLower.includes(aliasLower)) return true;
+          if (cityLower.length >= 4 && aliasLower.includes(cityLower)) return true;
+        }
+        return false;
+      });
+    });
+  }
+
+  return false;
+}
 
 // City code → canonical names and common aliases used in service_cities TEXT[].
 // SHORT aliases (< 4 chars) match only exactly.

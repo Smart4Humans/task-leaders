@@ -24,7 +24,7 @@ import {
 } from "../_shared/twilio.ts";
 import {
   CATEGORY_NAMES, normalizeToCategoryCode, providerCoversCity,
-  CITY_CODE_TO_NAMES,
+  CITY_CODE_TO_NAMES, providerCoversMunicipality,
 } from "../_shared/constants.ts";
 import { getCategoryLeadFee } from "../_shared/fees.ts";
 import { toPublicJobId } from "../_shared/job-ids.ts";
@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
   // ── Load job ───────────────────────────────────────────────────────────────
   const { data: job, error: jobErr } = await supabase
     .from("jobs")
-    .select("job_id, city_code, category_code, category_name, state, address, description, client_id, client_whatsapp, lead_fee_cents, gst_cents, source")
+    .select("job_id, city_code, market_code, municipality_code, category_code, category_name, state, address, description, client_id, client_whatsapp, lead_fee_cents, gst_cents, source")
     .eq("job_id", jobId)
     .single();
 
@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
   // Category and city filtering is applied post-query with full normalization.
   const { data: candidateProviders, error: provErr } = await supabase
     .from("provider_accounts")
-    .select("slug, first_name, last_name, whatsapp_number, primary_service, additional_services, service_cities, service_area")
+    .select("slug, first_name, last_name, whatsapp_number, primary_service, additional_services, service_cities, service_area, municipality_codes")
     .eq("concierge_eligible", true)
     .eq("status", "active")
     .eq("suspended", false)
@@ -171,6 +171,26 @@ Deno.serve(async (req) => {
   if (provErr) return err("server_error", provErr.message, 500);
 
   // ── Apply eligibility filter ───────────────────────────────────────────────
+  //
+  // Geography matching — two-tier with full backward compatibility:
+  //
+  //   Tier 1 (municipality): if the job has a municipality_code (populated from
+  //   the client's address), check whether the provider explicitly covers that
+  //   municipality via municipality_codes[] (structured) or service_cities[]
+  //   alias matching (free-text compat). A match at this tier is sufficient.
+  //
+  //   Tier 2 (market fallback): if Tier 1 didn't match — OR if the job has no
+  //   municipality_code (all pre-refactor jobs) — fall back to the existing
+  //   market-level city_code / service_cities alias logic. This ensures:
+  //     • Existing jobs are unaffected (no municipality_code → pure market match)
+  //     • Broad-coverage providers (e.g. "Metro Vancouver") always match within VAN
+  //     • No provider that previously matched is excluded during transition
+  //
+  // Long-term: once provider profiles carry municipality_codes[], and all jobs
+  // have municipality_code from address parsing, the market fallback can be
+  // restricted or removed — but that is a separate, later migration.
+  const marketCode = String(job.market_code ?? job.city_code ?? "");
+
   const eligible = (candidateProviders ?? []).filter((p) => {
     const hasCategory = providerHasCategory(
       p.primary_service,
@@ -179,12 +199,22 @@ Deno.serve(async (req) => {
     );
     if (!hasCategory) return false;
 
-    const hasCity = providerCoversCityWithFallback(
+    // Tier 1: municipality match (only possible when job has municipality_code)
+    if (job.municipality_code) {
+      const munMatch = providerCoversMunicipality(
+        p.municipality_codes,
+        p.service_cities,
+        job.municipality_code,
+      );
+      if (munMatch) return true;
+    }
+
+    // Tier 2: market-level fallback (existing logic — always evaluated)
+    return providerCoversCityWithFallback(
       p.service_cities,
       p.service_area,
-      job.city_code,
+      marketCode,
     );
-    return hasCity;
   });
 
   // ── No-match path ─────────────────────────────────────────────────────────

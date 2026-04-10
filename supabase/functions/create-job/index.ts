@@ -88,13 +88,18 @@ Deno.serve(async (req) => {
     return error("unauthorized", "Admin password or internal secret required", 401);
   }
 
-  const cityCode     = String(body.city_code     ?? "").trim().toUpperCase();
-  const categoryCode = String(body.category_code ?? "").trim().toUpperCase();
-  const categoryName = String(body.category_name ?? "").trim();
-  const source       = String(body.source        ?? "concierge").trim();
-  const clientId     = body.client_id   ? String(body.client_id).trim()   : null;
-  const address      = body.address     ? String(body.address).trim()     : null;
-  const description  = body.description ? String(body.description).trim() : null;
+  const cityCode          = String(body.city_code          ?? "").trim().toUpperCase();
+  const categoryCode      = String(body.category_code      ?? "").trim().toUpperCase();
+  const categoryName      = String(body.category_name      ?? "").trim();
+  const source            = String(body.source             ?? "concierge").trim();
+  const clientId          = body.client_id          ? String(body.client_id).trim()          : null;
+  const address           = body.address            ? String(body.address).trim()            : null;
+  const description       = body.description        ? String(body.description).trim()        : null;
+  // Optional geography fields (all nullable — omitting them is valid)
+  const municipalityCode  = body.municipality_code  ? String(body.municipality_code).trim().toUpperCase()  : null;
+  const municipalityName  = body.municipality_name  ? String(body.municipality_name).trim()  : null;
+  // market_code defaults to city_code (they are equivalent until explicitly diverged)
+  const marketCode        = body.market_code        ? String(body.market_code).trim().toUpperCase() : cityCode;
 
   if (!cityCode)                               return error("validation_error", "city_code is required");
   if (!VALID_CITY_CODES.has(cityCode))         return error("validation_error", `Invalid city_code: ${cityCode}`);
@@ -140,6 +145,9 @@ Deno.serve(async (req) => {
     .insert({
       job_id:               jobId,
       city_code:            cityCode,
+      market_code:          marketCode,
+      municipality_code:    municipalityCode,
+      municipality_name:    municipalityName,
       category_code:        categoryCode,
       category_name:        categoryName || null,
       status:               "pending",
