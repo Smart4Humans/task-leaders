@@ -31,13 +31,22 @@ import {
   normalizeKeyword,
   KW_ACCEPT, KW_PASS, KW_DECLINE, KW_HELP,
   KW_KEEP_OPEN, KW_CANCEL, KW_YES, KW_NO,
-  CATEGORY_NAMES, CATEGORY_LEAD_FEES_CENTS, calcGst as calcGstFn,
-  SLUG_TO_CATEGORY_CODE,
+  CATEGORY_NAMES, CATEGORY_PROVIDER_NOUNS, CATEGORY_LEAD_FEES_CENTS, calcGst as calcGstFn,
+  SLUG_TO_CATEGORY_CODE, extractMunicipalityFromAddress,
 } from "../_shared/constants.ts";
 import { toPublicJobId } from "../_shared/job-ids.ts";
 
 // Re-declare GST calc locally to keep import clean
 function calcGst(base: number) { return Math.round(base * 0.05); }
+
+// ─── Reserved cancel commands ─────────────────────────────────────────────────
+// Checked before any address/timing parsing in intake states.
+// Any of these signals an intent to abort the current intake session.
+
+function isCancelCommand(body: string): boolean {
+  const lower = body.trim().toLowerCase();
+  return lower === "cancel" || lower === "stop" || lower === "never mind" || lower === "nevermind";
+}
 
 // ─── TwiML response (no auto-reply) ──────────────────────────────────────────
 
@@ -414,11 +423,54 @@ async function handleConciergeIntake(
   const sessionState = String(session?.session_state ?? "idle");
   const currentJobId = session?.current_job_id as string | undefined;
 
+  // ── Reserved cancel commands — checked before any input parsing ───────────
+  // Aborts intake at any pre-finalize state. "cancel", "stop", "never mind",
+  // "nevermind" are all treated as explicit abandonment intent.
+  const PRE_FINALIZE_STATES = new Set(["awaiting_address", "awaiting_timing"]);
+  if (PRE_FINALIZE_STATES.has(sessionState) && isCancelCommand(body)) {
+    if (currentJobId) {
+      await supabase.from("jobs")
+        .update({ state: "cancelled", status: "completed" })
+        .eq("job_id", currentJobId);
+    }
+    await updateSession({ session_state: "idle", current_job_id: null });
+    const msg = "No problem — your request has been cancelled. Message us any time you need help.";
+    await sendAndLog(ctx, fromNumber, msg, { jobId: currentJobId ?? null, templateName: "INTAKE_CANCELLED" });
+    return;
+  }
+
   // ── Awaiting address ───────────────────────────────────────────────────────
   if (sessionState === "awaiting_address" && currentJobId) {
-    await supabase.from("jobs").update({ address: body }).eq("job_id", currentJobId);
+    // Validate: address must contain (a) at least one digit (street number) AND
+    // (b) a recognizable municipality/city that maps into the geography system.
+    // Both conditions are required — a street number alone (e.g. "999 Stud Ave")
+    // is not enough because we cannot route to a provider without knowing the city.
+    // Cancel commands have already been intercepted above and never reach here.
+    const hasStreetNumber = /\d/.test(body);
+    const munResult       = extractMunicipalityFromAddress(body);
+    const isValidAddress  = hasStreetNumber && munResult !== null;
+    if (!isValidAddress) {
+      const prompt = `Please provide a complete address including street number and city (e.g. "123 Main St, Vancouver" or "456 Oak Ave, Burnaby").`;
+      await sendAndLog(ctx, fromNumber, prompt, { jobId: currentJobId, templateName: "INTAKE_ADDRESS_INVALID" });
+      // Stay in awaiting_address — do not write to jobs or advance the session
+      return;
+    }
+
+    // Municipality already extracted above — reuse it when writing the address.
+    // Populates municipality_code + municipality_name for precise dispatch matching.
+    const addressUpdate: Record<string, unknown> = { address: body };
+    if (munResult) {
+      addressUpdate.municipality_code = munResult.code;
+      addressUpdate.municipality_name = munResult.name;
+    }
+    await supabase.from("jobs").update(addressUpdate).eq("job_id", currentJobId);
+    // Check the original intake message (stored as description) for timing info.
+    // description is always set (it's the initial intake body), so we must inspect
+    // its content — not just its existence — to decide whether timing is already known.
     const { data: job } = await supabase.from("jobs").select("description").eq("job_id", currentJobId).single();
-    if (!job?.description) {
+    const timingPattern = /asap|today|tomorrow|morning|afternoon|evening|mon|tue|wed|thu|fri|sat|sun|weekend/i;
+    const hasTimingInDescription = timingPattern.test(job?.description ?? "");
+    if (!hasTimingInDescription) {
       const prompt = `Thank you. When do you need this done? (e.g. "tomorrow morning", "ASAP")`;
       if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, prompt);
       logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: currentJobId, participantWhatsapp: fromNumber, body: prompt, status: "sent" });
@@ -437,6 +489,10 @@ async function handleConciergeIntake(
   }
 
   // ── Parse fresh request ────────────────────────────────────────────────────
+  // Require at least one recognized service keyword before creating a new job.
+  // Without this guard, unrecognized messages (e.g. "Thank you", "OK", courtesy
+  // replies after dispatch) fall through here and silently create a new job with
+  // the hardcoded default category. No keyword match → not a new intake.
   const bodyLower = body.toLowerCase();
   const keywordMap: [string[], string][] = [
     [["plumb", "pipe", "leak", "drain"],               "PLM"],
@@ -448,9 +504,13 @@ async function handleConciergeIntake(
     [["mov", "transport", "haul"],                      "MVG"],
     [["yard", "lawn", "garden", "snow"],                "YRD"],
   ];
-  let categoryCode = "HND"; // default if undetected
+  let categoryCode: string | null = null;
   for (const [keywords, code] of keywordMap) {
     if (keywords.some((kw) => bodyLower.includes(kw))) { categoryCode = code; break; }
+  }
+  if (!categoryCode) {
+    // No recognized service keyword — not a new intake. Ignore silently.
+    return;
   }
   const categoryName = CATEGORY_NAMES[categoryCode];
 
@@ -476,6 +536,7 @@ async function handleConciergeIntake(
   const { data: job } = await supabase.from("jobs").insert({
     job_id:              jobIdData,
     city_code:           cityCode,
+    market_code:         cityCode,  // explicit market field — same value until markets diverge
     category_code:       categoryCode,
     category_name:       categoryName,
     status:              "pending",
@@ -488,12 +549,15 @@ async function handleConciergeIntake(
     lead_fee_cents:      baseFee,
     gst_cents:           gst,
     total_charged_cents: baseFee + gst,
+    // municipality_code and municipality_name are populated later when
+    // the client replies with their address (awaiting_address handler).
   }).select("job_id, address, description").single();
 
   if (!job) return;
 
   if (!job.address) {
-    const prompt = `Got it — we'll find you a ${categoryName}. What's the service address?`;
+    const providerNoun = CATEGORY_PROVIDER_NOUNS[categoryCode] ?? categoryName.toLowerCase();
+    const prompt = `Got it — we'll find you a ${providerNoun}. What's the service address?`;
     await sendAndLog(ctx, fromNumber, prompt, { jobId: job.job_id, templateName: "INTAKE_ADDRESS_PROMPT" });
     await updateSession({ session_state: "awaiting_address", current_job_id: job.job_id, sender_type: "client", last_prompt: prompt });
     return;
@@ -523,14 +587,36 @@ async function finalizeAndDispatch(
   await supabase.from("jobs").update({ state: "intake_confirmed" }).eq("job_id", jobId);
   await updateSession({ session_state: "idle", current_job_id: jobId, sender_type: "client" });
 
-  // Trigger dispatch
+  // Trigger dispatch — awaited so the edge function doesn't terminate before
+  // the HTTP call is sent. A failed dispatch is written to admin_alerts so it
+  // surfaces without manual SQL inspection.
   const cronSecret = Deno.env.get("INTERNAL_CRON_SECRET");
   const fnBase     = (Deno.env.get("SUPABASE_URL") ?? "").split(".supabase.co")[0].replace("https://", "");
-  fetch(`https://${fnBase}.supabase.co/functions/v1/job-dispatch`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-internal-secret": cronSecret ?? "" },
-    body: JSON.stringify({ job_id: jobId }),
-  }).catch(() => {});
+  try {
+    const dispatchRes = await fetch(`https://${fnBase}.supabase.co/functions/v1/job-dispatch`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-internal-secret": cronSecret ?? "" },
+      body: JSON.stringify({ job_id: jobId }),
+    });
+    if (!dispatchRes.ok) {
+      const errText = await dispatchRes.text().catch(() => "(unreadable)");
+      await supabase.from("admin_alerts").insert({
+        alert_type:  "escalation",
+        priority:    "high",
+        job_id:      jobId,
+        description: `job-dispatch call FAILED after intake. Status: ${dispatchRes.status}. Body: ${errText.substring(0, 200)}`,
+        status:      "open",
+      });
+    }
+  } catch (e) {
+    await supabase.from("admin_alerts").insert({
+      alert_type:  "escalation",
+      priority:    "high",
+      job_id:      jobId,
+      description: `job-dispatch fetch threw after intake: ${String(e)}`,
+      status:      "open",
+    });
+  }
 }
 
 // ─── Survey answer handler ────────────────────────────────────────────────────
