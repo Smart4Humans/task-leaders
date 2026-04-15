@@ -403,10 +403,28 @@
       background: rgba(220,38,38,0.10);
       color: #ef4444;
       border: 1px solid rgba(220,38,38,0.30);
+      min-width: 90px;
+      text-align: center;
     }
     .deactivate-btn:hover { background: rgba(220,38,38,0.20); }
     .deactivate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    /* Non-interactive Active indicator shown in pipe-right alongside Deactivate.
+       Same dimensions as .action-btn so the two sit as a visually matched pair. */
+    .active-indicator {
+      background: rgba(0,200,83,0.12);
+      color: var(--green);
+      border: 1px solid rgba(0,200,83,0.3);
+      min-width: 90px;
+      text-align: center;
+      cursor: default;
+      pointer-events: none;
+      user-select: none;
+    }
+    /* Flex wrapper that holds the Active + Deactivate pair in pipe-right */
+    .pipe-btn-pair { display: flex; gap: 6px; align-items: center; }
     .status-badge.suspended { background: rgba(220,38,38,0.12); color: #ef4444; }
+    /* Copied flash for action-btn copy buttons in Queue cards */
+    .action-btn.copied { background: rgba(0,200,83,0.25); color: var(--green); border-color: rgba(0,200,83,0.4); }
 
     /* ── Pipeline detail panel ── */
     .pipe-detail { display: none; border-top: 1px solid var(--border); padding: 16px 20px 18px; }
@@ -896,8 +914,8 @@
             <div class="link-result" style="display:block;margin-top:12px;">
               <div class="link-result-label">Welcome link — resend if they haven't started</div>
               <div class="link-result-url" id="${urlElId}">${welcomeUrl}</div>
-              <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                <button class="copy-btn" id="${copyBtnId}" onclick="copyText('${urlElId}','${copyBtnId}')">Copy Link</button>
+              <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+                <button class="action-btn resend-btn" style="min-width:90px;text-align:center;" id="${copyBtnId}" onclick="copyText('${urlElId}','${copyBtnId}')">Copy Link</button>
                 <button class="action-btn deactivate-btn" id="ob-deactivate-${escHtml(p.slug)}" onclick="deactivateFromQueue('${escHtml(p.slug)}',this)">Deactivate</button>
               </div>
             </div>
@@ -1015,13 +1033,19 @@
       el.innerHTML = providers.map(p => {
         const { cls, label } = pipelineStatus(p);
         const actionBtn = p.suspended
-          ? '' // no actions for deactivated TaskLeaders
+          // Deactivated: no actions — the Deactivated badge in the status column is sufficient
+          ? ''
           : p.status === 'pending_onboarding'
+          // pending_onboarding should not reach Pipeline (excluded by backend neq filter),
+          // but keep the resend path as a safe fallback
           ? `<button class="action-btn resend-btn" onclick="event.stopPropagation();resendLink('${escHtml(p.slug)}',this)" title="Show welcome link">Resend Link</button>`
           : p.status === 'pending_approval'
-          ? `<button class="action-btn activate-btn" onclick="event.stopPropagation();activateProvider('${escHtml(p.slug)}',this)" title="Activate TaskLeader">Activate</button><button class="action-btn deactivate-btn" style="margin-left:6px;" onclick="event.stopPropagation();deactivateProvider('${escHtml(p.slug)}',this)" title="Deactivate TaskLeader">Deactivate</button>`
+          // Pending Approval: only Activate. Deactivate is for active TaskLeaders only.
+          ? `<button class="action-btn activate-btn" onclick="event.stopPropagation();activateProvider('${escHtml(p.slug)}',this)" title="Activate TaskLeader">Activate</button>`
           : p.status === 'active'
-          ? `<button class="action-btn deactivate-btn" onclick="event.stopPropagation();deactivateProvider('${escHtml(p.slug)}',this)" title="Deactivate TaskLeader">Deactivate</button>`
+          // Active: matched pair — Active indicator (same size) + Deactivate button.
+          // Status column is empty for active rows; this pair IS the status + action display.
+          ? `<div class="pipe-btn-pair"><span class="action-btn active-indicator" aria-label="Active TaskLeader">Active</span><button class="action-btn deactivate-btn" onclick="event.stopPropagation();deactivateProvider('${escHtml(p.slug)}',this)" title="Deactivate TaskLeader">Deactivate</button></div>`
           : '';
         const welcomeUrl = `https://task-leaders.com/v0.5/welcome.html?slug=${escHtml(p.slug)}`;
 
@@ -1061,8 +1085,10 @@
     }
 
     function pipelineStatus(p) {
-      if (p.suspended)                   return { cls: 'suspended',        label: 'Deactivated' };
-      if (p.status === 'active')         return { cls: 'active',           label: 'Active' };
+      if (p.suspended)                     return { cls: 'suspended',        label: 'Deactivated' };
+      // Active rows: status column is intentionally empty — Active label appears
+      // in pipe-right as part of the matched Active + Deactivate button pair.
+      if (p.status === 'active')           return { cls: '',                 label: '' };
       if (p.status === 'pending_approval') return { cls: 'pending-approval', label: 'Pending Approval' };
       return { cls: 'in-progress', label: 'In Progress' };
     }
