@@ -777,7 +777,7 @@
         if (!data || data.ok !== true) throw new Error(data?.error?.message || 'Failed to load data');
 
         showApp();
-        renderPending(data.data.pending           || []);
+        renderPending(data.data.pending || [], data.data.pending_onboarding || []);
         renderPipeline(data.data.approved         || []);
         renderJobs(data.data.jobs                 || []);
         renderConciergeQueue(data.data.concierge_clients || []);
@@ -798,17 +798,26 @@
     }
 
     // ── Render Onboarding Queue ─────────────────────────────────────────────
-    function renderPending(apps) {
+    // Two data sources:
+    //   apps              — applications.status = 'submitted' (need admin review)
+    //   onboardingProviders — provider_accounts.status = 'pending_onboarding'
+    //                         (admin approved, link sent, provider hasn't finished onboarding)
+    // onboardingProviders cards auto-disappear from the queue once the provider
+    // completes onboarding (complete-onboarding sets status → pending_approval),
+    // because they are driven by backend state, not DOM manipulation.
+    function renderPending(apps, onboardingProviders = []) {
       const el    = document.getElementById('pendingList');
       const count = document.getElementById('pendingCount');
-      count.textContent = `${apps.length} application${apps.length !== 1 ? 's' : ''}`;
+      const total = apps.length + onboardingProviders.length;
+      count.textContent = `${total} application${total !== 1 ? 's' : ''}`;
 
-      if (apps.length === 0) {
+      if (total === 0) {
         el.innerHTML = '<div class="empty-row">No pending applications.</div>';
         return;
       }
 
-      el.innerHTML = apps.map(app => {
+      // Submitted applications — need Approve action
+      const submittedHtml = apps.map(app => {
         const date    = new Date(app.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
         const service = categoryLabel(app.category_slug);
         return `
@@ -839,6 +848,63 @@
           </div>
         </div>`;
       }).join('');
+
+      // Providers awaiting onboarding — link already sent, onboarding not complete
+      // Card ID uses slug prefix "card-ob-" to avoid collision with application UUIDs.
+      // These cards are driven by backend state; they leave the Queue automatically
+      // once the provider completes onboarding (status → pending_approval).
+      const onboardingHtml = onboardingProviders.map(p => {
+        const date       = new Date(p.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+        const service    = categoryLabel(p.primary_service);
+        const welcomeUrl = `https://task-leaders.com/v0.5/welcome.html?slug=${escHtml(p.slug)}`;
+        const cardId     = `card-ob-${p.slug}`;
+        const detailId   = `detail-ob-${p.slug}`;
+        const toggleId   = `toggle-ob-${p.slug}`;
+        const urlElId    = `ob-url-${p.slug}`;
+        const copyBtnId  = `ob-copy-${p.slug}`;
+        return `
+        <div class="app-card" id="${cardId}" style="border-left:3px solid rgba(245,158,11,0.5);">
+          <div class="app-card-summary" onclick="toggleOnboardingDetail('${p.slug}')">
+            <div class="app-card-top">
+              <div>
+                <div class="app-name">${escHtml(p.first_name || '')} ${escHtml(p.last_name || '')}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                <span class="status-badge pending-approval" style="font-size:10px;padding:2px 8px;">Link Sent</span>
+                <span style="color:var(--muted);font-size:11px;">${date}</span>
+              </div>
+            </div>
+            <div class="app-meta">
+              ${service ? `<span class="app-tag service">${escHtml(service)}</span>` : ''}
+              ${p.service_area ? `<span class="app-tag">${escHtml(toTitleCase(p.service_area))}</span>` : ''}
+            </div>
+            <span class="expand-toggle" id="${toggleId}">Awaiting onboarding — view link ▾</span>
+          </div>
+          <div class="app-card-detail" id="${detailId}">
+            <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${escHtml(p.email || '')}</span></div>
+            <div class="detail-row"><span class="detail-label">WhatsApp</span><span class="detail-value">${escHtml(p.whatsapp_number || '')}</span></div>
+            <div class="link-result" style="display:block;margin-top:12px;">
+              <div class="link-result-label">Welcome link — resend if they haven't started</div>
+              <div class="link-result-url" id="${urlElId}">${welcomeUrl}</div>
+              <div style="margin-top:8px;">
+                <button class="copy-btn" id="${copyBtnId}" onclick="copyText('${urlElId}','${copyBtnId}')">Copy Link</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      el.innerHTML = submittedHtml + onboardingHtml;
+    }
+
+    // ── Toggle pending onboarding card detail ────────────────────────────────
+    function toggleOnboardingDetail(slug) {
+      const detail = document.getElementById(`detail-ob-${slug}`);
+      const toggle = document.getElementById(`toggle-ob-${slug}`);
+      if (!detail || !toggle) return;
+      const isOpen = detail.classList.contains('open');
+      detail.classList.toggle('open', !isOpen);
+      toggle.textContent = isOpen ? 'Awaiting onboarding — view link ▾' : 'Hide details ▴';
     }
 
     // ── Render TaskLeader Pipeline ──────────────────────────────────────────
@@ -1252,13 +1318,34 @@
           <div class="link-result-url" id="ql-url-${applicationId}">${escHtml(welcomeUrl)}</div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
             <button class="copy-btn" id="ql-copy-${applicationId}" onclick="copyText('ql-url-${applicationId}','ql-copy-${applicationId}')">Copy Link</button>
-            <button class="copy-btn" style="background:rgba(255,255,255,0.1);" onclick="loadData()">Done — Move to Pipeline</button>
+            <button class="copy-btn" style="background:rgba(255,255,255,0.1);" onclick="dismissApprovedCard('${applicationId}')">Done</button>
           </div>`;
         detail.appendChild(linkDiv);
+        // Immediately refresh the Pipeline so the new provider_account appears
+        // there without requiring a full-page reload. The Queue card stays until
+        // the admin clicks "Done", which then removes it from the DOM.
+        loadPipelineOnly();
       } catch {
         btn.disabled = false;
         btn.textContent = 'Approve & Generate Link';
         alert('Network error. Please try again.');
+      }
+    }
+
+    // ── Dismiss an approved Queue card ──────────────────────────────────────
+    // Called by the "Done" button after admin has copied the welcome link.
+    // Removes the card from the DOM so the Queue accurately reflects only
+    // applications that have NOT yet been acted on. The Pipeline already shows
+    // the provider (populated by the loadPipelineOnly() call in approveApp).
+    function dismissApprovedCard(applicationId) {
+      const card = document.getElementById('card-' + applicationId);
+      if (card) card.remove();
+      const remaining = document.querySelectorAll('#pendingList .app-card').length;
+      const countEl = document.getElementById('pendingCount');
+      if (countEl) countEl.textContent = remaining + ' application' + (remaining !== 1 ? 's' : '');
+      if (remaining === 0) {
+        document.getElementById('pendingList').innerHTML =
+          '<div class="empty-row">No pending applications.</div>';
       }
     }
 
