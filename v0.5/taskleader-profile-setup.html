@@ -619,6 +619,7 @@
               <option value="Coquitlam">Coquitlam</option>
               <option value="New Westminster">New Westminster</option>
               <option value="North Vancouver">North Vancouver</option>
+              <option value="West Vancouver">West Vancouver</option>
               <option value="Port Coquitlam">Port Coquitlam</option>
               <option value="Maple Ridge">Maple Ridge</option>
               <option value="Langley">Langley</option>
@@ -648,7 +649,7 @@
 
           <div class="checkbox-item" style="margin-bottom: 12px;" onclick="toggleAllCities()">
             <input type="checkbox" id="selectAllCities" />
-            <label for="selectAllCities" style="margin: 0; font-weight: 600; color: var(--blue);">Select all 17 cities</label>
+            <label for="selectAllCities" style="margin: 0; font-weight: 600; color: var(--blue);">Select all 18 cities</label>
           </div>
 
           <div class="city-grid" id="cityGrid"></div>
@@ -819,7 +820,10 @@
 
   <script src="js/config.js"></script>
   <script>
-    const approvedCities = ['Vancouver','Surrey','Burnaby','Richmond','Coquitlam','New Westminster','North Vancouver','Port Coquitlam','Maple Ridge','Langley','White Rock','Port Moody','Pitt Meadows','Delta','Abbotsford','Chilliwack','Mission'];
+    // Canonical Metro Vancouver + Fraser Valley city list.
+    // Must match the Apply Now service area options (become-task-leader.html) exactly.
+    // West Vancouver added Apr 2026 — was previously missing, causing area loss during onboarding.
+    const approvedCities = ['Vancouver','Surrey','Burnaby','Richmond','Coquitlam','New Westminster','North Vancouver','West Vancouver','Port Coquitlam','Maple Ridge','Langley','White Rock','Port Moody','Pitt Meadows','Delta','Abbotsford','Chilliwack','Mission'];
 
     let onboardingSlug = '';
 
@@ -873,11 +877,20 @@
           }
         }
 
-        // Base city / service area
+        // Base city / service area.
+        // Normalize both sides before comparing because Apply Now stored values as
+        // lowercase hyphenated slugs (e.g. 'west-vancouver') while the dropdown
+        // options use Title Case (e.g. 'West Vancouver'). Strip spaces and hyphens,
+        // then compare case-insensitively so 'west-vancouver' matches 'West Vancouver'.
         if (p.service_area) {
+          const normalize = (s) => String(s || '').toLowerCase().replace(/[\s\-]/g, '');
+          const targetNorm = normalize(p.service_area);
           const sel = document.getElementById('baseCity');
           for (const opt of sel.options) {
-            if (opt.value === p.service_area) { sel.value = p.service_area; break; }
+            if (normalize(opt.value) === targetNorm) {
+              sel.value = opt.value; // always set to the canonical dropdown value
+              break;
+            }
           }
         }
 

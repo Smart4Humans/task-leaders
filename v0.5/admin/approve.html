@@ -582,9 +582,11 @@
         </div>
 
         <!-- Status filter tabs -->
+        <!-- "In Progress" tab removed: pending_onboarding providers are now tracked
+             exclusively in the Onboarding Queue above, not the Pipeline.
+             Pipeline only shows pending_approval and active providers. -->
         <div class="filter-bar" id="pipelineFilterBar">
           <button class="filter-tab active" data-filter="all"              onclick="setPipelineFilter(this)">All</button>
-          <button class="filter-tab"         data-filter="in_progress"     onclick="setPipelineFilter(this)">In Progress</button>
           <button class="filter-tab"         data-filter="pending_approval" onclick="setPipelineFilter(this)">Pending Approval</button>
           <button class="filter-tab"         data-filter="active"          onclick="setPipelineFilter(this)">Active</button>
         </div>
@@ -954,10 +956,10 @@
       const limit     = noFilters ? 10 : Infinity;
       let filtered    = allProviders;
 
-      // Status filter
-      if (pipelineFilter === 'in_progress') {
-        filtered = filtered.filter(p => p.status !== 'active' && p.status !== 'pending_approval');
-      } else if (pipelineFilter === 'pending_approval') {
+      // Status filter — Pipeline only shows pending_approval and active.
+      // pending_onboarding is excluded at the backend query level and tracked
+      // in the Onboarding Queue instead.
+      if (pipelineFilter === 'pending_approval') {
         filtered = filtered.filter(p => p.status === 'pending_approval');
       } else if (pipelineFilter === 'active') {
         filtered = filtered.filter(p => p.status === 'active');
