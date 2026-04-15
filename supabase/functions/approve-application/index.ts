@@ -45,7 +45,18 @@ function sendEmail(resendKey: string, from: string, to: string, subject: string,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ from, to: [to], subject, html, text }),
-  }).catch(() => {}); // non-blocking
+  })
+  .then(async (r) => {
+    const body = await r.text().catch(() => "(unreadable)");
+    if (!r.ok) {
+      console.error(`[sendEmail] Resend rejected (${r.status}) sending to ${to}: ${body}`);
+    } else {
+      console.log(`[sendEmail] Sent to ${to}: "${subject}"`);
+    }
+  })
+  .catch((e: unknown) => {
+    console.error(`[sendEmail] Network error sending to ${to}: ${(e as Error)?.message ?? String(e)}`);
+  });
 }
 
 Deno.serve(async (req) => {
@@ -67,16 +78,22 @@ Deno.serve(async (req) => {
     const pw  = url.searchParams.get("admin_password");
     if (pw !== adminPassword) return error("unauthorized", "Invalid admin password", 401);
 
-    const [pendingRes, approvedRes, conciergeRes, jobsRes] = await Promise.all([
+    const [pendingRes, approvedRes, conciergeRes, jobsRes, pendingOnboardingRes] = await Promise.all([
       supabase
         .from("applications")
         .select("id, created_at, contact_name, business_name, email, whatsapp_e164, service_area, category_slug, description, status")
         .eq("status", "submitted")
         .order("created_at", { ascending: false }),
 
+      // Pipeline shows providers who are past the onboarding stage (pending_approval or active).
+      // Providers in pending_onboarding are tracked exclusively in the Onboarding Queue
+      // (returned as pending_onboarding below) to prevent duplication.
+      // suspended is included so the frontend can render the Deactivated badge and
+      // suppress action buttons for deactivated TaskLeaders.
       supabase
         .from("provider_accounts")
-        .select("slug, first_name, last_name, business_name, email, whatsapp_number, service_area, primary_service, short_description, status, created_at")
+        .select("slug, first_name, last_name, business_name, email, whatsapp_number, service_area, primary_service, short_description, status, suspended, created_at")
+        .neq("status", "pending_onboarding")
         .order("created_at", { ascending: false })
         .limit(200),
 
@@ -91,15 +108,30 @@ Deno.serve(async (req) => {
         .select("id, job_id, city_code, category_code, category_name, status, client_id, address, description, created_at, assigned_at, completed_at")
         .order("created_at", { ascending: false })
         .limit(500),
+
+      // Providers who have been approved (link sent) but have not yet completed
+      // onboarding. These appear in the Onboarding Queue alongside submitted
+      // applications so the admin can track them without a full page reload.
+      // They leave the Queue automatically once the provider completes onboarding
+      // (status advances to pending_approval via complete-onboarding), OR when
+      // the admin clicks Deactivate (suspended = true removes them from this query).
+      supabase
+        .from("provider_accounts")
+        .select("slug, first_name, last_name, email, whatsapp_number, service_area, primary_service, status, created_at")
+        .eq("status", "pending_onboarding")
+        .eq("suspended", false)
+        .order("created_at", { ascending: false })
+        .limit(50),
     ]);
 
     return json({
       ok: true,
       data: {
-        pending:           pendingRes.data  ?? [],
-        approved:          approvedRes.data ?? [],
-        concierge_clients: conciergeRes.data ?? [],
-        jobs:              jobsRes.data ?? [],
+        pending:             pendingRes.data          ?? [],
+        pending_onboarding:  pendingOnboardingRes.data ?? [],
+        approved:            approvedRes.data          ?? [],
+        concierge_clients:   conciergeRes.data         ?? [],
+        jobs:                jobsRes.data              ?? [],
       },
     });
   }
@@ -135,10 +167,14 @@ Deno.serve(async (req) => {
       return error("conflict", `Provider is already ${acct.status}`, 409);
     }
 
-    // Set status active in provider_accounts
+    // Set status active in provider_accounts.
+    // concierge_eligible is set to true here so the provider immediately
+    // qualifies for Concierge lead broadcasts via job-dispatch.
+    // Without this, the provider is active on the Marketplace but silently
+    // excluded from all Concierge dispatch queries.
     const { error: updateError } = await supabase
       .from("provider_accounts")
-      .update({ status: "active" })
+      .update({ status: "active", concierge_eligible: true })
       .eq("slug", slug);
 
     if (updateError) return error("server_error", updateError.message, 500);
@@ -194,23 +230,29 @@ Deno.serve(async (req) => {
 
     if (resendKey && acct.email) {
       const firstName  = acct.first_name || "there";
-      const profileUrl = `https://task-leaders.com/v0.5/profile.html?slug=${slug}`;
       const html = [
         "<html><head><meta charset=\"utf-8\"></head>",
         `<body style="font-family:sans-serif;font-size:16px;color:#000000;line-height:1.6;">`,
         `<p>Hi ${firstName},</p>`,
-        "<p>Your TaskLeaders profile has been reviewed and is now live on the marketplace.</p>",
-        `<p>Clients can find you here: <a href="${profileUrl}">${profileUrl}</a></p>`,
-        "<p>Welcome to the network!</p>",
+        "<p>You're now active on <strong>TaskLeaders Concierge</strong>.</p>",
+        "<p>Here's how it works:</p>",
+        "<ul>",
+        "<li>When a matching client request comes in, we'll message you on WhatsApp.</li>",
+        "<li>Reply <strong>ACCEPT</strong> to claim the job or <strong>PASS</strong> to skip it.</li>",
+        "<li>The first TaskLeader to accept and complete the lead fee payment gets the job.</li>",
+        "<li>Once confirmed, we'll connect you directly with the client through our WhatsApp number.</li>",
+        "</ul>",
+        "<p>Save our WhatsApp number — that's where all your Concierge leads and client threads will come through.</p>",
+        "<p>Reply HELP any time if you need support.</p>",
         "<p>— The TaskLeaders Team</p>",
         "</body></html>",
       ].join("\n");
 
       sendEmail(
         resendKey, fromEmail, acct.email,
-        "You're Live on TaskLeaders",
+        "You're active on TaskLeaders Concierge",
         html,
-        `Hi ${firstName},\n\nYour TaskLeaders profile has been reviewed and is now live on the marketplace.\n\nClients can find you here: ${profileUrl}\n\nWelcome to the network!\n\n— The TaskLeaders Team`,
+        `Hi ${firstName},\n\nYou're now active on TaskLeaders Concierge.\n\nHere's how it works:\n- When a matching client request comes in, we'll message you on WhatsApp.\n- Reply ACCEPT to claim the job or PASS to skip it.\n- The first TaskLeader to accept and complete the lead fee payment gets the job.\n- Once confirmed, we'll connect you directly with the client through our WhatsApp number.\n\nSave our WhatsApp number — that's where all your Concierge leads and client threads will come through.\n\nReply HELP any time if you need support.\n\n— The TaskLeaders Team`,
       );
     }
 
@@ -261,6 +303,37 @@ Deno.serve(async (req) => {
     }
 
     return json({ ok: true, data: { slug, status: "active", marketplace_synced: true } });
+  }
+
+  // ── Action: deactivate TaskLeader ───────────────────────────────────────
+  // Sets suspended = true and concierge_eligible = false.
+  // Does NOT delete the record or change status — preserves history.
+  // Effect:
+  //   • job-dispatch eligibility query (.eq("suspended", false)) immediately excludes them
+  //   • concierge_eligible = false adds a second broadcast gate
+  //   • pending_onboarding Queue query (.eq("suspended", false)) removes them from Queue
+  //   • Pipeline shows them with a Deactivated badge (suspended field in select)
+  // Reactivate (future): set suspended = false, concierge_eligible = true.
+  if (action === "deactivate") {
+    const slug = String(body.slug ?? "").trim();
+    if (!slug) return error("bad_request", "Missing required field: slug");
+
+    const { data: acct, error: fetchErr } = await supabase
+      .from("provider_accounts")
+      .select("slug, status, suspended")
+      .eq("slug", slug)
+      .single();
+
+    if (fetchErr || !acct) return error("not_found", "Provider account not found", 404);
+    if (acct.suspended === true) return error("conflict", "TaskLeader is already deactivated", 409);
+
+    const { error: updateErr } = await supabase
+      .from("provider_accounts")
+      .update({ suspended: true, concierge_eligible: false })
+      .eq("slug", slug);
+
+    if (updateErr) return error("server_error", updateErr.message, 500);
+    return json({ ok: true, data: { slug, deactivated: true } });
   }
 
   // ── Action: approve concierge client ────────────────────────────────────

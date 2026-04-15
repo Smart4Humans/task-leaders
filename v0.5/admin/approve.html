@@ -399,6 +399,14 @@
     }
     .activate-btn:hover { background: rgba(0,200,83,0.22); }
     .activate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .deactivate-btn {
+      background: rgba(220,38,38,0.10);
+      color: #ef4444;
+      border: 1px solid rgba(220,38,38,0.30);
+    }
+    .deactivate-btn:hover { background: rgba(220,38,38,0.20); }
+    .deactivate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status-badge.suspended { background: rgba(220,38,38,0.12); color: #ef4444; }
 
     /* ── Pipeline detail panel ── */
     .pipe-detail { display: none; border-top: 1px solid var(--border); padding: 16px 20px 18px; }
@@ -888,8 +896,9 @@
             <div class="link-result" style="display:block;margin-top:12px;">
               <div class="link-result-label">Welcome link — resend if they haven't started</div>
               <div class="link-result-url" id="${urlElId}">${welcomeUrl}</div>
-              <div style="margin-top:8px;">
+              <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                 <button class="copy-btn" id="${copyBtnId}" onclick="copyText('${urlElId}','${copyBtnId}')">Copy Link</button>
+                <button class="action-btn deactivate-btn" id="ob-deactivate-${escHtml(p.slug)}" onclick="deactivateFromQueue('${escHtml(p.slug)}',this)">Deactivate</button>
               </div>
             </div>
           </div>
@@ -1004,11 +1013,15 @@
       }
 
       el.innerHTML = providers.map(p => {
-        const { cls, label } = pipelineStatus(p.status);
-        const actionBtn = p.status === 'pending_onboarding'
+        const { cls, label } = pipelineStatus(p);
+        const actionBtn = p.suspended
+          ? '' // no actions for deactivated TaskLeaders
+          : p.status === 'pending_onboarding'
           ? `<button class="action-btn resend-btn" onclick="event.stopPropagation();resendLink('${escHtml(p.slug)}',this)" title="Show welcome link">Resend Link</button>`
           : p.status === 'pending_approval'
-          ? `<button class="action-btn activate-btn" onclick="event.stopPropagation();activateProvider('${escHtml(p.slug)}',this)" title="Activate TaskLeader">Activate</button>`
+          ? `<button class="action-btn activate-btn" onclick="event.stopPropagation();activateProvider('${escHtml(p.slug)}',this)" title="Activate TaskLeader">Activate</button><button class="action-btn deactivate-btn" style="margin-left:6px;" onclick="event.stopPropagation();deactivateProvider('${escHtml(p.slug)}',this)" title="Deactivate TaskLeader">Deactivate</button>`
+          : p.status === 'active'
+          ? `<button class="action-btn deactivate-btn" onclick="event.stopPropagation();deactivateProvider('${escHtml(p.slug)}',this)" title="Deactivate TaskLeader">Deactivate</button>`
           : '';
         const welcomeUrl = `https://task-leaders.com/v0.5/welcome.html?slug=${escHtml(p.slug)}`;
 
@@ -1047,9 +1060,10 @@
       }).join('');
     }
 
-    function pipelineStatus(status) {
-      if (status === 'active')           return { cls: 'active',           label: 'Active' };
-      if (status === 'pending_approval') return { cls: 'pending-approval', label: 'Pending Approval' };
+    function pipelineStatus(p) {
+      if (p.suspended)                   return { cls: 'suspended',        label: 'Deactivated' };
+      if (p.status === 'active')         return { cls: 'active',           label: 'Active' };
+      if (p.status === 'pending_approval') return { cls: 'pending-approval', label: 'Pending Approval' };
       return { cls: 'in-progress', label: 'In Progress' };
     }
 
@@ -1383,6 +1397,76 @@
       } catch {
         btn.disabled = false;
         btn.textContent = 'Activate';
+        alert('Network error. Please try again.');
+      }
+    }
+
+    // ── Deactivate TaskLeader (from Pipeline) ────────────────────────────────
+    // Sets suspended = true + concierge_eligible = false.
+    // Provider stays visible in Pipeline with "Deactivated" badge.
+    // Reactivation is a future admin action — record is fully preserved.
+    async function deactivateProvider(slug, btn) {
+      if (!confirm(`Deactivate this TaskLeader?\n\nThey will no longer receive Concierge broadcasts. Their record is preserved and can be reactivated later.`)) return;
+      btn.disabled = true;
+      btn.textContent = 'Deactivating…';
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      try {
+        const res  = await fetch(`${base.replace(/\/$/, '')}/approve-application`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'deactivate', slug, admin_password: adminPw }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!data || data.ok !== true) {
+          btn.disabled = false;
+          btn.textContent = 'Deactivate';
+          alert(data?.error?.message || 'Failed to deactivate TaskLeader.');
+          return;
+        }
+        // Refresh Pipeline so the badge updates to Deactivated and buttons clear
+        setTimeout(() => loadPipelineOnly(), 600);
+      } catch {
+        btn.disabled = false;
+        btn.textContent = 'Deactivate';
+        alert('Network error. Please try again.');
+      }
+    }
+
+    // ── Deactivate TaskLeader (from Onboarding Queue) ─────────────────────────
+    // Called from pending_onboarding Queue cards.
+    // Same DB update as deactivateProvider; Queue card is removed from DOM on success
+    // because the backend pending_onboarding query filters suspended = false, so a
+    // reload would also remove it. The record is preserved in the database.
+    async function deactivateFromQueue(slug, btn) {
+      if (!confirm(`Deactivate this TaskLeader?\n\nThey will be removed from the Onboarding Queue. Their record is preserved and can be reactivated later.`)) return;
+      btn.disabled = true;
+      btn.textContent = 'Deactivating…';
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      try {
+        const res  = await fetch(`${base.replace(/\/$/, '')}/approve-application`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'deactivate', slug, admin_password: adminPw }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!data || data.ok !== true) {
+          btn.disabled = false;
+          btn.textContent = 'Deactivate';
+          alert(data?.error?.message || 'Failed to deactivate TaskLeader.');
+          return;
+        }
+        // Remove Queue card immediately; DB state is already correct
+        const card = document.getElementById(`card-ob-${slug}`);
+        if (card) card.remove();
+        const remaining = document.querySelectorAll('#pendingList .app-card').length;
+        const countEl = document.getElementById('pendingCount');
+        if (countEl) countEl.textContent = remaining + ' application' + (remaining !== 1 ? 's' : '');
+        if (remaining === 0) {
+          document.getElementById('pendingList').innerHTML = '<div class="empty-row">No pending applications.</div>';
+        }
+      } catch {
+        btn.disabled = false;
+        btn.textContent = 'Deactivate';
         alert('Network error. Please try again.');
       }
     }
