@@ -130,6 +130,7 @@
     .badge-pending_onboarding { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
     .badge-pending_approval   { background: rgba(0,102,255,0.12);  color: var(--blue);  border: 1px solid rgba(0,102,255,0.25); }
     .badge-active             { background: rgba(0,200,83,0.1);    color: var(--green); border: 1px solid rgba(0,200,83,0.2); }
+    .badge-deactivated        { background: rgba(220,38,38,0.12);  color: #ef4444;      border: 1px solid rgba(220,38,38,0.3); }
 
     /* ── Sections ── */
     .section {
@@ -432,7 +433,7 @@
           <div class="hero-info">
             <div class="hero-name">${esc(fullName)}</div>
             ${service ? `<div class="hero-service">${esc(service)}</div>` : ''}
-            <span class="status-badge ${badgeCls(p.status)}">${badgeLabel(p.status)}</span>
+            <span class="status-badge ${p.suspended ? 'badge-deactivated' : badgeCls(p.status)}">${p.suspended ? 'Deactivated' : badgeLabel(p.status)}</span>
           </div>
         </div>
 
@@ -506,7 +507,7 @@
         <!-- Account -->
         <div class="section">
           <div class="section-title">Account</div>
-          ${row('Status',     badgeLabel(p.status))}
+          ${row('Status',     p.suspended ? 'Deactivated' : badgeLabel(p.status))}
           ${row('Submitted',  fmtDate(p.created_at))}
           ${row('Onboarded',  fmtDate(p.onboarded_at))}
         </div>
