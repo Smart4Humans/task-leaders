@@ -79,14 +79,15 @@ Deno.serve(async (req) => {
   }
 
   // ── IDENTICAL FILTER LOGIC TO public-category ────────────────────────────
-  // Both functions query provider_accounts WHERE status='active' and count
-  // providers per JSONB key in service_rates.  DO NOT change this to an RPC
-  // or a different table — that is what caused the homepage/leaderboard count
-  // mismatch.  If you change the filter here, change it in public-category too.
+  // Both functions query provider_accounts WHERE status='active' AND suspended=false.
+  // suspended=false is the deactivation gate — deactivate() never changes status,
+  // so status='active' alone is not sufficient. Both filters must be kept in sync
+  // with public-category. Do not change one without changing the other.
   const { data: acctRows, error: acctErr } = await supabase
     .from("provider_accounts")
     .select("service_rates")
-    .eq("status", "active");
+    .eq("status", "active")
+    .eq("suspended", false);
 
   if (acctErr) {
     return json({ ok: false, error: { code: "server_error", message: "Failed to load providers", details: { supabase: acctErr } } }, 500);

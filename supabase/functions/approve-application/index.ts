@@ -337,6 +337,15 @@ Deno.serve(async (req) => {
       .eq("slug", slug);
 
     if (updateErr) return error("server_error", updateErr.message, 500);
+
+    // Suppress public marketplace profile. The get_public_profile RPC gates on
+    // providers.is_active = true, so setting it false makes public-profile return 404.
+    // No-op if the provider never completed activation and has no providers row.
+    await supabase
+      .from("providers")
+      .update({ is_active: false })
+      .eq("provider_slug", slug);
+
     return json({ ok: true, data: { slug, deactivated: true } });
   }
 
@@ -369,6 +378,18 @@ Deno.serve(async (req) => {
       .eq("slug", slug);
 
     if (updateErr) return error("server_error", updateErr.message, 500);
+
+    // Restore public marketplace visibility for previously-active providers.
+    // providers row only exists once a provider has been activated (approve-application
+    // activate action upserts it). Pending-approval providers have no providers row,
+    // so this is a no-op for them — correct, since Activate will create the row later.
+    if (acct.status === "active") {
+      await supabase
+        .from("providers")
+        .update({ is_active: true })
+        .eq("provider_slug", slug);
+    }
+
     return json({ ok: true, data: { slug, reactivated: true, status: acct.status, concierge_eligible: restoreFields.concierge_eligible } });
   }
 

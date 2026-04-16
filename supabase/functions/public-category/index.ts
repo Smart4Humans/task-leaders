@@ -88,14 +88,16 @@ Deno.serve(async (req) => {
   }
 
   // ── IDENTICAL FILTER LOGIC TO public-homepage ────────────────────────────
-  // Query provider_accounts WHERE status='active'; filter by JSONB key presence.
-  // This is the canonical filter — public-homepage counts must mirror this exactly.
-  // Do not add extra filters (city, primary_service, etc.) without updating both.
+  // Query provider_accounts WHERE status='active' AND suspended=false.
+  // suspended=false is the deactivation gate — deactivate() never changes status,
+  // so status='active' alone is not sufficient. Both filters must be kept in sync
+  // with public-homepage. Do not add other filters without updating both functions.
   const [accountsRes, metricsRes] = await Promise.all([
     supabase
       .from("provider_accounts")
       .select("slug, first_name, last_name, business_name, display_name_type, service_rates, base_rate, service_area, primary_service, profile_photo")
-      .eq("status", "active"),
+      .eq("status", "active")
+      .eq("suspended", false),
     supabase
       .from("providers")
       .select("provider_slug, response_time_minutes, reliability_percent, rank, is_featured")

@@ -3,6 +3,9 @@
 // Returns the provider record for the given slug.
 // Used by the welcome flow and profile-setup pre-population.
 // Only returns non-sensitive fields (no internal IDs beyond what's needed).
+//
+// Deactivation gate: suspended=true providers return 404 so that deactivated
+// TaskLeaders cannot access their welcome link or pre-populate the onboarding form.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -51,12 +54,17 @@ Deno.serve(async (req) => {
   const { data, error: dbError } = await supabase
     .from("provider_accounts")
     .select(
-      "slug, status, first_name, last_name, business_name, email, whatsapp_number, service_area, primary_service, short_description, profile_photo, base_rate, service_rates, created_at, onboarded_at, display_name_type, backup_phone, address_line1, address_line2, city, province, postal_code, service_cities, additional_services, work_photos"
+      "slug, status, suspended, first_name, last_name, business_name, email, whatsapp_number, service_area, primary_service, short_description, profile_photo, base_rate, service_rates, created_at, onboarded_at, display_name_type, backup_phone, address_line1, address_line2, city, province, postal_code, service_cities, additional_services, work_photos"
     )
     .eq("slug", slug)
     .single();
 
   if (dbError || !data) {
+    return error("not_found", "Provider not found", 404);
+  }
+
+  // Deactivated providers must not access the welcome/onboarding flow.
+  if (data.suspended === true) {
     return error("not_found", "Provider not found", 404);
   }
 
