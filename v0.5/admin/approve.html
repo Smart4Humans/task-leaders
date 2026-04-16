@@ -355,8 +355,36 @@
     .pipe-col-area    { width: 90px; }
     .pipe-col-email   { width: 160px; }
     .pipe-col-wa      { width: 120px; }
-    .pipe-col-status  { width: 120px; flex-shrink: 0; }
-    .pipe-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; min-width: 22px; }
+    /* ── Two-slot fixed-width system (replaces pipe-col-status + pipe-right) ──
+       pipe-slot-status (120px) + pipe-slot-action (114px) + chevron sit in a
+       fixed-width flex container. All rows render the same total right-side
+       width regardless of state — keeps main columns aligned perfectly.       */
+    .pipe-slots {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .pipe-slot-status {
+      width: 120px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+    .pipe-slot-action {
+      width: 114px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+    /* Header label inside status slot */
+    .pipe-header .pipe-slot-status {
+      color: rgba(255,255,255,0.35);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
     .pipe-chevron { font-size: 11px; color: rgba(255,255,255,0.3); transition: transform 0.2s; line-height: 1; }
     .pipe-header {
       display: flex;
@@ -419,14 +447,22 @@
     }
     .badge-deactivate:hover { background: rgba(220,38,38,0.22); }
     .badge-deactivate:disabled { opacity: 0.5; cursor: not-allowed; }
-    /* Modifier for pipe-col-status when it holds the Active + Deactivate badge pair.
-       Wider than the default 120px to fit both badges. flex layout for inline pairing. */
-    .pipe-status-pair {
-      width: 160px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      overflow: visible;
+    /* Terminal state pill for deactivated rows — same scale as .action-btn (Activate)
+       so it visually reads as "the action slot is filled by a state marker, not an action".
+       Muted red (low opacity) distinguishes it from the clickable .badge-deactivate. */
+    .state-deactivated {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: rgba(220,38,38,0.07);
+      color: rgba(239,68,68,0.45);
+      border: 1px solid rgba(220,38,38,0.15);
+      white-space: nowrap;
+      cursor: default;
+      pointer-events: none;
+      user-select: none;
     }
     /* Copied flash for action-btn copy buttons in Queue cards */
     .action-btn.copied { background: rgba(0,200,83,0.25); color: var(--green); border-color: rgba(0,200,83,0.4); }
@@ -655,8 +691,11 @@
           <div class="pipe-col pipe-col-area">Area</div>
           <div class="pipe-col pipe-col-email">Email</div>
           <div class="pipe-col pipe-col-wa">WhatsApp</div>
-          <div class="pipe-col pipe-col-status">Status</div>
-          <div class="pipe-right" style="visibility:hidden;"><span class="pipe-chevron">▾</span></div>
+          <div class="pipe-slots">
+            <div class="pipe-slot-status">Status</div>
+            <div class="pipe-slot-action"></div>
+            <span class="pipe-chevron" style="visibility:hidden;">▾</span>
+          </div>
         </div>
 
         <div id="pipelineList"><div class="loading-row">Loading…</div></div>
@@ -1036,34 +1075,32 @@
       }
 
       el.innerHTML = providers.map(p => {
-        // Compute status column content and right-side action separately so that
-        // Active rows can place both badges inside the status column (keeping
-        // pipe-right to chevron-only width) while Pending Approval keeps the
-        // full Activate button in pipe-right as a primary CTA.
-        let statusColContent = '';
-        let statusColClass   = 'pipe-col pipe-col-status';
-        let rightAction      = '';
+        // Fixed two-slot system: every row gets an identical pipe-slots container.
+        // pipe-slot-status (120px) + pipe-slot-action (114px) + chevron = consistent
+        // right-side width across all states. Main columns never shift.
+        let slotStatus = '';
+        let slotAction = '';
 
         if (p.suspended) {
-          // Deactivated: badge only. No actions.
-          statusColContent = `<span class="status-badge suspended">Deactivated</span>`;
+          // Deactivated: status slot empty; action slot shows muted terminal-state pill.
+          // .state-deactivated is action-btn scale (same footprint as Activate) but
+          // visually muted — clearly "state marker", not a clickable control.
+          slotAction = `<span class="state-deactivated">Deactivated</span>`;
         } else if (p.status === 'active') {
-          // Active: badge-scale Active + badge-scale Deactivate sit side-by-side
-          // in the status column. pipe-right stays chevron-only → no table distortion.
-          statusColClass  += ' pipe-status-pair';
-          statusColContent = `<span class="status-badge active">Active</span><button class="badge-deactivate" onclick="event.stopPropagation();deactivateProvider('${escHtml(p.slug)}',this)" title="Deactivate TaskLeader">Deactivate</button>`;
+          // Active: compact green badge in status slot; compact red badge-button in action slot.
+          slotStatus = `<span class="status-badge active">Active</span>`;
+          slotAction = `<button class="badge-deactivate" onclick="event.stopPropagation();deactivateProvider('${escHtml(p.slug)}',this)" title="Deactivate TaskLeader">Deactivate</button>`;
         } else if (p.status === 'pending_approval') {
-          // Pending Approval: badge in status col, full Activate button in pipe-right.
-          statusColContent = `<span class="status-badge pending-approval">Pending Approval</span>`;
-          rightAction      = `<button class="action-btn activate-btn" onclick="event.stopPropagation();activateProvider('${escHtml(p.slug)}',this)" title="Activate TaskLeader">Activate</button>`;
+          // Pending Approval: amber badge in status slot; full green Activate button in action slot.
+          slotStatus = `<span class="status-badge pending-approval">Pending Approval</span>`;
+          slotAction = `<button class="action-btn activate-btn" onclick="event.stopPropagation();activateProvider('${escHtml(p.slug)}',this)" title="Activate TaskLeader">Activate</button>`;
         } else if (p.status === 'pending_onboarding') {
-          // pending_onboarding should not reach Pipeline (backend neq filter),
-          // kept as a safe fallback.
-          statusColContent = `<span class="status-badge in-progress">In Progress</span>`;
-          rightAction      = `<button class="action-btn resend-btn" onclick="event.stopPropagation();resendLink('${escHtml(p.slug)}',this)" title="Show welcome link">Resend Link</button>`;
+          // pending_onboarding excluded from Pipeline by backend — safe fallback only.
+          slotStatus = `<span class="status-badge in-progress">In Progress</span>`;
+          slotAction = `<button class="action-btn resend-btn" onclick="event.stopPropagation();resendLink('${escHtml(p.slug)}',this)" title="Show welcome link">Resend Link</button>`;
         } else {
           const { cls, label } = pipelineStatus(p);
-          statusColContent = label ? `<span class="status-badge ${cls}">${label}</span>` : '';
+          if (label) slotStatus = `<span class="status-badge ${cls}">${label}</span>`;
         }
 
         const welcomeUrl = `https://task-leaders.com/v0.5/welcome.html?slug=${escHtml(p.slug)}`;
@@ -1078,8 +1115,11 @@
             <div class="pipe-col pipe-col-area">${escHtml(toTitleCase(p.service_area || ''))}</div>
             <div class="pipe-col pipe-col-email">${escHtml(p.email || '')}</div>
             <div class="pipe-col pipe-col-wa">${escHtml(p.whatsapp_number || '')}</div>
-            <div class="${statusColClass}">${statusColContent}</div>
-            <div class="pipe-right">${rightAction}<span class="pipe-chevron">▾</span></div>
+            <div class="pipe-slots">
+              <div class="pipe-slot-status">${slotStatus}</div>
+              <div class="pipe-slot-action">${slotAction}</div>
+              <span class="pipe-chevron">▾</span>
+            </div>
           </div>
           <div class="pipe-detail" id="pdetail-${p.slug}">
             ${p.email           ? `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${escHtml(p.email)}</span></div>` : ''}
