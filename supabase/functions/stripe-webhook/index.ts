@@ -84,9 +84,70 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("TASKLEADERS_SERVICE_ROLE_KEY");
   const webhookSecret  = Deno.env.get("STRIPE_WEBHOOK_SECRET");
   const stripeKey      = Deno.env.get("STRIPE_SECRET_KEY");
+  const adminPassword  = Deno.env.get("TASKLEADERS_ADMIN_PASSWORD") ?? "";
 
   if (!supabaseUrl || !serviceRoleKey || !webhookSecret) {
     return json({ ok: false, error: "Missing configuration" }, 500);
+  }
+
+  // ── Admin payment simulation path ─────────────────────────────────────────
+  // FOR TESTING ONLY. Bypasses Stripe signature verification.
+  // Gate: x-admin-simulate header must equal TASKLEADERS_ADMIN_PASSWORD.
+  // Body: { job_id: string, provider_slug: string }
+  //
+  // Exercises the exact same handlePaymentConfirmed() code path as a real
+  // Stripe payment — no mock, no duplication. Safe to call repeatedly with
+  // no real Stripe charges (only the card-save invite makes a Stripe API call;
+  // pass skip_card_save: true in the body to suppress it during testing).
+  //
+  // Prerequisites before calling:
+  //   • jobs row exists with state = 'claim_received' or 'payment_link_sent'
+  //   • payment_records row exists with payment_status = 'pending'
+  //   • provider_accounts row exists for provider_slug
+  //
+  // Usage:
+  //   curl -X POST https://iwgoafvemlsswkjroyhl.supabase.co/functions/v1/stripe-webhook \
+  //     -H "x-admin-simulate: YOUR_ADMIN_PW" \
+  //     -H "Content-Type: application/json" \
+  //     -d '{"job_id":"VAN-CLN-00022","provider_slug":"hayley-bieber","skip_card_save":true}'
+  //
+  // To remove later: delete this entire block and the adminPassword variable above.
+  const simHeader = req.headers.get("x-admin-simulate") ?? "";
+  if (simHeader && adminPassword && simHeader === adminPassword) {
+    let simBody: Record<string, unknown>;
+    try { simBody = await req.json(); } catch { return json({ ok: false, error: "Invalid JSON" }, 400); }
+
+    const jobId      = String(simBody.job_id       ?? "").trim();
+    const provSlug   = String(simBody.provider_slug ?? "").trim();
+    const skipCard   = Boolean(simBody.skip_card_save ?? false);
+    if (!jobId || !provSlug) {
+      return json({ ok: false, error: "job_id and provider_slug required" }, 400);
+    }
+
+    // Verify payment_records row is in a pending state before simulating.
+    const supabaseSim = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+    const { data: pr } = await supabaseSim
+      .from("payment_records")
+      .select("payment_status")
+      .eq("job_id", jobId)
+      .eq("provider_slug", provSlug)
+      .maybeSingle();
+
+    if (!pr) {
+      return json({ ok: false, error: `No payment_records row found for job_id=${jobId} provider_slug=${provSlug}` }, 404);
+    }
+    if (pr.payment_status === "paid") {
+      return json({ ok: false, error: "Payment is already marked paid — nothing to simulate" }, 409);
+    }
+
+    // paymentLinkId=null skips the card-save invite; pass skip_card_save: false
+    // in the body if you want to include the card-save invite in the test.
+    await handlePaymentConfirmed(
+      supabaseSim, supabaseUrl, serviceRoleKey, skipCard ? null : (stripeKey ?? null),
+      jobId, provSlug, null, skipCard ? null : "simulate",
+    );
+
+    return json({ ok: true, simulated: true, job_id: jobId, provider_slug: provSlug, card_save_skipped: skipCard });
   }
 
   const rawBody   = await req.text();
