@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
 
       supabase
         .from("concierge_clients")
-        .select("id, first_name, last_name, name, email, whatsapp, company, role, status, approved_date, created_at")
+        .select("id, first_name, last_name, name, email, whatsapp, company, role, status, suspended, approved_date, created_at")
         .order("created_at", { ascending: false })
         .limit(200),
 
@@ -334,6 +334,31 @@ Deno.serve(async (req) => {
 
     if (updateErr) return error("server_error", updateErr.message, 500);
     return json({ ok: true, data: { slug, deactivated: true } });
+  }
+
+  // ── Action: deactivate Concierge client ─────────────────────────────────
+  // Sets suspended = true on concierge_clients. Does not delete the record.
+  // The client is preserved for history. Re-activation is a future action.
+  if (action === "deactivate_concierge_client") {
+    const clientId = String(body.client_id ?? "").trim();
+    if (!clientId) return error("bad_request", "Missing required field: client_id");
+
+    const { data: client, error: fetchErr } = await supabase
+      .from("concierge_clients")
+      .select("id, status, suspended")
+      .eq("id", clientId)
+      .single();
+
+    if (fetchErr || !client) return error("not_found", "Concierge client not found", 404);
+    if (client.suspended === true) return error("conflict", "Client is already deactivated", 409);
+
+    const { error: updateErr } = await supabase
+      .from("concierge_clients")
+      .update({ suspended: true })
+      .eq("id", clientId);
+
+    if (updateErr) return error("server_error", updateErr.message, 500);
+    return json({ ok: true, data: { id: clientId, deactivated: true } });
   }
 
   // ── Action: approve concierge client ────────────────────────────────────

@@ -399,15 +399,36 @@
     }
     .activate-btn:hover { background: rgba(0,200,83,0.22); }
     .activate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .deactivate-btn {
+    .status-badge.suspended { background: rgba(220,38,38,0.12); color: #ef4444; }
+    /* badge-deactivate: compact danger control sized to match .status-badge (not .action-btn).
+       Used in the Pipeline status column and Queue cards so Deactivate does not
+       visually compete with the primary Activate button or distort table columns. */
+    .badge-deactivate {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 5px;
+      border: 1px solid rgba(220,38,38,0.35);
       background: rgba(220,38,38,0.10);
       color: #ef4444;
-      border: 1px solid rgba(220,38,38,0.30);
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: background 0.15s;
+      line-height: inherit;
     }
-    .deactivate-btn:hover { background: rgba(220,38,38,0.20); }
-    .deactivate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .status-badge.suspended { background: rgba(220,38,38,0.12); color: #ef4444; }
-    /* Copied flash for action-btn buttons used in Queue cards */
+    .badge-deactivate:hover { background: rgba(220,38,38,0.22); }
+    .badge-deactivate:disabled { opacity: 0.5; cursor: not-allowed; }
+    /* Modifier for pipe-col-status when it holds the Active + Deactivate badge pair.
+       Wider than the default 120px to fit both badges. flex layout for inline pairing. */
+    .pipe-status-pair {
+      width: 160px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow: visible;
+    }
+    /* Copied flash for action-btn copy buttons in Queue cards */
     .action-btn.copied { background: rgba(0,200,83,0.25); color: var(--green); border-color: rgba(0,200,83,0.4); }
 
     /* ── Pipeline detail panel ── */
@@ -900,7 +921,7 @@
               <div class="link-result-url" id="${urlElId}">${welcomeUrl}</div>
               <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
                 <button class="action-btn resend-btn" id="${copyBtnId}" onclick="copyText('${urlElId}','${copyBtnId}')">Copy Link</button>
-                <button class="action-btn deactivate-btn" id="ob-deactivate-${escHtml(p.slug)}" onclick="deactivateFromQueue('${escHtml(p.slug)}',this)">Deactivate</button>
+                <button class="badge-deactivate" id="ob-deactivate-${escHtml(p.slug)}" onclick="deactivateFromQueue('${escHtml(p.slug)}',this)" title="Deactivate TaskLeader">Deactivate</button>
               </div>
             </div>
           </div>
@@ -1015,22 +1036,36 @@
       }
 
       el.innerHTML = providers.map(p => {
-        const { cls, label } = pipelineStatus(p);
-        const actionBtn = p.suspended
-          // Deactivated: no actions — the Deactivated badge in the status column is sufficient
-          ? ''
-          : p.status === 'pending_onboarding'
-          // pending_onboarding should not reach Pipeline (excluded by backend neq filter),
-          // but keep the resend path as a safe fallback
-          ? `<button class="action-btn resend-btn" onclick="event.stopPropagation();resendLink('${escHtml(p.slug)}',this)" title="Show welcome link">Resend Link</button>`
-          : p.status === 'pending_approval'
-          // Pending Approval: only Activate. Deactivate is for active TaskLeaders only.
-          ? `<button class="action-btn activate-btn" onclick="event.stopPropagation();activateProvider('${escHtml(p.slug)}',this)" title="Activate TaskLeader">Activate</button>`
-          : p.status === 'active'
-          // Active: compact Deactivate button beside the chevron. Active badge stays in
-          // the status column (pipe-col-status) so pipe-right width stays unchanged.
-          ? `<button class="action-btn deactivate-btn" onclick="event.stopPropagation();deactivateProvider('${escHtml(p.slug)}',this)" title="Deactivate TaskLeader">Deactivate</button>`
-          : '';
+        // Compute status column content and right-side action separately so that
+        // Active rows can place both badges inside the status column (keeping
+        // pipe-right to chevron-only width) while Pending Approval keeps the
+        // full Activate button in pipe-right as a primary CTA.
+        let statusColContent = '';
+        let statusColClass   = 'pipe-col pipe-col-status';
+        let rightAction      = '';
+
+        if (p.suspended) {
+          // Deactivated: badge only. No actions.
+          statusColContent = `<span class="status-badge suspended">Deactivated</span>`;
+        } else if (p.status === 'active') {
+          // Active: badge-scale Active + badge-scale Deactivate sit side-by-side
+          // in the status column. pipe-right stays chevron-only → no table distortion.
+          statusColClass  += ' pipe-status-pair';
+          statusColContent = `<span class="status-badge active">Active</span><button class="badge-deactivate" onclick="event.stopPropagation();deactivateProvider('${escHtml(p.slug)}',this)" title="Deactivate TaskLeader">Deactivate</button>`;
+        } else if (p.status === 'pending_approval') {
+          // Pending Approval: badge in status col, full Activate button in pipe-right.
+          statusColContent = `<span class="status-badge pending-approval">Pending Approval</span>`;
+          rightAction      = `<button class="action-btn activate-btn" onclick="event.stopPropagation();activateProvider('${escHtml(p.slug)}',this)" title="Activate TaskLeader">Activate</button>`;
+        } else if (p.status === 'pending_onboarding') {
+          // pending_onboarding should not reach Pipeline (backend neq filter),
+          // kept as a safe fallback.
+          statusColContent = `<span class="status-badge in-progress">In Progress</span>`;
+          rightAction      = `<button class="action-btn resend-btn" onclick="event.stopPropagation();resendLink('${escHtml(p.slug)}',this)" title="Show welcome link">Resend Link</button>`;
+        } else {
+          const { cls, label } = pipelineStatus(p);
+          statusColContent = label ? `<span class="status-badge ${cls}">${label}</span>` : '';
+        }
+
         const welcomeUrl = `https://task-leaders.com/v0.5/welcome.html?slug=${escHtml(p.slug)}`;
 
         return `
@@ -1043,8 +1078,8 @@
             <div class="pipe-col pipe-col-area">${escHtml(toTitleCase(p.service_area || ''))}</div>
             <div class="pipe-col pipe-col-email">${escHtml(p.email || '')}</div>
             <div class="pipe-col pipe-col-wa">${escHtml(p.whatsapp_number || '')}</div>
-            <div class="pipe-col pipe-col-status"><span class="status-badge ${cls}">${label}</span></div>
-            <div class="pipe-right">${actionBtn}<span class="pipe-chevron">▾</span></div>
+            <div class="${statusColClass}">${statusColContent}</div>
+            <div class="pipe-right">${rightAction}<span class="pipe-chevron">▾</span></div>
           </div>
           <div class="pipe-detail" id="pdetail-${p.slug}">
             ${p.email           ? `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${escHtml(p.email)}</span></div>` : ''}
@@ -1259,12 +1294,17 @@
       const rows = clients.map(c => {
         const date       = new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
         const displayName = (`${c.first_name || ''} ${c.last_name || ''}`).trim() || (c.name || '');
-        const statusBadge = c.status === 'active'
+        const statusBadge = c.suspended
+          ? `<span class="status-badge suspended">Deactivated</span>`
+          : c.status === 'active'
           ? `<span class="status-badge active">Active</span>`
           : `<span class="status-badge pending">Pending</span>`;
-        const approveBtn  = c.status !== 'active'
+        // Suspended: no actions. Pending: Approve button. Active: compact Deactivate badge.
+        const approveBtn = c.suspended
+          ? ''
+          : c.status !== 'active'
           ? `<button class="concierge-approve-btn" id="cbtn-${c.id}" onclick="approveConciergeClient('${escHtml(c.id)}',this)">Approve</button>`
-          : '';
+          : `<button class="badge-deactivate" onclick="deactivateConciergeClient('${escHtml(c.id)}',this)" title="Deactivate client">Deactivate</button>`;
 
         return `<tr>
           <td><div class="concierge-name">${escHtml(displayName)}</div></td>
@@ -1508,6 +1548,37 @@
       } catch {
         btn.disabled = false;
         btn.textContent = 'Approve';
+        alert('Network error. Please try again.');
+      }
+    }
+
+    // ── Deactivate Concierge client ──────────────────────────────────────────
+    // Sets suspended = true on concierge_clients. Record preserved for history.
+    async function deactivateConciergeClient(clientId, btn) {
+      if (!confirm('Deactivate this Concierge client?\n\nThey will no longer have active access. Record is preserved and can be reviewed.')) return;
+      btn.disabled = true;
+      btn.textContent = 'Deactivating…';
+      const base = window.TASKLEADERS_FUNCTIONS_BASE;
+      try {
+        const res  = await fetch(`${base.replace(/\/$/, '')}/approve-application`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'deactivate_concierge_client', client_id: clientId, admin_password: adminPw }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!data || data.ok !== true) {
+          btn.disabled = false;
+          btn.textContent = 'Deactivate';
+          alert(data?.error?.message || 'Failed to deactivate client.');
+          return;
+        }
+        // Update local state so the row re-renders immediately without reload
+        const rec = allConciergeClients.find(c => c.id === clientId);
+        if (rec) rec.suspended = true;
+        applyConciergeFilters();
+      } catch {
+        btn.disabled = false;
+        btn.textContent = 'Deactivate';
         alert('Network error. Please try again.');
       }
     }
