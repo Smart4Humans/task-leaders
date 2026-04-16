@@ -219,6 +219,7 @@ Deno.serve(async (req) => {
       .from("provider_accounts")
       .select("slug, first_name, last_name, status, suspended, concierge_eligible, card_on_file")
       .or(`whatsapp_number.eq.${fromNumber},whatsapp_number.eq.${fromNumberDigits}`)
+      .eq("suspended", false)   // exclude deactivated providers — shared test numbers must not collide
       .maybeSingle(),
   ]);
 
@@ -1023,14 +1024,40 @@ async function handleProviderAccept(
 
   await updateSession({ session_state: "idle", current_job_id: jobId, sender_type: "provider" });
 
-  // Trigger payment
+  // Trigger payment — awaited so failures surface immediately.
+  // Any non-OK response or thrown error is written to admin_alerts so it's
+  // visible without manual SQL inspection.
   const cronSecret = Deno.env.get("INTERNAL_CRON_SECRET");
   const fnBase     = (Deno.env.get("SUPABASE_URL") ?? "").split(".supabase.co")[0].replace("https://", "");
-  fetch(`https://${fnBase}.supabase.co/functions/v1/create-payment-link`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-internal-secret": cronSecret ?? "" },
-    body: JSON.stringify({ job_id: jobId, provider_slug: String(provider.slug) }),
-  }).catch(() => {});
+  try {
+    const payRes = await fetch(`https://${fnBase}.supabase.co/functions/v1/create-payment-link`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-internal-secret": cronSecret ?? "" },
+      body: JSON.stringify({ job_id: jobId, provider_slug: String(provider.slug) }),
+    });
+    if (!payRes.ok) {
+      const errText = await payRes.text().catch(() => "(unreadable)");
+      await supabase.from("admin_alerts").insert({
+        alert_type:           "escalation",
+        priority:             "high",
+        job_id:               jobId,
+        participant_whatsapp: fromNumber,
+        description:
+          `create-payment-link FAILED after provider ACCEPT. ` +
+          `Status: ${payRes.status}. Body: ${errText.substring(0, 200)}`,
+        status: "open",
+      });
+    }
+  } catch (e) {
+    await supabase.from("admin_alerts").insert({
+      alert_type:           "escalation",
+      priority:             "high",
+      job_id:               jobId,
+      participant_whatsapp: fromNumber,
+      description:          `create-payment-link fetch threw after provider ACCEPT: ${String(e)}`,
+      status:               "open",
+    });
+  }
 
   const ackMsg = `[Job #${toPublicJobId(jobId)}] Your claim has been received. ${
     provider.card_on_file
