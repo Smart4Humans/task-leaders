@@ -4,9 +4,13 @@
 // Creates a providers record from an application, generates a slug, returns the welcome URL.
 // Also accepts GET /approve-application?admin_password=... to list pipeline data.
 // Actions:
-//   POST { action: "approve",                application_id, admin_password } — approve application
-//   POST { action: "activate",               slug,           admin_password } — activate provider (→ marketplace)
-//   POST { action: "approve_concierge_client", client_id,    admin_password } — approve concierge client
+//   POST { action: "approve",                    application_id, admin_password } — approve application
+//   POST { action: "activate",                   slug,           admin_password } — activate provider (→ marketplace)
+//   POST { action: "deactivate",                 slug,           admin_password } — suspend provider
+//   POST { action: "reactivate",                 slug,           admin_password } — restore provider
+//   POST { action: "approve_concierge_client",   client_id,      admin_password } — approve concierge client
+//   POST { action: "deactivate_concierge_client", client_id,     admin_password } — suspend concierge client
+//   POST { action: "reactivate_concierge_client", client_id,     admin_password } — restore concierge client
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -336,6 +340,38 @@ Deno.serve(async (req) => {
     return json({ ok: true, data: { slug, deactivated: true } });
   }
 
+  // ── Action: reactivate TaskLeader ───────────────────────────────────────
+  // Reverses deactivation. Restoration rule (prior status survives deactivation intact):
+  //   • status === 'active'  → suspended=false + concierge_eligible=true  (full Concierge restore)
+  //   • status !== 'active'  → suspended=false + concierge_eligible=false (re-enters normal flow)
+  // No schema change needed — status was never overwritten by deactivate.
+  if (action === "reactivate") {
+    const slug = String(body.slug ?? "").trim();
+    if (!slug) return error("bad_request", "Missing required field: slug");
+
+    const { data: acct, error: fetchErr } = await supabase
+      .from("provider_accounts")
+      .select("slug, status, suspended")
+      .eq("slug", slug)
+      .single();
+
+    if (fetchErr || !acct) return error("not_found", "Provider account not found", 404);
+    if (acct.suspended !== true) return error("conflict", "TaskLeader is not currently deactivated", 409);
+
+    const restoreFields: Record<string, unknown> = {
+      suspended: false,
+      concierge_eligible: acct.status === "active",
+    };
+
+    const { error: updateErr } = await supabase
+      .from("provider_accounts")
+      .update(restoreFields)
+      .eq("slug", slug);
+
+    if (updateErr) return error("server_error", updateErr.message, 500);
+    return json({ ok: true, data: { slug, reactivated: true, status: acct.status, concierge_eligible: restoreFields.concierge_eligible } });
+  }
+
   // ── Action: deactivate Concierge client ─────────────────────────────────
   // Sets suspended = true on concierge_clients. Does not delete the record.
   // The client is preserved for history. Re-activation is a future action.
@@ -359,6 +395,31 @@ Deno.serve(async (req) => {
 
     if (updateErr) return error("server_error", updateErr.message, 500);
     return json({ ok: true, data: { id: clientId, deactivated: true } });
+  }
+
+  // ── Action: reactivate Concierge client ─────────────────────────────────
+  // Reverses deactivation on concierge_clients: suspended=false.
+  // Status is preserved through deactivation so the client returns exactly to prior state.
+  if (action === "reactivate_concierge_client") {
+    const clientId = String(body.client_id ?? "").trim();
+    if (!clientId) return error("bad_request", "Missing required field: client_id");
+
+    const { data: client, error: fetchErr } = await supabase
+      .from("concierge_clients")
+      .select("id, status, suspended")
+      .eq("id", clientId)
+      .single();
+
+    if (fetchErr || !client) return error("not_found", "Concierge client not found", 404);
+    if (client.suspended !== true) return error("conflict", "Client is not currently deactivated", 409);
+
+    const { error: updateErr } = await supabase
+      .from("concierge_clients")
+      .update({ suspended: false })
+      .eq("id", clientId);
+
+    if (updateErr) return error("server_error", updateErr.message, 500);
+    return json({ ok: true, data: { id: clientId, reactivated: true, status: client.status } });
   }
 
   // ── Action: approve concierge client ────────────────────────────────────
