@@ -152,47 +152,76 @@ Deno.serve(async (req) => {
 
   } else {
     // ── Payment link path ──────────────────────────────────────────────────
-    // Step 1: Create a Price object
-    const priceParams = new URLSearchParams({
-      unit_amount:            String(total),
-      currency:               "cad",
-      "product_data[name]":   description,
-    });
+    //
+    // Primary: pre-configured static Stripe payment link for this category.
+    // Set STRIPE_PAYMENT_LINK_{CATEGORY_CODE} in Supabase Edge Function secrets,
+    // e.g. STRIPE_PAYMENT_LINK_CLN = https://buy.stripe.com/xxxxx
+    // Static links require no runtime Stripe API calls and are the preferred
+    // path for reliability. Create them once in the Stripe dashboard (CAD,
+    // fixed price matching the category lead fee).
+    //
+    // Fallback: if no static link is configured, dynamically create a Stripe
+    // Price + Payment Link (original behavior — works but makes two API calls).
 
-    const priceRes  = await fetch(`${stripeBase}/prices`, {
-      method: "POST",
-      headers: { "Authorization": stripeAuth, "Content-Type": "application/x-www-form-urlencoded" },
-      body: priceParams,
-    });
-    const priceData = await priceRes.json();
+    const staticLinkUrl = Deno.env.get(`STRIPE_PAYMENT_LINK_${job.category_code}`);
 
-    if (!priceRes.ok) {
-      return err("stripe_error", priceData.error?.message ?? "Price creation failed", 502);
+    if (staticLinkUrl) {
+      // ── Static link path (preferred) ──────────────────────────────────
+      // Static Stripe Payment Links have no runtime metadata — the checkout
+      // session Stripe fires on payment carries whatever metadata was baked
+      // into the link at creation time, NOT job_id/provider_slug we need here.
+      // Solution: append client_reference_id as a URL query param. Stripe passes
+      // it through to checkout.session.completed as obj.client_reference_id, where
+      // stripe-webhook reads it as a fallback when metadata fields are absent.
+      const sep = staticLinkUrl.includes("?") ? "&" : "?";
+      paymentLinkUrl = `${staticLinkUrl}${sep}client_reference_id=${encodeURIComponent(`${job.job_id}___${provSlug}`)}`;
+      paymentMethod  = "payment_link";
+      nextState      = "payment_link_sent";
+
+    } else {
+      // ── Dynamic link path (fallback) ──────────────────────────────────
+      // Step 1: Create a Price object
+      const priceParams = new URLSearchParams({
+        unit_amount:            String(total),
+        currency:               "cad",
+        "product_data[name]":   description,
+      });
+
+      const priceRes  = await fetch(`${stripeBase}/prices`, {
+        method: "POST",
+        headers: { "Authorization": stripeAuth, "Content-Type": "application/x-www-form-urlencoded" },
+        body: priceParams,
+      });
+      const priceData = await priceRes.json();
+
+      if (!priceRes.ok) {
+        return err("stripe_error", priceData.error?.message ?? "Price creation failed", 502);
+      }
+
+      // Step 2: Create Payment Link
+      const plParams = new URLSearchParams({
+        "line_items[0][price]":    priceData.id,
+        "line_items[0][quantity]": "1",
+        "metadata[job_id]":        job.job_id,
+        "metadata[provider_slug]": provSlug,
+      });
+
+      const plRes  = await fetch(`${stripeBase}/payment_links`, {
+        method: "POST",
+        headers: { "Authorization": stripeAuth, "Content-Type": "application/x-www-form-urlencoded" },
+        body: plParams,
+      });
+      const plData = await plRes.json();
+
+      if (!plRes.ok) {
+        return err("stripe_error", plData.error?.message ?? "Payment link creation failed", 502);
+      }
+
+      paymentLinkId  = plData.id;
+      paymentLinkUrl = plData.url;
+      paymentMethod  = "payment_link";
+      nextState      = "payment_link_sent";
     }
-
-    // Step 2: Create Payment Link
-    const plParams = new URLSearchParams({
-      "line_items[0][price]":    priceData.id,
-      "line_items[0][quantity]": "1",
-      "metadata[job_id]":        job.job_id,
-      "metadata[provider_slug]": provSlug,
-    });
-
-    const plRes  = await fetch(`${stripeBase}/payment_links`, {
-      method: "POST",
-      headers: { "Authorization": stripeAuth, "Content-Type": "application/x-www-form-urlencoded" },
-      body: plParams,
-    });
-    const plData = await plRes.json();
-
-    if (!plRes.ok) {
-      return err("stripe_error", plData.error?.message ?? "Payment link creation failed", 502);
-    }
-
-    paymentLinkId  = plData.id;
-    paymentLinkUrl = plData.url;
-    paymentMethod  = "payment_link";
-    nextState      = "payment_link_sent";
   }
 
   // ── Insert payment_records ────────────────────────────────────────────────

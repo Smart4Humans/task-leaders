@@ -5,18 +5,28 @@
 // Handled events:
 //   payment_intent.succeeded        — auto-charge confirmed
 //   payment_intent.payment_failed   — auto-charge failed
-//   checkout.session.completed      — payment link paid
+//   checkout.session.completed      — payment link paid (mode=payment) OR card saved (mode=setup)
 //
-// On payment confirmed:
+// On payment confirmed (payment link path only):
 //   - Marks payment_records.payment_status = 'paid'
-//   - Advances job.state → 'confirmed_assigned'
+//   - Advances job.state → 'confirmed_assigned' → 'thread_live'
 //   - Adds client + provider to job_participants
 //   - Sends WC-2 to client (assignment confirmed)
 //   - Updates conversation sessions for both participants
+//   - Creates Stripe Checkout Session (mode=setup) and sends card-save invite to provider
+//     (only when paid via payment link — auto-charge providers already have a card on file)
+//
+// On payment confirmed (auto-charge path):
+//   - Same as above, minus card-save invite (card is already on file)
 //
 // On payment failed:
 //   - Logs to admin_alerts
-//   - Optionally notifies provider
+//
+// On card-save setup complete (mode=setup):
+//   - Retrieves SetupIntent to get the confirmed payment_method
+//   - Writes card_on_file=true, stripe_customer_id, stripe_payment_method_id to provider_accounts
+//   - Sends WhatsApp confirmation to provider
+//   - All failures write to admin_alerts (no silent failures)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
@@ -73,12 +83,13 @@ Deno.serve(async (req) => {
   const supabaseUrl    = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("TASKLEADERS_SERVICE_ROLE_KEY");
   const webhookSecret  = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+  const stripeKey      = Deno.env.get("STRIPE_SECRET_KEY");
 
   if (!supabaseUrl || !serviceRoleKey || !webhookSecret) {
     return json({ ok: false, error: "Missing configuration" }, 500);
   }
 
-  const rawBody  = await req.text();
+  const rawBody   = await req.text();
   const sigHeader = req.headers.get("stripe-signature") ?? "";
 
   const validSig = await verifyStripeSignature(rawBody, sigHeader, webhookSecret);
@@ -103,44 +114,85 @@ Deno.serve(async (req) => {
 
   // ─── payment_intent.succeeded ──────────────────────────────────────────────
   if (eventType === "payment_intent.succeeded") {
-    const jobId       = String((obj.metadata as Record<string,string>)?.job_id ?? "");
-    const provSlug    = String((obj.metadata as Record<string,string>)?.provider_slug ?? "");
-    const piId        = String(obj.id ?? "");
+    const jobId    = String((obj.metadata as Record<string, string>)?.job_id ?? "");
+    const provSlug = String((obj.metadata as Record<string, string>)?.provider_slug ?? "");
+    const piId     = String(obj.id ?? "");
 
     if (!jobId || !provSlug) {
       return json({ ok: true, skipped: "no job metadata" });
     }
 
-    await handlePaymentConfirmed(supabase, supabaseUrl, serviceRoleKey, jobId, provSlug, piId, null);
+    await handlePaymentConfirmed(
+      supabase, supabaseUrl, serviceRoleKey, stripeKey ?? null,
+      jobId, provSlug, piId, null,
+    );
   }
 
-  // ─── checkout.session.completed (payment link) ─────────────────────────────
+  // ─── checkout.session.completed ────────────────────────────────────────────
+  // Two sub-modes:
+  //   mode=payment  — provider paid via payment link → confirm assignment + send card-save invite
+  //   mode=setup    — provider saved card via setup flow → write card_on_file to DB + confirm via WhatsApp
   else if (eventType === "checkout.session.completed") {
-    const jobId    = String((obj.metadata as Record<string,string>)?.job_id ?? "");
-    const provSlug = String((obj.metadata as Record<string,string>)?.provider_slug ?? "");
-    const plId     = String(obj.payment_link ?? "");
+    const mode     = String(obj.mode ?? "");
+    const metadata = (obj.metadata as Record<string, string>) ?? {};
+    const provSlug = String(metadata.provider_slug ?? "");
 
-    if (!jobId || !provSlug) {
-      return json({ ok: true, skipped: "no job metadata" });
+    if (mode === "setup") {
+      // Card-save setup complete — handled separately from payment confirmation.
+      if (!provSlug) {
+        // No provider slug in metadata: escalate so it isn't lost silently.
+        await supabase.from("admin_alerts").insert({
+          alert_type:  "escalation",
+          priority:    "normal",
+          description: `checkout.session.completed mode=setup missing provider_slug in metadata. session_id=${String(obj.id ?? "")}`,
+          status:      "open",
+        });
+      } else {
+        await handleCardSaveSetupComplete(supabase, supabaseUrl, serviceRoleKey, stripeKey ?? null, obj);
+      }
+    } else {
+      // mode=payment (payment link paid)
+      // Primary: dynamic payment links embed job_id + provider_slug in metadata at creation.
+      // Fallback: static payment links (STRIPE_PAYMENT_LINK_{CODE} env) have no runtime
+      // metadata. create-payment-link appends ?client_reference_id={job_id}___{provider_slug}
+      // to the URL; Stripe passes it through to obj.client_reference_id here.
+      let jobId    = String(metadata.job_id ?? "");
+      let provSlug = String(metadata.provider_slug ?? "");
+
+      if ((!jobId || !provSlug) && obj.client_reference_id) {
+        const ref   = String(obj.client_reference_id);
+        const parts = ref.split("___");
+        if (parts.length === 2 && parts[0] && parts[1]) {
+          if (!jobId)    jobId    = parts[0];
+          if (!provSlug) provSlug = parts[1];
+        }
+      }
+
+      if (!jobId || !provSlug) {
+        return json({ ok: true, skipped: "no job metadata" });
+      }
+      const plId = String(obj.payment_link ?? "");
+      await handlePaymentConfirmed(
+        supabase, supabaseUrl, serviceRoleKey, stripeKey ?? null,
+        jobId, provSlug, null, plId,
+      );
     }
-
-    await handlePaymentConfirmed(supabase, supabaseUrl, serviceRoleKey, jobId, provSlug, null, plId);
   }
 
   // ─── payment_intent.payment_failed ────────────────────────────────────────
   else if (eventType === "payment_intent.payment_failed") {
-    const jobId       = String((obj.metadata as Record<string,string>)?.job_id ?? "");
-    const provSlug    = String((obj.metadata as Record<string,string>)?.provider_slug ?? "");
-    const failureMsg  = String((obj.last_payment_error as Record<string,string>)?.message ?? "Unknown error");
+    const jobId      = String((obj.metadata as Record<string, string>)?.job_id ?? "");
+    const provSlug   = String((obj.metadata as Record<string, string>)?.provider_slug ?? "");
+    const failureMsg = String((obj.last_payment_error as Record<string, string>)?.message ?? "Unknown error");
 
     if (jobId) {
       await supabase.from("admin_alerts").insert({
-        alert_type:   "escalation",
-        priority:     "high",
-        job_id:       jobId,
+        alert_type:    "escalation",
+        priority:      "high",
+        job_id:        jobId,
         provider_slug: provSlug || null,
-        description:  `Stripe payment failed: ${failureMsg}`,
-        status:       "open",
+        description:   `Stripe payment failed: ${failureMsg}`,
+        status:        "open",
       });
     }
   }
@@ -149,11 +201,16 @@ Deno.serve(async (req) => {
 });
 
 // ─── handlePaymentConfirmed ───────────────────────────────────────────────────
+// Called for both payment_intent.succeeded (auto-charge) and
+// checkout.session.completed mode=payment (payment link).
+// paymentLinkId is non-null only for the payment-link path, which is used
+// to decide whether to send the card-save invite.
 
 async function handlePaymentConfirmed(
   supabase: ReturnType<typeof createClient>,
   supabaseUrl: string,
   serviceRoleKey: string,
+  stripeKey: string | null,
   jobId: string,
   provSlug: string,
   paymentIntentId: string | null,
@@ -187,10 +244,10 @@ async function handlePaymentConfirmed(
     })
     .eq("job_id", jobId);
 
-  // Load provider
+  // Load provider — include stripe_customer_id and card_on_file for the card-save invite decision
   const { data: provider } = await supabase
     .from("provider_accounts")
-    .select("slug, first_name, last_name, business_name, display_name_type, whatsapp_number")
+    .select("slug, first_name, last_name, business_name, display_name_type, whatsapp_number, stripe_customer_id, card_on_file")
     .eq("slug", provSlug)
     .single();
 
@@ -242,10 +299,10 @@ async function handlePaymentConfirmed(
     // Update client session: thread now live
     await supabase.from("conversation_sessions")
       .upsert({
-        whatsapp_e164:   job.client_whatsapp,
-        sender_type:     "client",
-        session_state:   "open",
-        current_job_id:  job.job_id,
+        whatsapp_e164:    job.client_whatsapp,
+        sender_type:      "client",
+        session_state:    "open",
+        current_job_id:   job.job_id,
         last_activity_at: new Date().toISOString(),
       }, { onConflict: "whatsapp_e164" });
   }
@@ -254,10 +311,10 @@ async function handlePaymentConfirmed(
   if (provider.whatsapp_number) {
     await supabase.from("conversation_sessions")
       .upsert({
-        whatsapp_e164:   provider.whatsapp_number,
-        sender_type:     "provider",
-        session_state:   "open",
-        current_job_id:  job.job_id,
+        whatsapp_e164:    provider.whatsapp_number,
+        sender_type:      "provider",
+        session_state:    "open",
+        current_job_id:   job.job_id,
         last_activity_at: new Date().toISOString(),
       }, { onConflict: "whatsapp_e164" });
   }
@@ -272,4 +329,236 @@ async function handlePaymentConfirmed(
   await supabase.from("jobs")
     .update({ state: "thread_live" })
     .eq("job_id", jobId);
+
+  // ── Card-save invite ────────────────────────────────────────────────────────
+  // Only for the payment-link path (paymentLinkId non-null) and only when the
+  // provider does not already have a card on file. Auto-charge providers are
+  // excluded by definition: they already have a saved card.
+  const paidViaLink = paymentLinkId !== null;
+  const alreadyHasCard = Boolean(provider.card_on_file);
+
+  if (paidViaLink && !alreadyHasCard && provider.whatsapp_number && stripeKey) {
+    await handleCardSaveInvite(
+      supabase, supabaseUrl, serviceRoleKey,
+      provSlug, provider.whatsapp_number,
+      provider.stripe_customer_id as string | null,
+      stripeKey,
+    );
+  }
+}
+
+// ─── handleCardSaveInvite ─────────────────────────────────────────────────────
+// Creates a Stripe Checkout Session in setup mode and sends a WhatsApp invite
+// to the provider. Failures escalate to admin_alerts — nothing is silent.
+
+async function handleCardSaveInvite(
+  supabase: ReturnType<typeof createClient>,
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  provSlug: string,
+  providerWhatsapp: string,
+  existingStripeCustomerId: string | null,
+  stripeKey: string,
+) {
+  const stripeBase = "https://api.stripe.com/v1";
+  const stripeAuth = "Basic " + btoa(`${stripeKey}:`);
+  const successUrl = `https://task-leaders.com/v0.5/provider-profile.html?slug=${encodeURIComponent(provSlug)}&card_saved=1`;
+  const cancelUrl  = `https://task-leaders.com/v0.5/provider-profile.html?slug=${encodeURIComponent(provSlug)}`;
+
+  const params = new URLSearchParams({
+    mode:                       "setup",
+    "payment_method_types[]":   "card",
+    "metadata[provider_slug]":  provSlug,
+    success_url:                successUrl,
+    cancel_url:                 cancelUrl,
+  });
+
+  if (existingStripeCustomerId) {
+    params.set("customer", existingStripeCustomerId);
+  } else {
+    params.set("customer_creation", "always");
+  }
+
+  let setupUrl: string;
+  try {
+    const res  = await fetch(`${stripeBase}/checkout/sessions`, {
+      method: "POST",
+      headers: { "Authorization": stripeAuth, "Content-Type": "application/x-www-form-urlencoded" },
+      body: params,
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.url) {
+      await supabase.from("admin_alerts").insert({
+        alert_type:    "escalation",
+        priority:      "high",
+        provider_slug: provSlug,
+        description:   `Failed to create card-save Checkout Session for provider ${provSlug}: ${data.error?.message ?? "no URL in response"}`,
+        status:        "open",
+      });
+      return;
+    }
+
+    setupUrl = String(data.url);
+  } catch (e) {
+    await supabase.from("admin_alerts").insert({
+      alert_type:    "escalation",
+      priority:      "high",
+      provider_slug: provSlug,
+      description:   `card-save Checkout Session fetch threw for provider ${provSlug}: ${String(e)}`,
+      status:        "open",
+    });
+    return;
+  }
+
+  // Send WhatsApp invite to provider
+  const msgBody = (
+    `Payment received — you're confirmed on this job.\n\n` +
+    `Save a card on file to skip manual payment next time. Future lead fees will be charged automatically the moment you accept a job — no link, no wait.\n\n` +
+    `Save your card here: ${setupUrl}`
+  );
+
+  const twilioEnv = getTwilioEnv();
+  if (twilioEnv) {
+    const result = await sendWhatsApp(twilioEnv, providerWhatsapp, msgBody);
+    logMessage({
+      supabaseUrl, serviceRoleKey,
+      direction: "outbound",
+      participantWhatsapp: providerWhatsapp,
+      templateName: "CARD_SAVE_INVITE",
+      body: msgBody, status: result.ok ? "sent" : "failed",
+    });
+
+    if (!result.ok) {
+      await supabase.from("admin_alerts").insert({
+        alert_type:    "escalation",
+        priority:      "normal",
+        provider_slug: provSlug,
+        description:   `Card-save invite WhatsApp delivery failed for provider ${provSlug} (${providerWhatsapp})`,
+        status:        "open",
+      });
+    }
+  }
+}
+
+// ─── handleCardSaveSetupComplete ──────────────────────────────────────────────
+// Called when checkout.session.completed fires with mode=setup.
+// Retrieves the SetupIntent to get the confirmed payment_method, then writes
+// card_on_file=true, stripe_customer_id, and stripe_payment_method_id to
+// provider_accounts. Sends a WhatsApp confirmation to the provider.
+// All failure paths write to admin_alerts.
+
+async function handleCardSaveSetupComplete(
+  supabase: ReturnType<typeof createClient>,
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  stripeKey: string | null,
+  session: Record<string, unknown>,
+) {
+  const metadata      = (session.metadata as Record<string, string>) ?? {};
+  const provSlug      = String(metadata.provider_slug ?? "");
+  const custId        = String(session.customer ?? "");
+  const setupIntentId = String(session.setup_intent ?? "");
+
+  if (!provSlug || !custId || !setupIntentId) {
+    await supabase.from("admin_alerts").insert({
+      alert_type:    "escalation",
+      priority:      "normal",
+      provider_slug: provSlug || null,
+      description:   `card-save setup.completed missing required fields — provider_slug=${provSlug}, customer=${custId}, setup_intent=${setupIntentId}. session_id=${String(session.id ?? "")}`,
+      status:        "open",
+    });
+    return;
+  }
+
+  if (!stripeKey) {
+    await supabase.from("admin_alerts").insert({
+      alert_type:    "escalation",
+      priority:      "high",
+      provider_slug: provSlug,
+      description:   `STRIPE_SECRET_KEY missing — cannot retrieve SetupIntent ${setupIntentId} for provider ${provSlug}`,
+      status:        "open",
+    });
+    return;
+  }
+
+  const stripeAuth = "Basic " + btoa(`${stripeKey}:`);
+
+  // Retrieve SetupIntent to get the confirmed payment_method ID
+  let pmId: string;
+  try {
+    const siRes  = await fetch(`https://api.stripe.com/v1/setup_intents/${setupIntentId}`, {
+      headers: { "Authorization": stripeAuth },
+    });
+    const siData = await siRes.json();
+    pmId = String(siData.payment_method ?? "");
+
+    if (!pmId) {
+      await supabase.from("admin_alerts").insert({
+        alert_type:    "escalation",
+        priority:      "high",
+        provider_slug: provSlug,
+        description:   `SetupIntent ${setupIntentId} returned no payment_method for provider ${provSlug}`,
+        status:        "open",
+      });
+      return;
+    }
+  } catch (e) {
+    await supabase.from("admin_alerts").insert({
+      alert_type:    "escalation",
+      priority:      "high",
+      provider_slug: provSlug,
+      description:   `Failed to retrieve SetupIntent ${setupIntentId} for provider ${provSlug}: ${String(e)}`,
+      status:        "open",
+    });
+    return;
+  }
+
+  // Write card-on-file fields to provider_accounts
+  const { error: updateErr } = await supabase
+    .from("provider_accounts")
+    .update({
+      card_on_file:             true,
+      stripe_customer_id:       custId,
+      stripe_payment_method_id: pmId,
+    })
+    .eq("slug", provSlug);
+
+  if (updateErr) {
+    await supabase.from("admin_alerts").insert({
+      alert_type:    "escalation",
+      priority:      "high",
+      provider_slug: provSlug,
+      description:   `Failed to write card_on_file for provider ${provSlug}: ${updateErr.message}`,
+      status:        "open",
+    });
+    return;
+  }
+
+  // Load provider's WhatsApp number for confirmation message
+  const { data: provider } = await supabase
+    .from("provider_accounts")
+    .select("whatsapp_number")
+    .eq("slug", provSlug)
+    .single();
+
+  if (!provider?.whatsapp_number) return;
+
+  // Send WhatsApp confirmation to provider
+  const msgBody = (
+    `Your card has been saved.\n\n` +
+    `Future lead fees will be charged automatically when you accept a job — no payment link needed.`
+  );
+
+  const twilioEnv = getTwilioEnv();
+  if (twilioEnv) {
+    const result = await sendWhatsApp(twilioEnv, provider.whatsapp_number, msgBody);
+    logMessage({
+      supabaseUrl, serviceRoleKey,
+      direction: "outbound",
+      participantWhatsapp: provider.whatsapp_number,
+      templateName: "CARD_SAVE_CONFIRMED",
+      body: msgBody, status: result.ok ? "sent" : "failed",
+    });
+  }
 }
