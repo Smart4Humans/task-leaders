@@ -362,12 +362,23 @@
     async function load() {
       const slug = new URLSearchParams(window.location.search).get('slug')?.trim().toLowerCase();
       if (!slug) { document.getElementById('stateMsg').textContent = 'No provider slug specified.'; return; }
+
+      // Ensure adminPw is available before fetching. When this page is opened directly
+      // (bookmarked, linked from email, etc.) rather than navigated from approve.html,
+      // sessionStorage is empty and adminPw is ''. Without the password, get-provider
+      // applies the suspended=404 gate and deactivated providers appear as not found.
+      if (!adminPw) {
+        const pw = prompt('Admin password required:');
+        if (!pw) { document.getElementById('stateMsg').textContent = 'Password required to view profiles.'; return; }
+        adminPw = pw;
+        sessionStorage.setItem('tl_admin_pw', pw);
+      }
+
       try {
         // Pass admin_password so get-provider bypasses the suspended=404 gate.
-        // Deactivated providers must remain viewable in admin review even though
-        // their public profile is hidden. The password is already in sessionStorage
-        // from the approve.html admin session.
-        const pwParam = adminPw ? `&admin_password=${encodeURIComponent(adminPw)}` : '';
+        // Deactivated providers remain viewable in admin review even though their
+        // public profile is hidden. Non-admin callers never send this param.
+        const pwParam = `&admin_password=${encodeURIComponent(adminPw)}`;
         const res  = await fetch(`${FUNCTIONS_BASE}/get-provider?slug=${encodeURIComponent(slug)}${pwParam}`);
         const json = await res.json().catch(() => null);
         if (!json?.ok || !json.data) { document.getElementById('stateMsg').textContent = 'Provider not found.'; return; }
