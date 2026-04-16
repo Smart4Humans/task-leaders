@@ -1,11 +1,13 @@
 // TaskLeaders — Edge Function: get-provider
-// Contract: GET /get-provider?slug=marco-a3x9
+// Contract: GET /get-provider?slug=marco-a3x9[&admin_password=...]
 // Returns the provider record for the given slug.
-// Used by the welcome flow and profile-setup pre-population.
-// Only returns non-sensitive fields (no internal IDs beyond what's needed).
+// Used by the welcome flow, profile-setup pre-population, and admin profile review.
 //
-// Deactivation gate: suspended=true providers return 404 so that deactivated
-// TaskLeaders cannot access their welcome link or pre-populate the onboarding form.
+// Deactivation gate:
+//   Public callers (no admin_password): suspended=true → 404. Deactivated TaskLeaders
+//   cannot access their welcome link or pre-populate the onboarding form.
+//   Admin callers (valid admin_password query param): suspended check is skipped so
+//   admin profile-review.html can load deactivated providers for review.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -31,14 +33,20 @@ Deno.serve(async (req) => {
     return error("bad_request", "Method not allowed", 405);
   }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseUrl    = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("TASKLEADERS_SERVICE_ROLE_KEY");
+  const adminPassword  = Deno.env.get("TASKLEADERS_ADMIN_PASSWORD");
   if (!supabaseUrl || !serviceRoleKey) {
     return error("server_error", "Missing server configuration", 500);
   }
 
   const url = new URL(req.url);
   const slug = url.searchParams.get("slug")?.trim().toLowerCase();
+
+  // Admin callers may pass admin_password to bypass the suspended gate.
+  // This allows admin/profile-review.html to view deactivated providers.
+  // Public callers (welcome flow, onboarding) never send a password.
+  const isAdmin = adminPassword && url.searchParams.get("admin_password") === adminPassword;
 
   if (!slug) {
     return error("bad_request", "Missing required parameter: slug");
@@ -64,7 +72,8 @@ Deno.serve(async (req) => {
   }
 
   // Deactivated providers must not access the welcome/onboarding flow.
-  if (data.suspended === true) {
+  // Admin callers (verified above) bypass this check for profile review.
+  if (data.suspended === true && !isAdmin) {
     return error("not_found", "Provider not found", 404);
   }
 

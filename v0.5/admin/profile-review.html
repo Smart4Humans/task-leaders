@@ -363,7 +363,12 @@
       const slug = new URLSearchParams(window.location.search).get('slug')?.trim().toLowerCase();
       if (!slug) { document.getElementById('stateMsg').textContent = 'No provider slug specified.'; return; }
       try {
-        const res  = await fetch(`${FUNCTIONS_BASE}/get-provider?slug=${encodeURIComponent(slug)}`);
+        // Pass admin_password so get-provider bypasses the suspended=404 gate.
+        // Deactivated providers must remain viewable in admin review even though
+        // their public profile is hidden. The password is already in sessionStorage
+        // from the approve.html admin session.
+        const pwParam = adminPw ? `&admin_password=${encodeURIComponent(adminPw)}` : '';
+        const res  = await fetch(`${FUNCTIONS_BASE}/get-provider?slug=${encodeURIComponent(slug)}${pwParam}`);
         const json = await res.json().catch(() => null);
         if (!json?.ok || !json.data) { document.getElementById('stateMsg').textContent = 'Provider not found.'; return; }
         render(json.data);
@@ -398,7 +403,10 @@
       }
 
       /* ── activate section ── */
-      const activateSection = p.status === 'active'
+      // suspended overrides status — show deactivated notice regardless of underlying status.
+      const activateSection = p.suspended
+        ? `<div class="activate-section"><span style="color:#ef4444;font-size:14px;font-weight:700;">⚠ Deactivated — public profile and broadcasts suppressed</span></div>`
+        : p.status === 'active'
         ? `<div class="activate-section"><span class="already-active">✓ Already Active</span></div>`
         : `<div class="activate-section">
              <button class="activate-btn" id="activateBtn" onclick="activateProvider('${esc(p.slug)}')">Activate Provider</button>
