@@ -4,7 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>TaskLeader Profile — TaskLeaders</title>
+  <meta name="theme-color" content="#0a0a14" />
+  <title>My Profile — TaskLeaders</title>
   <style>
     :root {
       --blue: #0066ff;
@@ -15,7 +16,7 @@
       --card: rgba(255,255,255,0.05);
       --border: rgba(255,255,255,0.08);
       --muted: rgba(255,255,255,0.55);
-      --whatsapp: #25D366;
+      --success: #25D366;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
@@ -35,277 +36,989 @@
       border-bottom: 1px solid rgba(255,255,255,0.06);
       position: sticky;
       top: 0;
-      z-index: 50;
+      z-index: 100;
       backdrop-filter: blur(10px);
     }
-    .back {
-      color: rgba(255,255,255,0.6);
-      text-decoration: none;
-      font-size: 13px;
-      padding: 5px 8px;
-      border-radius: 6px;
-    }
-    .back:hover { background: rgba(255,255,255,0.04); color: #fff; }
     .logo {
       font-size: 22px;
       font-weight: 800;
       text-decoration: none;
       letter-spacing: -0.5px;
-      line-height: 1;
     }
     .logo .task { color: var(--blue); }
     .logo .leaders { color: #fff; }
-
     main {
       max-width: 600px;
       margin: 0 auto;
-      padding: 24px 20px 60px;
+      padding: 32px 20px 100px;
     }
-
-    /* ── Hero ── */
     .hero {
       text-align: center;
-      margin-bottom: 28px;
+      margin-bottom: 36px;
     }
-    .hero-photo {
-      width: 110px;
-      height: 110px;
-      border-radius: 50%;
-      margin: 0 auto 16px;
-      border: 3px solid var(--blue);
-      overflow: hidden;
-      background: rgba(255,255,255,0.06);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 40px;
-    }
-    .hero-photo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: none;
-    }
-    .hero-name {
+    .hero h1 {
       font-size: 26px;
       font-weight: 700;
-      margin: 0 0 10px;
+      margin-bottom: 10px;
+      line-height: 1.3;
     }
-    .hero-service {
-      display: inline-block;
-      background: rgba(0,102,255,0.15);
-      color: var(--blue);
+    .hero h1 .blue { color: var(--blue); }
+    .hero-sub {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin: 0;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       padding: 6px 14px;
       border-radius: 20px;
       font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-    .hero-area {
-      font-size: 14px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    /* ── Stat bar ── */
-    .stat-bar {
-      display: flex;
-      justify-content: space-around;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 18px 12px;
-      margin-bottom: 20px;
-    }
-    .stat-item {
-      text-align: center;
-      flex: 1;
-    }
-    .stat-label {
-      font-size: 10px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
       font-weight: 600;
-      margin-bottom: 6px;
-    }
-    .stat-value {
-      font-size: 17px;
-      font-weight: 700;
-    }
-
-    /* ── Section cards ── */
-    .section {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 14px;
-    }
-    .section h2 {
-      font-size: 15px;
-      font-weight: 700;
-      margin: 0 0 14px;
-      color: rgba(255,255,255,0.7);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .section p {
-      font-size: 15px;
-      line-height: 1.6;
-      color: rgba(255,255,255,0.85);
-      margin: 0;
-    }
-
-    /* ── Status badge ── */
-    .status-notice {
-      text-align: center;
-      padding: 12px 16px;
-      border-radius: 10px;
-      font-size: 13px;
       margin-bottom: 20px;
     }
-    .status-notice.pending {
-      background: rgba(245,158,11,0.12);
-      border: 1px solid rgba(245,158,11,0.25);
-      color: #f59e0b;
+    .status-badge.active   { background: rgba(0,200,83,0.12); border: 1px solid rgba(0,200,83,0.25); color: var(--green); }
+    .status-badge.pending  { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); color: #f59e0b; }
+    .form-section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
     }
-    .status-notice.active {
-      background: rgba(0,200,83,0.1);
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(0,102,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .section-title { font-size: 18px; font-weight: 700; margin: 0; }
+    .section-subtitle { font-size: 13px; color: var(--muted); margin: 4px 0 0 0; }
+    .form-group { margin-bottom: 20px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-row.three-col { grid-template-columns: 2fr 1fr 1fr; }
+    @media (max-width: 480px) {
+      .form-row.three-col { grid-template-columns: 1fr 1fr; }
+      .form-row.three-col .form-group:first-child { grid-column: span 2; }
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .form-group label .optional {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 12px;
+      margin-left: 4px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--blue);
+      background: rgba(255,255,255,0.05);
+    }
+    .form-group input[readonly] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: rgba(255,255,255,0.35); }
+    .form-group textarea { resize: vertical; line-height: 1.5; }
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    .helper-text { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+    /* Photo upload */
+    .photo-upload-box {
+      border: 2px dashed rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .photo-upload-box:hover { border-color: var(--blue); background: rgba(0,102,255,0.04); }
+    .photo-upload-box input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: none;
+      background: none;
+    }
+    .photo-upload-icon { font-size: 32px; margin-bottom: 10px; }
+    .photo-upload-label { font-size: 14px; font-weight: 600; color: var(--blue); margin-bottom: 4px; }
+    .photo-upload-hint { font-size: 12px; color: var(--muted); }
+    .photo-preview { margin-top: 12px; text-align: center; }
+    .photo-preview img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--blue);
+    }
+    /* Work photos */
+    .work-photos-box {
+      border: 2px dashed rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .work-photos-box:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.02); }
+    .work-photos-box input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: none;
+      background: none;
+    }
+    .work-photos-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .work-photos-preview img {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+    /* Display name toggle */
+    .display-name-toggle { display: flex; gap: 12px; margin-top: 12px; }
+    .toggle-option {
+      flex: 1;
+      padding: 14px;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .toggle-option:hover { border-color: rgba(255,255,255,0.2); }
+    .toggle-option.selected { border-color: var(--blue); background: rgba(0,102,255,0.1); }
+    .toggle-option input { display: none; }
+    .toggle-option .toggle-label { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .toggle-option .toggle-hint { font-size: 11px; color: var(--muted); }
+    /* Checkboxes */
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .checkbox-item:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+    .checkbox-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--blue);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .city-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    @media (min-width: 480px) { .city-grid { grid-template-columns: repeat(3, 1fr); } }
+    .inline-rate-input {
+      width: 160px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    .inline-rate-input:focus { border-color: var(--blue); }
+    .inline-rate-input::placeholder { color: rgba(255,255,255,0.35); }
+    .checkbox-item-wrap { margin-bottom: 4px; }
+    /* Card section */
+    .card-status-ok {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: rgba(0,200,83,0.08);
       border: 1px solid rgba(0,200,83,0.2);
       color: var(--green);
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
     }
-
-    /* ── Loading / error ── */
-    .state-msg {
-      text-align: center;
-      padding: 60px 24px;
-      color: var(--muted);
-      font-size: 16px;
+    .stripe-card-element {
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.03);
+      margin-bottom: 14px;
+      transition: border-color 0.2s;
+    }
+    .stripe-card-element.focused { border-color: var(--blue); }
+    .card-save-btn {
+      padding: 14px 24px;
+      border-radius: 10px;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .card-save-btn:hover { background: var(--blue-dark); }
+    .card-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .card-update-link {
+      font-size: 13px;
+      color: var(--blue);
+      cursor: pointer;
+      text-decoration: underline;
+      margin-left: 10px;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .card-update-link:hover { color: #fff; }
+    /* Buttons */
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      border-radius: 14px;
+      border: none;
+      background: var(--success);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 32px;
+    }
+    .submit-btn:hover { background: #128C7E; }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .submit-note { text-align: center; font-size: 13px; color: var(--muted); margin-top: 12px; }
+    /* Messages */
+    .form-error {
+      background: rgba(255,107,107,0.1);
+      border: 1px solid rgba(255,107,107,0.3);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 14px;
+      color: #ff6b6b;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .inline-success {
+      background: rgba(0,200,83,0.08);
+      border: 1px solid rgba(0,200,83,0.2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--green);
+      font-weight: 600;
+      display: none;
+    }
+    .state-msg { text-align: center; padding: 80px 24px; color: var(--muted); font-size: 16px; }
+    @media (min-width: 768px) {
+      main { padding: 40px 32px; }
+      .form-section { padding: 28px; }
     }
   </style>
 </head>
 <body>
   <header>
-    <a href="javascript:history.back()" class="back">←</a>
     <a href="homepage.html" class="logo"><span class="task">Task</span><span class="leaders">Leaders</span></a>
   </header>
 
   <main id="main">
-    <div class="state-msg" id="stateMsg">Loading profile…</div>
+    <div class="state-msg" id="stateMsg">Loading your profile…</div>
   </main>
 
   <script src="js/config.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
   <script>
-    function titleCase(str) {
-      if (!str) return '';
-      return str
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, c => c.toUpperCase());
+    const SUPABASE_URL = 'https://iwgoafvemlsswkjroyhl.supabase.co';
+    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3Z29hZnZlbWxzc3dranJveWhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNjMwMDksImV4cCI6MjA4ODkzOTAwOX0.1Eb-wyFk8Suyg2-POO-cy9mhPvb7-KlDg8VlZIIYMqI';
+    const approvedCities = ['Vancouver','Surrey','Burnaby','Richmond','Coquitlam','New Westminster','North Vancouver','West Vancouver','Port Coquitlam','Maple Ridge','Langley','White Rock','Port Moody','Pitt Meadows','Delta','Abbotsford','Chilliwack','Mission'];
+    const SERVICE_LABELS = { handyman:'Handyman', cleaning:'Cleaning', painting:'Painting', electrical:'Electrical', plumbing:'Plumbing', 'yard-work':'Yard Work', hvac:'HVAC', moving:'Moving / Transport' };
+
+    let currentSlug = '';
+    let currentProvider = null;
+    let stripeInstance = null;
+    let cardElement = null;
+    let _selectedProfilePhoto = null;
+    let _selectedWorkPhotos = [];
+    let _existingWorkPhotos = [];
+
+    function esc(str) {
+      return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    function escHtml(str) {
-      return String(str ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    function statusNotice(status) {
-      if (status === 'active') {
-        return `<div class="status-notice active">Profile active — receiving leads</div>`;
-      }
-      if (status === 'pending_approval') {
-        return `<div class="status-notice pending">Profile under review — will be activated within 24 hrs</div>`;
-      }
-      return `<div class="status-notice pending">Onboarding in progress</div>`;
+    function getSlug() {
+      return new URLSearchParams(window.location.search).get('slug')?.trim().toLowerCase() || '';
     }
 
     async function load() {
-      const slug = new URLSearchParams(window.location.search).get('slug')?.trim().toLowerCase();
-      if (!slug) {
+      currentSlug = getSlug();
+      if (!currentSlug) {
         document.getElementById('stateMsg').textContent = 'No provider slug specified.';
         return;
       }
 
-      const base = window.TASKLEADERS_FUNCTIONS_BASE;
-      if (!base) {
-        document.getElementById('stateMsg').textContent = 'Site configuration missing.';
-        return;
-      }
+      const base = (window.TASKLEADERS_FUNCTIONS_BASE || '').replace(/\/$/, '');
+      if (!base) { document.getElementById('stateMsg').textContent = 'Site configuration missing.'; return; }
 
       try {
-        const res = await fetch(`${base.replace(/\/$/, '')}/get-provider?slug=${encodeURIComponent(slug)}`);
+        const res = await fetch(`${base}/get-provider-private?slug=${encodeURIComponent(currentSlug)}`);
         const json = await res.json().catch(() => null);
-
         if (!json?.ok || !json.data) {
           document.getElementById('stateMsg').textContent = 'Provider not found.';
           return;
         }
-
-        render(json.data);
+        currentProvider = json.data;
+        renderPage(json.data);
       } catch {
-        document.getElementById('stateMsg').textContent = 'Failed to load profile. Please try again.';
+        document.getElementById('stateMsg').textContent = 'Failed to load your profile. Please try again.';
       }
     }
 
-    function render(p) {
-      const name = `${escHtml(p.first_name || '')} ${escHtml(p.last_name || '')}`.trim();
-      const service = titleCase(p.primary_service || '');
-      const area = escHtml(p.service_area || '');
-      // base_rate is stored as a dollar string e.g. "100" → display as "$100/hr"
-      let rate = null;
-      if (p.base_rate) {
-        const num = parseFloat(String(p.base_rate).replace(/[^0-9.]/g, ''));
-        rate = Number.isFinite(num) && num > 0 ? `$${num % 1 === 0 ? num.toFixed(0) : num.toFixed(2)}/hr` : escHtml(p.base_rate);
-      }
-      const about = p.short_description ? escHtml(p.short_description) : null;
+    function renderPage(p) {
+      document.title = `My Profile — TaskLeaders`;
 
-      // Photo
-      const photoInner = p.profile_photo
-        ? `<img src="${escHtml(p.profile_photo)}" alt="${name}" onload="this.style.display='block';this.parentElement.querySelector('.initials').style.display='none'" /><span class="initials">${escHtml((p.first_name || '?')[0])}</span>`
-        : `<span class="initials">${escHtml((p.first_name || '?')[0])}</span>`;
+      const statusBadge = p.status === 'active'
+        ? `<div class="status-badge active">● Active — receiving leads</div>`
+        : `<div class="status-badge pending">● Under review</div>`;
 
-      document.title = `${name} — TaskLeaders`;
-
-      const sections = [];
-
-      if (about) {
-        sections.push(`
-          <div class="section">
-            <h2>About</h2>
-            <p>${about}</p>
-          </div>`);
-      }
-
-      if (service || rate) {
-        sections.push(`
-          <div class="section">
-            <h2>Service</h2>
-            ${service ? `<p style="margin-bottom:${rate ? '10px' : '0'};">${service}</p>` : ''}
-            ${rate ? `<p style="color:var(--gold);font-weight:700;">${rate}</p>` : ''}
-          </div>`);
-      }
-
-      if (area) {
-        sections.push(`
-          <div class="section">
-            <h2>Service Area</h2>
-            <p>${area}</p>
-          </div>`);
-      }
+      const cardSection = buildCardSection(p.card_on_file);
 
       document.getElementById('main').innerHTML = `
-        ${statusNotice(p.status)}
         <div class="hero">
-          <div class="hero-photo">${photoInner}</div>
-          <h1 class="hero-name">${name}</h1>
-          ${service ? `<div class="hero-service">${service}</div>` : ''}
-          ${area ? `<div class="hero-area">${area}</div>` : ''}
+          ${statusBadge}
+          <h1>Your <span class="blue">Task</span>Leader Profile</h1>
+          <p class="hero-sub">Update your details, services, and payment preferences below.</p>
         </div>
-        ${sections.join('')}
+
+        <form id="profile-form" onsubmit="handleSubmit(event)">
+
+          <!-- Identity -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon">👤</div>
+              <div>
+                <h2 class="section-title">Identity</h2>
+                <p class="section-subtitle">How customers will know you</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Profile Photo <span class="optional">(optional — upload to replace)</span></label>
+              <div class="photo-upload-box" id="photoUploadBox">
+                <input type="file" id="profilePhoto" accept="image/*" onchange="previewProfilePhoto(this)" />
+                <div class="photo-upload-icon">📷</div>
+                <div class="photo-upload-label">Upload a new profile photo</div>
+                <div class="photo-upload-hint">JPG or PNG · At least 400×400px</div>
+              </div>
+              <div class="photo-preview" id="photoPreview" style="${p.profile_photo ? 'display:block' : 'display:none'}">
+                <img id="photoPreviewImg" src="${esc(p.profile_photo || '')}" alt="Profile photo" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>First Name</label>
+                <input type="text" id="firstName" value="${esc(p.first_name || '')}" placeholder="First name" required />
+              </div>
+              <div class="form-group">
+                <label>Last Name</label>
+                <input type="text" id="lastName" value="${esc(p.last_name || '')}" placeholder="Last name" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Business Name <span class="optional">(optional)</span></label>
+              <input type="text" id="businessName" value="${esc(p.business_name || '')}" placeholder="Smith's Home Services" />
+            </div>
+
+            <div class="form-group">
+              <label>Public display name</label>
+              <div class="display-name-toggle" id="displayNameToggle">
+                <label class="toggle-option${p.display_name_type !== 'business' ? ' selected' : ''}" onclick="selectDisplayName('personal', this)">
+                  <input type="radio" name="displayNameType" value="personal" ${p.display_name_type !== 'business' ? 'checked' : ''}/>
+                  <div class="toggle-label">Personal Name</div>
+                  <div class="toggle-hint">First + Last</div>
+                </label>
+                <label class="toggle-option${p.display_name_type === 'business' ? ' selected' : ''}" onclick="selectDisplayName('business', this)">
+                  <input type="radio" name="displayNameType" value="business" ${p.display_name_type === 'business' ? 'checked' : ''}/>
+                  <div class="toggle-label">Business Name</div>
+                  <div class="toggle-hint">Business name shown</div>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="email" value="${esc(p.email || '')}" placeholder="your@email.com" required />
+            </div>
+          </div>
+
+          <!-- Contact -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon">💬</div>
+              <div>
+                <h2 class="section-title">Contact</h2>
+                <p class="section-subtitle">Your registered WhatsApp number</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>WhatsApp Number</label>
+              <input type="tel" id="whatsapp" value="${esc(p.whatsapp_number || '')}" readonly />
+              <p class="helper-text">Your WhatsApp number cannot be changed here. Contact support if you need to update it.</p>
+            </div>
+
+            <div class="form-group">
+              <label>Backup Phone <span class="optional">(optional)</span></label>
+              <input type="tel" id="backupPhone" value="${esc(p.backup_phone || '')}" placeholder="+1 (604) 555-5678" />
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon">📍</div>
+              <div>
+                <h2 class="section-title">Location</h2>
+                <p class="section-subtitle">Personal or business address</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Address Line 1</label>
+              <input type="text" id="address1" value="${esc(p.address_line1 || '')}" placeholder="123 Main Street" required />
+            </div>
+            <div class="form-group">
+              <label>Address Line 2 <span class="optional">(optional)</span></label>
+              <input type="text" id="address2" value="${esc(p.address_line2 || '')}" placeholder="Apt 4B" />
+            </div>
+            <div class="form-row three-col">
+              <div class="form-group">
+                <label>City</label>
+                <input type="text" id="city" value="${esc(p.city || '')}" placeholder="Vancouver" required />
+              </div>
+              <div class="form-group">
+                <label>Province</label>
+                <select id="province" required>
+                  ${['BC','AB','SK','MB','ON','QC','NB','NS','PE','NL','NT','NU','YK'].map(pr =>
+                    `<option value="${pr}" ${p.province === pr ? 'selected' : ''}>${pr}</option>`
+                  ).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Postal Code</label>
+                <input type="text" id="postalCode" value="${esc(p.postal_code || '')}" placeholder="V5V 1Y4" maxlength="7" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Base Location</label>
+              <select id="baseCity" required>
+                <option value="">Select your service area</option>
+                ${approvedCities.map(city => {
+                  const norm = s => String(s||'').toLowerCase().replace(/[\s\-]/g,'');
+                  const sel = norm(p.service_area) === norm(city) ? 'selected' : '';
+                  return `<option value="${city}" ${sel}>${city}</option>`;
+                }).join('')}
+              </select>
+              <p class="helper-text">This is the main city shown on your public profile</p>
+            </div>
+          </div>
+
+          <!-- Coverage -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon">🗺️</div>
+              <div>
+                <h2 class="section-title">Coverage</h2>
+                <p class="section-subtitle">Cities you serve</p>
+              </div>
+            </div>
+            <div class="checkbox-item" style="margin-bottom:12px;" onclick="toggleAllCities()">
+              <input type="checkbox" id="selectAllCities" />
+              <label for="selectAllCities" style="margin:0;font-weight:600;color:var(--blue);">Select all 18 cities</label>
+            </div>
+            <div class="city-grid" id="cityGrid"></div>
+          </div>
+
+          <!-- Services -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon">🔧</div>
+              <div>
+                <h2 class="section-title">Services</h2>
+                <p class="section-subtitle">Your primary and additional offerings</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Primary Service</label>
+              <select id="primaryService" required onchange="updatePrimaryServiceRateLabel()">
+                <option value="">Select your main service</option>
+                ${Object.entries(SERVICE_LABELS).map(([val, lbl]) =>
+                  `<option value="${val}" ${p.primary_service===val?'selected':''}>${lbl}</option>`
+                ).join('')}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Rate for <span id="primaryServiceRateLabel">Primary Service</span> (CAD/hr)</label>
+              <input type="number" id="hourlyRate" value="${esc(p.base_rate || '')}" placeholder="e.g. 75" min="1" step="1" required />
+            </div>
+
+            <p style="font-size:13px;color:var(--muted);margin:20px 0 12px;">Additional services:</p>
+            <div id="additionalServices"></div>
+
+            <div class="form-group" style="margin-top:20px;">
+              <label>About You</label>
+              <textarea id="bio" rows="4" placeholder="Tell customers about your experience and what sets you apart.">${esc(p.short_description || '')}</textarea>
+              <p class="helper-text">Shown on your public profile. 2–4 sentences is ideal.</p>
+            </div>
+
+            <div class="form-group">
+              <label>Work Photos <span class="optional">(optional — upload to replace existing)</span></label>
+              <div class="work-photos-box" id="workPhotosBox">
+                <input type="file" id="workPhotos" accept="image/*" multiple onchange="previewWorkPhotos(this)" />
+                <div class="photo-upload-icon">🖼️</div>
+                <div class="photo-upload-label" style="color:rgba(255,255,255,0.7);">Upload up to 6 photos of your work</div>
+                <div class="photo-upload-hint">JPG or PNG · Showcase your best projects</div>
+              </div>
+              <div class="work-photos-preview" id="workPhotosPreview"></div>
+            </div>
+          </div>
+
+          <!-- Card on File -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon">💳</div>
+              <div>
+                <h2 class="section-title">Payment Card <span style="font-size:13px;font-weight:500;color:var(--muted);margin-left:6px;">(optional)</span></h2>
+                <p class="section-subtitle">For faster lead-fee acceptance</p>
+              </div>
+            </div>
+            <p style="font-size:14px;color:rgba(255,255,255,0.75);line-height:1.6;margin:0 0 20px;">
+              Add a card to enable auto-payment when you claim a lead. Instead of receiving a payment link, your lead fee is charged automatically the moment your claim is confirmed — so you never lose a job to the payment window.
+            </p>
+            ${cardSection}
+          </div>
+
+          <div class="form-error" id="formError"></div>
+          <div class="inline-success" id="saveSuccess">✓ Profile updated successfully.</div>
+
+          <button type="submit" class="submit-btn" id="submitBtn">Save Profile</button>
+          <p class="submit-note">Changes are applied immediately. Your active status is not affected by profile updates.</p>
+        </form>
       `;
+
+      // Wire up city grid, additional services, rate label after DOM is ready
+      initCityGrid(currentProvider?.service_cities || []);
+      initAdditionalServices(currentProvider?.additional_services || [], currentProvider?.service_rates || {});
+      updatePrimaryServiceRateLabel();
+      initExistingWorkPhotos(currentProvider?.work_photos || []);
+
+      // Init Stripe card element
+      initStripe();
+    }
+
+    function buildCardSection(cardOnFile) {
+      if (cardOnFile) {
+        return `
+          <div class="card-status-ok" id="cardStatusOk">
+            ✓ Card on file
+            <button type="button" class="card-update-link" onclick="showCardInput()">Update card</button>
+          </div>
+          <div id="cardInputSection" style="display:none;">
+            <div class="stripe-card-element" id="cardElement"></div>
+            <div class="form-error" id="cardError" style="margin-bottom:10px;"></div>
+            <button type="button" class="card-save-btn" id="cardSaveBtn" onclick="saveCard()">Save New Card</button>
+            <div class="inline-success" id="cardSuccess" style="margin-top:12px;"></div>
+          </div>`;
+      }
+      return `
+        <div id="cardInputSection">
+          <div class="stripe-card-element" id="cardElement"></div>
+          <div class="form-error" id="cardError" style="margin-bottom:10px;"></div>
+          <button type="button" class="card-save-btn" id="cardSaveBtn" onclick="saveCard()">Save Card</button>
+          <div class="inline-success" id="cardSuccess" style="margin-top:12px;"></div>
+        </div>`;
+    }
+
+    function showCardInput() {
+      document.getElementById('cardInputSection').style.display = 'block';
+      document.getElementById('cardStatusOk').style.display = 'none';
+      initStripe();
+    }
+
+    function initStripe() {
+      const pubKey = window.TASKLEADERS_STRIPE_PUBLISHABLE_KEY;
+      if (!pubKey || !window.Stripe) return;
+      if (stripeInstance) return; // already initialised
+      stripeInstance = Stripe(pubKey);
+      const elements = stripeInstance.elements({
+        appearance: { theme: 'night', variables: { colorBackground: 'rgba(255,255,255,0.03)', colorText: '#ffffff', colorDanger: '#ff6b6b', borderRadius: '10px' } },
+      });
+      cardElement = elements.create('card', { style: { base: { color: '#fff', fontSize: '15px', '::placeholder': { color: 'rgba(255,255,255,0.35)' } } } });
+      const mountEl = document.getElementById('cardElement');
+      if (mountEl) {
+        cardElement.mount('#cardElement');
+        cardElement.on('focus', () => mountEl.classList.add('focused'));
+        cardElement.on('blur',  () => mountEl.classList.remove('focused'));
+      }
+    }
+
+    async function saveCard() {
+      const btn = document.getElementById('cardSaveBtn');
+      const errorEl = document.getElementById('cardError');
+      const successEl = document.getElementById('cardSuccess');
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      if (!stripeInstance || !cardElement) {
+        errorEl.textContent = 'Card setup is not available. Please refresh and try again.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      const base = (window.TASKLEADERS_FUNCTIONS_BASE || '').replace(/\/$/, '');
+
+      // Get client_secret from create-setup-intent
+      let clientSecret;
+      try {
+        const res = await fetch(`${base}/create-setup-intent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: currentSlug }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!data?.ok || !data.data?.client_secret) {
+          throw new Error(data?.error || 'Could not initialise card setup.');
+        }
+        clientSecret = data.data.client_secret;
+      } catch (e) {
+        errorEl.textContent = String(e.message || 'Setup failed. Please try again.');
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Save Card';
+        return;
+      }
+
+      // Confirm card setup with Stripe
+      const providerName = [currentProvider?.first_name, currentProvider?.last_name].filter(Boolean).join(' ');
+      const { error: stripeError, setupIntent } = await stripeInstance.confirmCardSetup(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: { name: providerName || undefined },
+        },
+      });
+
+      if (stripeError) {
+        errorEl.textContent = stripeError.message || 'Card could not be saved.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Save Card';
+        return;
+      }
+
+      // Confirm with backend
+      try {
+        const res = await fetch(`${base}/confirm-card-setup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: currentSlug, payment_method_id: setupIntent.payment_method }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!data?.ok) throw new Error(data?.error || 'Could not confirm card.');
+      } catch (e) {
+        errorEl.textContent = String(e.message || 'Card confirmed with Stripe but could not be saved. Contact support.');
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Save Card';
+        return;
+      }
+
+      successEl.textContent = '✓ Card saved — future lead fees will be charged automatically.';
+      successEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Save Card';
+      currentProvider = { ...currentProvider, card_on_file: true };
+    }
+
+    // ── City grid ─────────────────────────────────────────────────────────────
+
+    function initCityGrid(existingCities) {
+      const normalised = (existingCities || []).map(c => c.trim());
+      document.getElementById('cityGrid').innerHTML = approvedCities.map(city =>
+        `<label class="checkbox-item"><input type="checkbox" name="serviceCities" value="${city}" ${normalised.includes(city)?'checked':''}/>
+         <span>${city}</span></label>`
+      ).join('');
+    }
+
+    function toggleAllCities() {
+      const cb = document.getElementById('selectAllCities');
+      document.querySelectorAll('input[name="serviceCities"]').forEach(c => c.checked = cb.checked);
+    }
+
+    // ── Additional services ───────────────────────────────────────────────────
+
+    function initAdditionalServices(existing, rates) {
+      const primarySvc = (currentProvider?.primary_service || '').toLowerCase();
+      const existingSet = new Set((existing || []).map(s => s.toLowerCase()));
+
+      const html = Object.entries(SERVICE_LABELS).map(([val, lbl]) => {
+        if (val === primarySvc) return ''; // primary service not shown in additional
+        const checked = existingSet.has(val);
+        const rate = rates?.[val] || '';
+        return `
+          <div class="checkbox-item-wrap" data-service="${val}">
+            <label class="checkbox-item" onclick="toggleServiceRate('${val}', this)">
+              <input type="checkbox" name="additionalServices" value="${val}" ${checked?'checked':''}
+                onclick="event.stopPropagation(); toggleServiceRate('${val}', this.closest('.checkbox-item-wrap').querySelector('.checkbox-item'))" />
+              <span>${lbl}</span>
+            </label>
+            <div class="service-rate-input" id="rate-${val}" style="display:${checked?'block':'none'};margin:6px 0 4px 28px;">
+              <input type="number" class="inline-rate-input" data-service="${val}" value="${rate}" placeholder="Rate (CAD/hr)" min="1" step="1" />
+            </div>
+          </div>`;
+      }).join('');
+      document.getElementById('additionalServices').innerHTML = html;
+    }
+
+    function toggleServiceRate(service, labelEl) {
+      const cb = labelEl.querySelector('input[type="checkbox"]');
+      const rateDiv = document.getElementById('rate-' + service);
+      if (!cb || !rateDiv) return;
+      rateDiv.style.display = cb.checked ? 'block' : 'none';
+    }
+
+    function collectServiceRates() {
+      const rates = {};
+      const primaryService = document.getElementById('primaryService').value;
+      const baseRate = parseFloat(document.getElementById('hourlyRate').value);
+      if (primaryService && Number.isFinite(baseRate) && baseRate > 0) rates[primaryService] = baseRate;
+      document.querySelectorAll('input[name="additionalServices"]:checked').forEach(cb => {
+        const svc = cb.value;
+        const rateInput = document.querySelector(`.inline-rate-input[data-service="${svc}"]`);
+        const val = rateInput ? parseFloat(rateInput.value) : NaN;
+        if (Number.isFinite(val) && val > 0) {
+          rates[svc] = val;
+        } else if (Number.isFinite(baseRate) && baseRate > 0) {
+          rates[svc] = baseRate;
+        }
+      });
+      return Object.keys(rates).length > 0 ? rates : undefined;
+    }
+
+    function updatePrimaryServiceRateLabel() {
+      const svc = document.getElementById('primaryService')?.value;
+      const lbl = SERVICE_LABELS[svc] || (svc ? svc.charAt(0).toUpperCase() + svc.slice(1) : 'Primary Service');
+      const span = document.getElementById('primaryServiceRateLabel');
+      if (span) span.textContent = lbl;
+    }
+
+    function selectDisplayName(type, el) {
+      document.querySelectorAll('.toggle-option').forEach(e => e.classList.remove('selected'));
+      el.classList.add('selected');
+      el.querySelector('input').checked = true;
+    }
+
+    // ── Photo handlers ────────────────────────────────────────────────────────
+
+    function previewProfilePhoto(input) {
+      if (!input.files?.[0]) return;
+      _selectedProfilePhoto = input.files[0];
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('photoPreviewImg').src = e.target.result;
+        document.getElementById('photoPreview').style.display = 'block';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+
+    function initExistingWorkPhotos(urls) {
+      _existingWorkPhotos = urls || [];
+      const preview = document.getElementById('workPhotosPreview');
+      if (!preview) return;
+      preview.innerHTML = _existingWorkPhotos.map(url =>
+        `<img src="${esc(url)}" alt="Work photo" />`
+      ).join('');
+    }
+
+    function previewWorkPhotos(input) {
+      _selectedWorkPhotos = Array.from(input.files).slice(0, 6);
+      const preview = document.getElementById('workPhotosPreview');
+      preview.innerHTML = '';
+      _selectedWorkPhotos.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadProfilePhoto(slug) {
+      if (!_selectedProfilePhoto || !slug) return null;
+      const ext = _selectedProfilePhoto.name.split('.').pop().toLowerCase() || 'jpg';
+      const path = `${slug}/profile.${ext}`;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/storage/v1/object/provider-photos/${path}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${ANON_KEY}`, 'apikey': ANON_KEY, 'Content-Type': _selectedProfilePhoto.type || 'image/jpeg', 'x-upsert': 'true' },
+          body: _selectedProfilePhoto,
+        });
+        if (!res.ok) return null;
+        return `${SUPABASE_URL}/storage/v1/object/public/provider-photos/${path}`;
+      } catch { return null; }
+    }
+
+    async function uploadWorkPhotos(slug) {
+      if (!_selectedWorkPhotos.length || !slug) return null;
+      const urls = [];
+      for (let i = 0; i < _selectedWorkPhotos.length; i++) {
+        const file = _selectedWorkPhotos[i];
+        const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+        const path = `${slug}/work-${i + 1}.${ext}`;
+        try {
+          const res = await fetch(`${SUPABASE_URL}/storage/v1/object/provider-photos/${path}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${ANON_KEY}`, 'apikey': ANON_KEY, 'Content-Type': file.type || 'image/jpeg', 'x-upsert': 'true' },
+            body: file,
+          });
+          if (res.ok) urls.push(`${SUPABASE_URL}/storage/v1/object/public/provider-photos/${path}`);
+        } catch { /* skip */ }
+      }
+      return urls.length > 0 ? urls : null;
+    }
+
+    // ── Form submit ───────────────────────────────────────────────────────────
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const errorEl = document.getElementById('formError');
+      const successEl = document.getElementById('saveSuccess');
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      const base = (window.TASKLEADERS_FUNCTIONS_BASE || '').replace(/\/$/, '');
+
+      // Upload new photos if selected
+      btn.textContent = 'Uploading photos…';
+      const [profilePhotoUrl, workPhotoUrls] = await Promise.all([
+        uploadProfilePhoto(currentSlug),
+        uploadWorkPhotos(currentSlug),
+      ]);
+      btn.textContent = 'Saving…';
+
+      const additionalServices = Array.from(document.querySelectorAll('input[name="additionalServices"]:checked')).map(cb => cb.value);
+      const serviceCities = Array.from(document.querySelectorAll('input[name="serviceCities"]:checked')).map(cb => cb.value);
+
+      const payload = {
+        slug:            currentSlug,
+        firstName:       document.getElementById('firstName').value.trim(),
+        lastName:        document.getElementById('lastName').value.trim(),
+        businessName:    document.getElementById('businessName').value.trim(),
+        displayNameType: document.querySelector('input[name="displayNameType"]:checked')?.value,
+        email:           document.getElementById('email').value.trim(),
+        backupPhone:     document.getElementById('backupPhone').value.trim(),
+        address1:        document.getElementById('address1').value.trim(),
+        address2:        document.getElementById('address2').value.trim(),
+        city:            document.getElementById('city').value.trim(),
+        province:        document.getElementById('province').value,
+        postalCode:      document.getElementById('postalCode').value.trim(),
+        baseCity:        document.getElementById('baseCity').value,
+        serviceCities,
+        primaryService:  document.getElementById('primaryService').value,
+        additionalServices,
+        hourlyRate:      document.getElementById('hourlyRate').value,
+        bio:             document.getElementById('bio').value.trim(),
+        serviceRates:    collectServiceRates(),
+      };
+
+      // Only include photo fields if new uploads were made
+      if (profilePhotoUrl) payload.profilePhoto = profilePhotoUrl;
+      if (workPhotoUrls)   payload.workPhotos   = workPhotoUrls;
+
+      try {
+        const res = await fetch(`${base}/complete-onboarding`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => null);
+        if (!data?.ok) {
+          throw new Error(data?.error?.message || 'Save failed. Please try again.');
+        }
+        successEl.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (err) {
+        errorEl.textContent = String(err.message || 'Save failed. Please try again.');
+        errorEl.style.display = 'block';
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Save Profile';
     }
 
     load();
