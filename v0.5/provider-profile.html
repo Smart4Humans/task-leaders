@@ -683,6 +683,11 @@
           </div>
           <div id="cardInputSection" style="display:none;">
             <div class="stripe-card-element" id="cardElement"></div>
+            <div class="form-group" style="margin-top:10px;margin-bottom:14px;">
+              <label style="font-size:13px;margin-bottom:6px;">Postal Code</label>
+              <input type="text" id="cardPostalCode" placeholder="V5V 1Y4" maxlength="7" autocomplete="postal-code"
+                style="width:160px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.03);color:#fff;font-size:15px;outline:none;font-family:inherit;text-transform:uppercase;" />
+            </div>
             <div class="form-error" id="cardError" style="margin-bottom:10px;"></div>
             <button type="button" class="card-save-btn" id="cardSaveBtn" onclick="saveCard()">Save New Card</button>
             <div class="inline-success" id="cardSuccess" style="margin-top:12px;"></div>
@@ -691,6 +696,11 @@
       return `
         <div id="cardInputSection">
           <div class="stripe-card-element" id="cardElement"></div>
+          <div class="form-group" style="margin-top:10px;margin-bottom:14px;">
+            <label style="font-size:13px;margin-bottom:6px;">Postal Code</label>
+            <input type="text" id="cardPostalCode" placeholder="V5V 1Y4" maxlength="7" autocomplete="postal-code"
+              style="width:160px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.03);color:#fff;font-size:15px;outline:none;font-family:inherit;text-transform:uppercase;" />
+          </div>
           <div class="form-error" id="cardError" style="margin-bottom:10px;"></div>
           <button type="button" class="card-save-btn" id="cardSaveBtn" onclick="saveCard()">Save Card</button>
           <div class="inline-success" id="cardSuccess" style="margin-top:12px;"></div>
@@ -712,7 +722,7 @@
         locale: 'en-CA',
         appearance: { theme: 'night', variables: { colorBackground: 'rgba(255,255,255,0.03)', colorText: '#ffffff', colorDanger: '#ff6b6b', borderRadius: '10px' } },
       });
-      cardElement = elements.create('card', { style: { base: { color: '#fff', fontSize: '15px', '::placeholder': { color: 'rgba(255,255,255,0.35)' } } } });
+      cardElement = elements.create('card', { hidePostalCode: true, style: { base: { color: '#fff', fontSize: '15px', '::placeholder': { color: 'rgba(255,255,255,0.35)' } } } });
       const mountEl = document.getElementById('cardElement');
       if (mountEl) {
         cardElement.mount('#cardElement');
@@ -733,6 +743,14 @@
         errorEl.style.display = 'block';
         return;
       }
+
+      const postalRaw = (document.getElementById('cardPostalCode')?.value || '').trim().toUpperCase().replace(/\s/g, '');
+      if (!/^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(postalRaw)) {
+        errorEl.textContent = 'Enter a valid Canadian postal code (e.g. V5V 1Y4).';
+        errorEl.style.display = 'block';
+        return;
+      }
+      const postalCode = postalRaw.slice(0, 3) + ' ' + postalRaw.slice(3);
 
       btn.disabled = true;
       btn.textContent = 'Saving…';
@@ -765,7 +783,10 @@
       const { error: stripeError, setupIntent } = await stripeInstance.confirmCardSetup(clientSecret, {
         payment_method: {
           card: cardElement,
-          billing_details: { name: providerName || undefined },
+          billing_details: {
+            name: providerName || undefined,
+            address: { postal_code: postalCode, country: 'CA' },
+          },
         },
       });
 
