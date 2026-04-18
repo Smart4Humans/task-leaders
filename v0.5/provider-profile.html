@@ -32,12 +32,11 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      background: rgba(255,255,255,0.02);
+      background: #0c0c1a;
       border-bottom: 1px solid rgba(255,255,255,0.06);
       position: sticky;
       top: 0;
       z-index: 100;
-      backdrop-filter: blur(10px);
     }
     .logo {
       font-size: 22px;
@@ -300,6 +299,7 @@
       background: rgba(255,255,255,0.03);
       margin-bottom: 14px;
       transition: border-color 0.2s;
+      overflow: hidden;
     }
     .stripe-card-element.focused { border-color: var(--blue); }
     .card-save-btn {
@@ -722,12 +722,13 @@
         locale: 'en-CA',
         appearance: { theme: 'night', variables: { colorBackground: 'rgba(255,255,255,0.03)', colorText: '#ffffff', colorDanger: '#ff6b6b', borderRadius: '10px' } },
       });
-      cardElement = elements.create('card', { hidePostalCode: true, style: { base: { color: '#fff', fontSize: '15px', '::placeholder': { color: 'rgba(255,255,255,0.35)' } } } });
+      cardElement = elements.create('card', { hidePostalCode: true, style: { base: { color: '#fff', fontSize: '15px', '::placeholder': { color: 'rgba(255,255,255,0.35)' }, ':-webkit-autofill': { color: '#fff' } } } });
       const mountEl = document.getElementById('cardElement');
       if (mountEl) {
         cardElement.mount('#cardElement');
-        cardElement.on('focus', () => mountEl.classList.add('focused'));
-        cardElement.on('blur',  () => mountEl.classList.remove('focused'));
+        cardElement.on('focus',  () => mountEl.classList.add('focused'));
+        cardElement.on('blur',   () => mountEl.classList.remove('focused'));
+        cardElement.on('change', () => { const el = document.getElementById('cardError'); if (el) el.style.display = 'none'; });
       }
     }
 
