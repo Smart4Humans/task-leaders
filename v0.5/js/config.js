@@ -1,1 +1,2 @@
 window.TASKLEADERS_FUNCTIONS_BASE = "https://iwgoafvemlsswkjroyhl.supabase.co/functions/v1";
+window.TASKLEADERS_STRIPE_PUBLISHABLE_KEY = "pk_test_51TKnp8JRlGQ2P4bojvOeNzC2nHtpUj28XgVLkC8zg2BmEmwRDE7ZPuKgWA21akoR7znOP8htML0O6KbT2ZIWpKin007y46zfd9"; // TODO: set to pk_live_... before card-on-file section will initialize
