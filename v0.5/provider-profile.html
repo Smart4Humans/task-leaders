@@ -709,6 +709,7 @@
       if (stripeInstance) return; // already initialised
       stripeInstance = Stripe(pubKey);
       const elements = stripeInstance.elements({
+        locale: 'en-CA',
         appearance: { theme: 'night', variables: { colorBackground: 'rgba(255,255,255,0.03)', colorText: '#ffffff', colorDanger: '#ff6b6b', borderRadius: '10px' } },
       });
       cardElement = elements.create('card', { style: { base: { color: '#fff', fontSize: '15px', '::placeholder': { color: 'rgba(255,255,255,0.35)' } } } });
