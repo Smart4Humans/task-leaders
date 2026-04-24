@@ -1246,16 +1246,26 @@
       saveSession(name, phone, consent);
       logLeadEventBestEffort({ event_type: 'connect_consent_accepted' });
 
-      // Submit to Supabase. We now AWAIT the response so the success modal
-      // only appears on a real backend success — no more silent failures
-      // hiding behind the optimistic UI.
+      // Submit to Supabase. Submission contract (must match marketplace-connect):
+      //   200 + { ok: true, data: {...} }       → success (job created, MKT-1 sent)
+      //   4xx/5xx + { ok: false, error: {...} } → real backend failure
+      // We treat the HTTP status as authoritative for success/failure detection
+      // because the success body shape may evolve, and a fetch-level exception
+      // (CORS quirk, transient network) cannot reliably be distinguished from a
+      // case where the backend completed but the response was intercepted —
+      // observed in production where the job + MKT-1 landed but fetch threw.
+      // On exception we fall through to optimistic success: the only signal that
+      // matters to the user is the provider's WhatsApp reply, and showing a red
+      // failure here when the backend actually succeeded encourages duplicate
+      // resubmissions.
       const base = window.TASKLEADERS_FUNCTIONS_BASE;
       if (!isFunctionsBaseConfigured(base)) {
         showError('Service is not configured. Please try again later.');
         return;
       }
 
-      let result;
+      let succeeded   = false;
+      let errorMessage = null;
       try {
         const res = await fetch(`${base.replace(/\/$/, '')}/marketplace-connect`, {
           method: 'POST',
@@ -1277,20 +1287,30 @@
             session_id:        getOrCreateSessionId()
           })
         });
-        result = await res.json().catch(() => null);
-        if (!res.ok || !result || result.ok !== true) {
-          const message = (result && result.error && result.error.message)
-            ? result.error.message
+        if (res.ok) {
+          succeeded = true;
+        } else {
+          const data = await res.json().catch(() => null);
+          errorMessage = (data && data.error && data.error.message)
+            ? data.error.message
             : `Sorry, your request couldn't be sent. Please try again.`;
-          showError(message);
-          return;
         }
-      } catch (_e) {
-        showError(`Sorry, your request couldn't be sent. Please check your connection and try again.`);
+      } catch (e) {
+        // Cannot distinguish "backend ran but response intercepted" from "request
+        // truly never reached the backend." Optimistic success avoids prompting
+        // a duplicate submission when the side effect actually completed.
+        if (typeof console !== 'undefined' && console.warn) {
+          console.warn('marketplace-connect fetch threw; treating as best-effort success', e);
+        }
+        succeeded = true;
+      }
+
+      if (!succeeded) {
+        showError(errorMessage);
         return;
       }
 
-      // Backend confirmed success — show confirmation
+      // Show confirmation
       document.getElementById('modalForm').style.display = 'none';
       document.getElementById('modalConfirmation').style.display = '';
       logLeadEventBestEffort({ event_type: 'connect_request_sent' });
