@@ -851,7 +851,7 @@
 
         <div class="error-message" id="errorMessage"></div>
 
-        <button class="btn-primary" onclick="connectNow()">Connect Now</button>
+        <button class="btn-primary" id="connectSubmitBtn" onclick="connectNow()">Connect Now</button>
         <button class="btn-secondary" onclick="closeModal()">Cancel</button>
       </div>
 
@@ -1246,74 +1246,88 @@
       saveSession(name, phone, consent);
       logLeadEventBestEffort({ event_type: 'connect_consent_accepted' });
 
-      // Submit to Supabase. Submission contract (must match marketplace-connect):
-      //   200 + { ok: true, data: {...} }       → success (job created, MKT-1 sent)
-      //   4xx/5xx + { ok: false, error: {...} } → real backend failure
-      // We treat the HTTP status as authoritative for success/failure detection
-      // because the success body shape may evolve, and a fetch-level exception
-      // (CORS quirk, transient network) cannot reliably be distinguished from a
-      // case where the backend completed but the response was intercepted —
-      // observed in production where the job + MKT-1 landed but fetch threw.
-      // On exception we fall through to optimistic success: the only signal that
-      // matters to the user is the provider's WhatsApp reply, and showing a red
-      // failure here when the backend actually succeeded encourages duplicate
-      // resubmissions.
+      // Submit to Supabase. Submission contract (matches marketplace-connect):
+      //   HTTP 200  + { ok: true,  data:  {...} } → success (job created, MKT-1 sent)
+      //   HTTP 4xx/5xx + { ok: false, error: {...} } → real backend failure
+      //   fetch throws (network, CORS, browser quirk, etc.) → state UNKNOWN —
+      //     do NOT claim success, do NOT claim outright failure. Show a neutral
+      //     "couldn't confirm" message and rely on the disabled-while-in-flight
+      //     guard plus the brief retry pause to avoid duplicate submissions.
       const base = window.TASKLEADERS_FUNCTIONS_BASE;
       if (!isFunctionsBaseConfigured(base)) {
         showError('Service is not configured. Please try again later.');
         return;
       }
 
-      let succeeded   = false;
-      let errorMessage = null;
+      // Disable submit button while the request is in flight to prevent rapid
+      // double-clicks creating duplicate Marketplace jobs. Re-enabled in the
+      // outer finally regardless of which path we exit through.
+      const submitBtn = document.getElementById('connectSubmitBtn');
+      if (submitBtn) submitBtn.disabled = true;
+
       try {
-        const res = await fetch(`${base.replace(/\/$/, '')}/marketplace-connect`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            // Field names match the marketplace-connect backend contract.
-            provider_slug:     currentProviderSlug,
-            city:              currentCitySlug,
-            client_name:       name,
-            client_whatsapp:   phone,
-            description:       job,
-            consent:           true,
-            municipality_code: municipalityCode,
-            // Extra context fields — backend ignores unknowns; harmless to keep.
-            category_slug:     currentCategorySlug,
-            timing,
-            timing_date:       timing === 'date' ? timingDate : null,
-            timing_time:       timing === 'date' ? timingTime : null,
-            session_id:        getOrCreateSessionId()
-          })
-        });
-        if (res.ok) {
-          succeeded = true;
-        } else {
-          const data = await res.json().catch(() => null);
-          errorMessage = (data && data.error && data.error.message)
-            ? data.error.message
-            : `Sorry, your request couldn't be sent. Please try again.`;
-        }
-      } catch (e) {
-        // Cannot distinguish "backend ran but response intercepted" from "request
-        // truly never reached the backend." Optimistic success avoids prompting
-        // a duplicate submission when the side effect actually completed.
-        if (typeof console !== 'undefined' && console.warn) {
-          console.warn('marketplace-connect fetch threw; treating as best-effort success', e);
-        }
-        succeeded = true;
-      }
+        let succeeded    = false;
+        let errorMessage = null;
 
-      if (!succeeded) {
-        showError(errorMessage);
-        return;
-      }
+        try {
+          const res = await fetch(`${base.replace(/\/$/, '')}/marketplace-connect`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              // Field names match the marketplace-connect backend contract.
+              provider_slug:     currentProviderSlug,
+              city:              currentCitySlug,
+              client_name:       name,
+              client_whatsapp:   phone,
+              description:       job,
+              consent:           true,
+              municipality_code: municipalityCode,
+              // Extra context fields — backend ignores unknowns; harmless to keep.
+              category_slug:     currentCategorySlug,
+              timing,
+              timing_date:       timing === 'date' ? timingDate : null,
+              timing_time:       timing === 'date' ? timingTime : null,
+              session_id:        getOrCreateSessionId()
+            })
+          });
+          if (res.ok) {
+            // HTTP 2xx is the authoritative success signal. We do NOT introspect
+            // the body shape further so the backend response can evolve safely.
+            succeeded = true;
+          } else {
+            // Real backend error (4xx/5xx). Surface the backend's error message
+            // verbatim where available; fall back to a generic message otherwise.
+            const data = await res.json().catch(() => null);
+            errorMessage = (data && data.error && data.error.message)
+              ? data.error.message
+              : `Sorry, your request couldn't be sent. Please try again.`;
+          }
+        } catch (e) {
+          // fetch threw — request state is unknown. The backend may or may not
+          // have run. Do NOT show success (would mislead on a true failure),
+          // do NOT show hard failure (would mislead and invite duplicates if the
+          // backend actually completed). Show a neutral "wait before retrying"
+          // message — the disabled button and the explicit pause copy together
+          // mitigate the duplicate-submission risk for the ambiguous case.
+          if (typeof console !== 'undefined' && console.warn) {
+            console.warn('marketplace-connect fetch threw:', e);
+          }
+          showError(`We couldn't confirm whether your request was sent. Please wait a moment before trying again.`);
+          return;
+        }
 
-      // Show confirmation
-      document.getElementById('modalForm').style.display = 'none';
-      document.getElementById('modalConfirmation').style.display = '';
-      logLeadEventBestEffort({ event_type: 'connect_request_sent' });
+        if (!succeeded) {
+          showError(errorMessage);
+          return;
+        }
+
+        // Backend confirmed success (HTTP 2xx) — show confirmation modal.
+        document.getElementById('modalForm').style.display = 'none';
+        document.getElementById('modalConfirmation').style.display = '';
+        logLeadEventBestEffort({ event_type: 'connect_request_sent' });
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
     }
 
     // Timing toggle — show/hide date+time picker
