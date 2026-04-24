@@ -813,7 +813,27 @@
           </div>
         </div>
 
-        <input type="text" class="area-input" id="areaInput" placeholder="e.g. Kitsilano, East Van, North Shore" />
+        <select class="area-input" id="municipalityInput">
+          <option value="">Select your service area…</option>
+          <option value="VANCOUVER">Vancouver</option>
+          <option value="NVAN">North Vancouver</option>
+          <option value="WVAN">West Vancouver</option>
+          <option value="BBY">Burnaby</option>
+          <option value="RMD">Richmond</option>
+          <option value="SRY">Surrey</option>
+          <option value="COQ">Coquitlam</option>
+          <option value="NWS">New Westminster</option>
+          <option value="PMD">Port Moody</option>
+          <option value="PRC">Port Coquitlam</option>
+          <option value="DLT">Delta</option>
+          <option value="LGL">Langley</option>
+          <option value="MPR">Maple Ridge</option>
+          <option value="PTM">Pitt Meadows</option>
+          <option value="WHR">White Rock</option>
+          <option value="ABB">Abbotsford</option>
+          <option value="CHK">Chilliwack</option>
+          <option value="MSN">Mission</option>
+        </select>
 
         <div class="consent-section">
           <div class="consent-item">
@@ -1149,7 +1169,7 @@
 
       // Always blank job-specific fields
       document.getElementById('jobInput').value  = '';
-      document.getElementById('areaInput').value = '';
+      document.getElementById('municipalityInput').value = '';
       document.getElementById('dateInput').value = '';
       document.getElementById('timeInput').value = '';
       const asapRadio = document.querySelector('input[name="timing"][value="asap"]');
@@ -1170,7 +1190,7 @@
       document.getElementById('errorMessage').classList.remove('show');
       // Clear job-specific fields only; session data stays in localStorage
       document.getElementById('jobInput').value  = '';
-      document.getElementById('areaInput').value = '';
+      document.getElementById('municipalityInput').value = '';
       document.getElementById('dateInput').value = '';
       document.getElementById('timeInput').value = '';
       const asapRadio = document.querySelector('input[name="timing"][value="asap"]');
@@ -1185,14 +1205,14 @@
     }
 
     async function connectNow() {
-      const name    = document.getElementById('nameInput').value.trim();
-      const phone   = document.getElementById('phoneInput').value.trim();
-      const job     = document.getElementById('jobInput').value.trim();
-      const area    = document.getElementById('areaInput').value.trim();
-      const consent = document.getElementById('consentRequired').checked;
-      const timing  = (document.querySelector('input[name="timing"]:checked') || {}).value || 'asap';
-      const timingDate = document.getElementById('dateInput').value || '';
-      const timingTime = document.getElementById('timeInput').value || '';
+      const name             = document.getElementById('nameInput').value.trim();
+      const phone            = document.getElementById('phoneInput').value.trim();
+      const job              = document.getElementById('jobInput').value.trim();
+      const municipalityCode = document.getElementById('municipalityInput').value.trim();
+      const consent          = document.getElementById('consentRequired').checked;
+      const timing           = (document.querySelector('input[name="timing"]:checked') || {}).value || 'asap';
+      const timingDate       = document.getElementById('dateInput').value || '';
+      const timingTime       = document.getElementById('timeInput').value || '';
 
       document.getElementById('errorMessage').classList.remove('show');
 
@@ -1201,8 +1221,20 @@
         consent_checked: Boolean(consent)
       });
 
+      if (!name) {
+        showError('Please enter your name');
+        return;
+      }
       if (!phone || phone.length < 10) {
         showError('Please enter a valid WhatsApp number');
+        return;
+      }
+      if (!job) {
+        showError('Please describe the job briefly');
+        return;
+      }
+      if (!municipalityCode) {
+        showError('Please select your service area');
         return;
       }
       if (!consent) {
@@ -1214,29 +1246,51 @@
       saveSession(name, phone, consent);
       logLeadEventBestEffort({ event_type: 'connect_consent_accepted' });
 
-      // Submit to Supabase (best-effort — never block UX)
+      // Submit to Supabase. We now AWAIT the response so the success modal
+      // only appears on a real backend success — no more silent failures
+      // hiding behind the optimistic UI.
       const base = window.TASKLEADERS_FUNCTIONS_BASE;
-      if (isFunctionsBaseConfigured(base)) {
-        fetch(`${base.replace(/\/$/, '')}/connect-request`, {
+      if (!isFunctionsBaseConfigured(base)) {
+        showError('Service is not configured. Please try again later.');
+        return;
+      }
+
+      let result;
+      try {
+        const res = await fetch(`${base.replace(/\/$/, '')}/marketplace-connect`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            provider_slug:    currentProviderSlug,
-            city_slug:        currentCitySlug,
-            category_slug:    currentCategorySlug,
-            customer_name:    name,
-            customer_whatsapp: phone,
-            job_description:  job,
+            // Field names match the marketplace-connect backend contract.
+            provider_slug:     currentProviderSlug,
+            city:              currentCitySlug,
+            client_name:       name,
+            client_whatsapp:   phone,
+            description:       job,
+            consent:           true,
+            municipality_code: municipalityCode,
+            // Extra context fields — backend ignores unknowns; harmless to keep.
+            category_slug:     currentCategorySlug,
             timing,
-            timing_date:      timing === 'date' ? timingDate : null,
-            timing_time:      timing === 'date' ? timingTime : null,
-            area,
-            session_id:       getOrCreateSessionId()
+            timing_date:       timing === 'date' ? timingDate : null,
+            timing_time:       timing === 'date' ? timingTime : null,
+            session_id:        getOrCreateSessionId()
           })
-        }).catch(() => {});
+        });
+        result = await res.json().catch(() => null);
+        if (!res.ok || !result || result.ok !== true) {
+          const message = (result && result.error && result.error.message)
+            ? result.error.message
+            : `Sorry, your request couldn't be sent. Please try again.`;
+          showError(message);
+          return;
+        }
+      } catch (_e) {
+        showError(`Sorry, your request couldn't be sent. Please check your connection and try again.`);
+        return;
       }
 
-      // Show confirmation
+      // Backend confirmed success — show confirmation
       document.getElementById('modalForm').style.display = 'none';
       document.getElementById('modalConfirmation').style.display = '';
       logLeadEventBestEffort({ event_type: 'connect_request_sent' });
