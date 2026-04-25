@@ -625,6 +625,15 @@
       display: none;
     }
     .error-message.show { display: block; }
+    /* Neutral/warning variant — used for ambiguous "couldn't confirm" states
+       so the copy doesn't read as a hard failure. Amber, not red. */
+    .error-message.warning {
+      color: #7a5c00;
+      background-color: #fff8e1;
+      border: 1px solid #f0d68a;
+      border-radius: 6px;
+      padding: 8px 12px;
+    }
     .hidden { display: none !important; }
     
     /* Mobile-specific hero adjustments */
@@ -1201,6 +1210,18 @@
     function showError(message) {
       const errorEl = document.getElementById('errorMessage');
       errorEl.textContent = message;
+      errorEl.classList.remove('warning');
+      errorEl.classList.add('show');
+    }
+
+    // Neutral/warning variant — used for ambiguous "couldn't confirm" states
+    // (network/CORS exceptions) so the user is not told a hard failure occurred
+    // when the actual outcome is unknown. Same DOM element as showError, just a
+    // different class to flip the styling from red to amber.
+    function showWarning(message) {
+      const errorEl = document.getElementById('errorMessage');
+      errorEl.textContent = message;
+      errorEl.classList.add('warning');
       errorEl.classList.add('show');
     }
 
@@ -1312,7 +1333,11 @@
           if (typeof console !== 'undefined' && console.warn) {
             console.warn('marketplace-connect fetch threw:', e);
           }
-          showError(`We couldn't confirm whether your request was sent. Please wait a moment before trying again.`);
+          // Neutral/warning copy — outcome is genuinely unknown. The disabled
+          // submit button + the "wait a moment" copy together reduce duplicate
+          // submissions for the rare case where the backend ran but the response
+          // didn't reach the browser.
+          showWarning(`We couldn't confirm whether your request was sent. Please wait a moment before trying again.`);
           return;
         }
 
