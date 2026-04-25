@@ -11,8 +11,14 @@
 //   POST { action: "approve_concierge_client",   client_id,      admin_password } — approve concierge client
 //   POST { action: "deactivate_concierge_client", client_id,     admin_password } — suspend concierge client
 //   POST { action: "reactivate_concierge_client", client_id,     admin_password } — restore concierge client
+//   POST { action: "resolve_guarantee_claim",    claim_id, outcome, admin_notes?, admin_password } — resolve guarantee claim
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  getTwilioEnv, sendTemplateWhatsApp, logMessage,
+  buildWC1, buildWT1, buildWT9, buildWT10, buildWC7, buildWC8,
+  jobHeader,
+} from "../_shared/twilio.ts";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -187,44 +193,25 @@ Deno.serve(async (req) => {
     // Template WT-1: TaskLeader profile activation / Concierge welcome
     // Only sent if the provider is concierge_eligible; Marketplace-only providers
     // receive a different email-only welcome for now.
-    const twilioAccountSid   = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const twilioAuthToken    = Deno.env.get("TWILIO_AUTH_TOKEN");
-    const twilioWaNumber     = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
-    const internalSecret     = Deno.env.get("INTERNAL_CRON_SECRET");
-    const supabaseUrlForFn   = Deno.env.get("SUPABASE_URL") ?? "";
-    const fnProject          = supabaseUrlForFn.replace("https://", "").split(".supabase.co")[0];
-
-    if (acct.whatsapp_number && twilioAccountSid && twilioAuthToken && twilioWaNumber) {
-      const firstName = acct.first_name || "there";
-      // WT-1 body (all 11 templates defined in _shared/twilio.ts)
-      const wt1Body = (
-        `Hi ${firstName} — welcome to TaskLeaders Concierge.\n\n` +
-        `Your profile is now active.\n\n` +
-        `When a matching Concierge lead comes in, we'll message you here. ` +
-        `The first qualified TaskLeader to accept and complete lead fee payment gets the job.\n\n` +
-        `Reply HELP any time if you need support.`
-      );
-      const twilioMsgUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
-      fetch(twilioMsgUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type":  "application/x-www-form-urlencoded",
-          "Authorization": "Basic " + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
-        },
-        body: new URLSearchParams({
-          From: `whatsapp:${twilioWaNumber}`,
-          To:   `whatsapp:${acct.whatsapp_number}`,
-          Body: wt1Body,
-        }),
-      }).catch(() => {}); // fire-and-forget
-
-      // Log to message_log via send-whatsapp (also fire-and-forget)
-      if (fnProject && internalSecret) {
-        fetch(`https://${fnProject}.supabase.co/functions/v1/send-whatsapp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-internal-secret": internalSecret },
-          body: JSON.stringify({ to: acct.whatsapp_number, body: wt1Body }),
-        }).catch(() => {});
+    if (acct.whatsapp_number) {
+      const twilioEnv = getTwilioEnv();
+      if (twilioEnv) {
+        const firstName = acct.first_name || "there";
+        const wt1Body   = buildWT1(firstName);
+        const wt1Sid    = Deno.env.get("TWILIO_TEMPLATE_SID_WT1");
+        const result    = await sendTemplateWhatsApp(
+          twilioEnv, acct.whatsapp_number,
+          wt1Sid, { "1": firstName },
+          wt1Body,
+        );
+        logMessage({
+          supabaseUrl, serviceRoleKey,
+          direction: "outbound",
+          participantWhatsapp: acct.whatsapp_number,
+          messageSid: result.messageSid,
+          templateName: "WT-1", body: wt1Body,
+          status: result.ok ? "sent" : "failed",
+        });
       }
     }
 
@@ -466,34 +453,28 @@ Deno.serve(async (req) => {
 
     // Send WC-1 WhatsApp welcome to approved Concierge client
     // Template WC-1: Client welcome / Concierge approval
-    const twilioAccountSid2  = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const twilioAuthToken2   = Deno.env.get("TWILIO_AUTH_TOKEN");
-    const twilioWaNumber2    = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
-
     // Concierge clients table stores WhatsApp number in the `whatsapp` column
     const clientWhatsapp = (client as Record<string, unknown>).whatsapp as string | undefined;
-    if (clientWhatsapp && twilioAccountSid2 && twilioAuthToken2 && twilioWaNumber2) {
-      const firstName2 = client.first_name || (client.name || "").split(" ")[0] || "there";
-      // WC-1 body
-      const wc1Body = (
-        `Hi ${firstName2} — you're approved for TaskLeaders Concierge.\n\n` +
-        `Save this number. When you need help, just message us here and we'll take it from there.\n\n` +
-        `No login. No account setup each time. Just send your request with details when you need a TaskLeader.\n\n` +
-        `— TaskLeaders Concierge`
-      );
-      const twilioMsgUrl2 = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid2}/Messages.json`;
-      fetch(twilioMsgUrl2, {
-        method: "POST",
-        headers: {
-          "Content-Type":  "application/x-www-form-urlencoded",
-          "Authorization": "Basic " + btoa(`${twilioAccountSid2}:${twilioAuthToken2}`),
-        },
-        body: new URLSearchParams({
-          From: `whatsapp:${twilioWaNumber2}`,
-          To:   `whatsapp:${clientWhatsapp}`,
-          Body: wc1Body,
-        }),
-      }).catch(() => {}); // fire-and-forget
+    if (clientWhatsapp) {
+      const twilioEnvWc1 = getTwilioEnv();
+      if (twilioEnvWc1) {
+        const firstName2 = client.first_name || (client.name || "").split(" ")[0] || "there";
+        const wc1Body    = buildWC1(firstName2);
+        const wc1Sid     = Deno.env.get("TWILIO_TEMPLATE_SID_WC1");
+        const result     = await sendTemplateWhatsApp(
+          twilioEnvWc1, clientWhatsapp,
+          wc1Sid, { "1": firstName2 },
+          wc1Body,
+        );
+        logMessage({
+          supabaseUrl, serviceRoleKey,
+          direction: "outbound",
+          participantWhatsapp: clientWhatsapp,
+          messageSid: result.messageSid,
+          templateName: "WC-1", body: wc1Body,
+          status: result.ok ? "sent" : "failed",
+        });
+      }
     }
 
     // Send welcome email via Resend
@@ -522,6 +503,145 @@ Deno.serve(async (req) => {
     }
 
     return json({ ok: true, data: { id: clientId, status: "active" } });
+  }
+
+  // ── Action: resolve guarantee claim ─────────────────────────────────────
+  // Sets claim_state to the authoritative final outcome, marks open guarantee_claim
+  // admin alerts resolved, and sends outcome notifications to both parties via
+  // approved templates (WT-9/WT-10 to provider, WC-7/WC-8 to client).
+  //
+  // Template path rationale:
+  //   Admin may resolve a claim hours or days after WT-4/WC-5 were delivered, so the
+  //   per-participant 24-hour WhatsApp session window may be closed by the time this
+  //   notification fires. sendTemplateWhatsApp() uses Meta-approved Content SIDs when
+  //   configured, which are valid outside the session window. If a SID env var is not
+  //   set (sandbox / pre-approval), sendTemplateWhatsApp falls through to a plain Body
+  //   send — behavior identical to the previous sendWhatsApp path.
+  if (action === "resolve_guarantee_claim") {
+    const claimId = String(body.claim_id  ?? "").trim();
+    const outcome = String(body.outcome   ?? "").trim().toLowerCase();
+    const notes   = body.admin_notes ? String(body.admin_notes).trim() : null;
+
+    if (!claimId) return error("bad_request", "claim_id is required");
+    if (!["approved", "denied"].includes(outcome)) {
+      return error("bad_request", "outcome must be 'approved' or 'denied'");
+    }
+
+    const { data: claim, error: claimErr } = await supabase
+      .from("guarantee_claims")
+      .select("id, job_id, provider_slug, client_whatsapp, claim_state, admin_notes")
+      .eq("id", claimId)
+      .maybeSingle();
+
+    if (claimErr || !claim) return error("not_found", "Guarantee claim not found", 404);
+
+    const TERMINAL = new Set(["approved", "denied", "closed"]);
+    if (TERMINAL.has(claim.claim_state)) {
+      return error("conflict", `Claim is already in terminal state: ${claim.claim_state}`, 409);
+    }
+
+    // Resolve claim — outcome is now the authoritative claim_state
+    const { error: resolveErr } = await supabase
+      .from("guarantee_claims")
+      .update({
+        claim_state:  outcome,
+        resolved_at:  new Date().toISOString(),
+        admin_notes:  notes ?? claim.admin_notes ?? null,
+      })
+      .eq("id", claimId);
+
+    if (resolveErr) return error("server_error", resolveErr.message, 500);
+
+    // Mark all open guarantee_claim alerts for this job resolved
+    await supabase
+      .from("admin_alerts")
+      .update({ status: "resolved", resolved_at: new Date().toISOString() })
+      .eq("job_id", claim.job_id)
+      .eq("alert_type", "guarantee_claim")
+      .eq("status", "open");
+
+    // Send outcome notifications via approved templates (session-window safe).
+    const twilioEnvRes = getTwilioEnv();
+    let providerNotified = false;
+    let clientNotified   = false;
+
+    if (twilioEnvRes) {
+      // Fetch job address for job header; fall back to "address on file" if missing.
+      const { data: jobRow } = await supabase
+        .from("jobs")
+        .select("address")
+        .eq("job_id", claim.job_id)
+        .maybeSingle();
+      const addr = jobRow?.address ?? "address on file";
+      const hdr  = jobHeader(claim.job_id, addr);
+
+      // Provider notification: WT-9 (approved) or WT-10 (denied)
+      const { data: providerAcct } = await supabase
+        .from("provider_accounts")
+        .select("whatsapp_number")
+        .eq("slug", claim.provider_slug)
+        .maybeSingle();
+
+      if (providerAcct?.whatsapp_number) {
+        const provBody = outcome === "approved"
+          ? buildWT9(claim.job_id, addr)
+          : buildWT10(claim.job_id, addr);
+        const provSid  = outcome === "approved"
+          ? Deno.env.get("TWILIO_TEMPLATE_SID_WT9")
+          : Deno.env.get("TWILIO_TEMPLATE_SID_WT10");
+        const provResult = await sendTemplateWhatsApp(
+          twilioEnvRes, providerAcct.whatsapp_number,
+          provSid, { "1": hdr },
+          provBody,
+        );
+        providerNotified = provResult.ok;
+        logMessage({
+          supabaseUrl, serviceRoleKey,
+          direction: "outbound", jobId: claim.job_id,
+          participantWhatsapp: providerAcct.whatsapp_number,
+          messageSid:   provResult.messageSid,
+          templateName: outcome === "approved" ? "WT-9" : "WT-10",
+          body:         provBody,
+          status:       provResult.ok ? "sent" : "failed",
+        });
+      }
+
+      // Client notification: WC-7 (approved) or WC-8 (denied)
+      if (claim.client_whatsapp) {
+        const clientBody = outcome === "approved"
+          ? buildWC7(claim.job_id, addr)
+          : buildWC8(claim.job_id, addr);
+        const clientSid  = outcome === "approved"
+          ? Deno.env.get("TWILIO_TEMPLATE_SID_WC7")
+          : Deno.env.get("TWILIO_TEMPLATE_SID_WC8");
+        const clientResult = await sendTemplateWhatsApp(
+          twilioEnvRes, claim.client_whatsapp,
+          clientSid, { "1": hdr },
+          clientBody,
+        );
+        clientNotified = clientResult.ok;
+        logMessage({
+          supabaseUrl, serviceRoleKey,
+          direction: "outbound", jobId: claim.job_id,
+          participantWhatsapp: claim.client_whatsapp,
+          messageSid:   clientResult.messageSid,
+          templateName: outcome === "approved" ? "WC-7" : "WC-8",
+          body:         clientBody,
+          status:       clientResult.ok ? "sent" : "failed",
+        });
+      }
+    }
+
+    return json({
+      ok: true,
+      data: {
+        claim_id:          claimId,
+        job_id:            claim.job_id,
+        outcome,
+        provider_notified: providerNotified,
+        client_notified:   clientNotified,
+      },
+    });
   }
 
   // ── Action: approve application (default) ───────────────────────────────

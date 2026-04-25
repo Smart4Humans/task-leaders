@@ -27,7 +27,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
-  getTwilioEnv, sendWhatsApp, logMessage, buildWT4,
+  getTwilioEnv, sendTemplateWhatsApp, logMessage, buildWT4, buildWC5,
+  jobHeader, toPublicJobId,
 } from "../_shared/twilio.ts";
 
 const TERMINAL_CLAIM_STATES = new Set(["closed", "denied", "approved"]);
@@ -134,7 +135,7 @@ Deno.serve(async (req) => {
   // ── Load provider name for WT-4 ───────────────────────────────────────────
   const { data: provider } = await supabase
     .from("provider_accounts")
-    .select("first_name, last_name")
+    .select("first_name, last_name, whatsapp_number")
     .eq("slug", providerSlug)
     .maybeSingle();
 
@@ -158,44 +159,89 @@ Deno.serve(async (req) => {
 
   if (claimErr) return err("server_error", "Failed to create claim: " + claimErr.message, 500);
 
-  // ── Send WT-4 to client ───────────────────────────────────────────────────
-  const wt4Body    = buildWT4(jobId, job.address ?? "address on file", providerName);
-  const twilioEnv  = getTwilioEnv();
-  let   messageSent = false;
+  // ── Send WT-4 to provider (claim received confirmation) ──────────────────
+  const addr      = job.address ?? "address on file";
+  const wt4Body   = buildWT4(jobId, addr);
+  const wt4Sid    = Deno.env.get("TWILIO_TEMPLATE_SID_WT4");
+  const twilioEnv = getTwilioEnv();
+  let   wt4Sent   = false;
+
+  if (twilioEnv && provider?.whatsapp_number) {
+    // WT-4 approved template shape: {{1}} = public Job ID, {{2}} = service area / location.
+    // ContentVariables must match that shape exactly or Twilio rejects the send.
+    const wt4Result = await sendTemplateWhatsApp(
+      twilioEnv, provider.whatsapp_number,
+      wt4Sid, { "1": toPublicJobId(jobId), "2": addr },
+      wt4Body,
+    );
+    wt4Sent = wt4Result.ok;
+    logMessage({
+      supabaseUrl,
+      serviceRoleKey,
+      direction:           "outbound",
+      jobId,
+      participantWhatsapp: provider.whatsapp_number,
+      messageSid:          wt4Result.messageSid,
+      templateName:        "WT-4",
+      body:                wt4Body,
+      status:              wt4Result.ok ? "sent" : "failed",
+    });
+  }
+
+  // ── Send WC-5 to client (factual check — YES/NO Quick Reply buttons in registered template) ──
+  const wc5Body = buildWC5(jobId, addr, providerName);
+  const wc5Sid  = Deno.env.get("TWILIO_TEMPLATE_SID_WC5");
+  let   wc5Sent = false;
 
   if (twilioEnv) {
-    const result = await sendWhatsApp(twilioEnv, job.client_whatsapp, wt4Body);
-    messageSent = result.ok;
+    const wc5Result = await sendTemplateWhatsApp(
+      twilioEnv, job.client_whatsapp,
+      wc5Sid, { "1": jobHeader(jobId, addr), "2": providerName },
+      wc5Body,
+    );
+    wc5Sent = wc5Result.ok;
     logMessage({
       supabaseUrl,
       serviceRoleKey,
       direction:           "outbound",
       jobId,
       participantWhatsapp: job.client_whatsapp,
-      messageSid:          result.messageSid,
-      templateName:        "WT-4",
-      body:                wt4Body,
-      status:              result.ok ? "sent" : "failed",
+      messageSid:          wc5Result.messageSid,
+      templateName:        "WC-5",
+      body:                wc5Body,
+      status:              wc5Result.ok ? "sent" : "failed",
     });
   }
 
-  // ── Set client conversation session to awaiting_guarantee_confirm ─────────
-  // This ensures the twilio-webhook routes the client's YES/NO reply correctly
-  // via handleGuaranteeConfirmation() rather than treating it as a relay message.
+  // ── Set both conversation sessions to awaiting_guarantee_confirm ─────────
+  // twilio-webhook routes both YES/NO replies via handleGuaranteeConfirmation()
   await supabase.from("conversation_sessions").upsert(
     {
-      whatsapp_e164:   job.client_whatsapp,
-      session_state:   "awaiting_guarantee_confirm",
-      current_job_id:  jobId,
-      sender_type:     "client",
-      last_prompt:     wt4Body,
+      whatsapp_e164:    job.client_whatsapp,
+      session_state:    "awaiting_guarantee_confirm",
+      current_job_id:   jobId,
+      sender_type:      "client",
+      last_prompt:      wc5Body,
       last_activity_at: new Date().toISOString(),
     },
     { onConflict: "whatsapp_e164" },
   );
 
+  if (provider?.whatsapp_number) {
+    await supabase.from("conversation_sessions").upsert(
+      {
+        whatsapp_e164:    provider.whatsapp_number,
+        session_state:    "awaiting_guarantee_confirm",
+        current_job_id:   jobId,
+        sender_type:      "provider",
+        last_prompt:      wt4Body,
+        last_activity_at: new Date().toISOString(),
+      },
+      { onConflict: "whatsapp_e164" },
+    );
+  }
+
   // ── Admin alert for audit trail ───────────────────────────────────────────
-  // Awaited with try/catch — PostgrestFilterBuilder does not support .catch().
   try {
     await supabase.from("admin_alerts").insert({
       alert_type:           "guarantee_claim",
@@ -205,25 +251,28 @@ Deno.serve(async (req) => {
       participant_whatsapp: job.client_whatsapp,
       description:
         `Guarantee claim initiated by admin for provider ${providerSlug}. ` +
-        `WT-4 ${messageSent ? "sent" : "FAILED to send"} to client ${job.client_whatsapp}. ` +
+        `WT-4 ${wt4Sent ? "sent" : "FAILED to send"} to provider ${provider?.whatsapp_number ?? "unknown"}. ` +
+        `WC-5 ${wc5Sent ? "sent" : "FAILED to send"} to client ${job.client_whatsapp}. ` +
         `Client session set to awaiting_guarantee_confirm. ` +
         (adminNotes ? `Notes: ${adminNotes}` : ""),
       status: "open",
     });
-  } catch { /* audit alert failure is non-fatal; claim and WT-4 already succeeded */ }
+  } catch { /* audit alert failure is non-fatal */ }
 
   return json({
     ok: true,
     data: {
-      claim_id:          claim.id,
-      claim_state:       claim.claim_state,
-      job_id:            jobId,
-      provider_slug:     providerSlug,
-      client_whatsapp:   job.client_whatsapp,
-      wt4_sent:          messageSent,
-      session_updated:   true,
+      claim_id:        claim.id,
+      claim_state:     claim.claim_state,
+      job_id:          jobId,
+      provider_slug:   providerSlug,
+      client_whatsapp: job.client_whatsapp,
+      wt4_sent:        wt4Sent,
+      wc5_sent:        wc5Sent,
+      session_updated: true,
       note:
-        "Client conversation session set to awaiting_guarantee_confirm. " +
+        "WT-4 sent to provider. WC-5 sent to client. " +
+        "Client session set to awaiting_guarantee_confirm. " +
         "Reply YES/NO will be routed by twilio-webhook to handleGuaranteeConfirmation().",
     },
   });
