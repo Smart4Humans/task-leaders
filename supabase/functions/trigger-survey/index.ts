@@ -31,8 +31,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
-  getTwilioEnv, sendWhatsApp, logMessage,
-  buildWC3, buildWT5, buildWT3, SURVEY_QUESTIONS,
+  getTwilioEnv, sendWhatsApp, sendTemplateWhatsApp, logMessage,
+  buildWC3, buildWT5, buildWT3, SURVEY_QUESTIONS, jobHeader,
 } from "../_shared/twilio.ts";
 import { CATEGORY_NAMES } from "../_shared/constants.ts";
 
@@ -129,7 +129,12 @@ Deno.serve(async (req) => {
 
     // Send WC-3 to client
     const wc3Body = buildWC3(job.job_id, address, providerName, categoryName);
-    const wc3Result = await sendWhatsApp(twilioEnv, job.client_whatsapp, wc3Body);
+    const wc3Sid  = Deno.env.get("TWILIO_TEMPLATE_SID_WC3");
+    const wc3Result = await sendTemplateWhatsApp(
+      twilioEnv, job.client_whatsapp,
+      wc3Sid, { "1": jobHeader(job.job_id, address), "2": providerName, "3": categoryName },
+      wc3Body,
+    );
     logMessage({
       supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id,
       participantWhatsapp: job.client_whatsapp,
@@ -178,7 +183,12 @@ Deno.serve(async (req) => {
 
     if (providerAcct?.whatsapp_number) {
       const wt5Body = buildWT5(job.job_id, address, clientLabel, categoryName);
-      const wt5Result = await sendWhatsApp(twilioEnv, providerAcct.whatsapp_number, wt5Body);
+      const wt5Sid  = Deno.env.get("TWILIO_TEMPLATE_SID_WT5");
+      const wt5Result = await sendTemplateWhatsApp(
+        twilioEnv, providerAcct.whatsapp_number,
+        wt5Sid, { "1": jobHeader(job.job_id, address), "2": clientLabel, "3": categoryName },
+        wt5Body,
+      );
       logMessage({
         supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id,
         participantWhatsapp: providerAcct.whatsapp_number,
@@ -249,7 +259,12 @@ Deno.serve(async (req) => {
     // client_name for WT-3: use a placeholder (Phase 5: derive from concierge_clients or intake)
     const clientLabel = "the client";
     const wt3Body     = buildWT3(job.job_id, address, categoryName, clientLabel);
-    const wt3Result   = await sendWhatsApp(twilioEnv, provAcct.whatsapp_number, wt3Body);
+    const wt3Sid      = Deno.env.get("TWILIO_TEMPLATE_SID_WT3");
+    const wt3Result   = await sendTemplateWhatsApp(
+      twilioEnv, provAcct.whatsapp_number,
+      wt3Sid, { "1": jobHeader(job.job_id, address), "2": categoryName, "3": clientLabel },
+      wt3Body,
+    );
     logMessage({
       supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id,
       participantWhatsapp: provAcct.whatsapp_number,
