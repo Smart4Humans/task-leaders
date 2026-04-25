@@ -823,25 +823,9 @@
         </div>
 
         <select class="area-input" id="municipalityInput">
+          <!-- Options are populated dynamically from the loaded provider's
+               municipality_codes / service_cities. See buildMunicipalityDropdown(). -->
           <option value="">Select your service area…</option>
-          <option value="VANCOUVER">Vancouver</option>
-          <option value="NVAN">North Vancouver</option>
-          <option value="WVAN">West Vancouver</option>
-          <option value="BBY">Burnaby</option>
-          <option value="RMD">Richmond</option>
-          <option value="SRY">Surrey</option>
-          <option value="COQ">Coquitlam</option>
-          <option value="NWS">New Westminster</option>
-          <option value="PMD">Port Moody</option>
-          <option value="PRC">Port Coquitlam</option>
-          <option value="DLT">Delta</option>
-          <option value="LGL">Langley</option>
-          <option value="MPR">Maple Ridge</option>
-          <option value="PTM">Pitt Meadows</option>
-          <option value="WHR">White Rock</option>
-          <option value="ABB">Abbotsford</option>
-          <option value="CHK">Chilliwack</option>
-          <option value="MSN">Mission</option>
         </select>
 
         <div class="consent-section">
@@ -889,6 +873,106 @@
     let connectStatus = 'gated';
     let connectMessage = 'Direct connect is not enabled yet.';
     let providerWhatsApp = null;
+
+    // ── Marketplace municipality registry (mirrors _shared/constants.ts MUNICIPALITY_NAMES) ──
+    // Ordered list of [code, display_name] for the 18 supported municipalities.
+    // Used to render the Connect modal dropdown filtered to the loaded provider's
+    // coverage (P2). Order is preserved in the rendered dropdown.
+    const MUNICIPALITY_REGISTRY = [
+      ['VANCOUVER', 'Vancouver'],
+      ['NVAN',      'North Vancouver'],
+      ['WVAN',      'West Vancouver'],
+      ['BBY',       'Burnaby'],
+      ['RMD',       'Richmond'],
+      ['SRY',       'Surrey'],
+      ['COQ',       'Coquitlam'],
+      ['NWS',       'New Westminster'],
+      ['PMD',       'Port Moody'],
+      ['PRC',       'Port Coquitlam'],
+      ['DLT',       'Delta'],
+      ['LGL',       'Langley'],
+      ['MPR',       'Maple Ridge'],
+      ['PTM',       'Pitt Meadows'],
+      ['WHR',       'White Rock'],
+      ['ABB',       'Abbotsford'],
+      ['CHK',       'Chilliwack'],
+      ['MSN',       'Mission']
+    ];
+
+    // Free-text → registry-code aliases for legacy service_cities[] values.
+    // Mirrors a subset of _shared/constants.ts MUNICIPALITY_ALIASES. Used only
+    // as the fallback when a provider has no structured municipality_codes yet.
+    const MUNICIPALITY_ALIAS_TO_CODE = {
+      'vancouver':         'VANCOUVER',
+      'city of vancouver': 'VANCOUVER',
+      'north vancouver':   'NVAN',
+      'north van':         'NVAN',
+      'west vancouver':    'WVAN',
+      'west van':          'WVAN',
+      'burnaby':           'BBY',
+      'richmond':          'RMD',
+      'surrey':            'SRY',
+      'coquitlam':         'COQ',
+      'new westminster':   'NWS',
+      'new west':          'NWS',
+      'port moody':        'PMD',
+      'port coquitlam':    'PRC',
+      'port coq':          'PRC',
+      'poco':              'PRC',
+      'delta':             'DLT',
+      'langley':           'LGL',
+      'city of langley':   'LGL',
+      'langley city':      'LGL',
+      'township of langley':'LGL',
+      'langley township':  'LGL',
+      'maple ridge':       'MPR',
+      'pitt meadows':      'PTM',
+      'white rock':        'WHR',
+      'abbotsford':        'ABB',
+      'chilliwack':        'CHK',
+      'mission':           'MSN',
+      'district of mission':'MSN'
+    };
+
+    // Build the Connect modal dropdown from the loaded provider's coverage.
+    // Coverage source priority:
+    //   1. provider.municipality_codes (structured, canonical — populated post-backfill)
+    //   2. provider.service_cities[] mapped via MUNICIPALITY_ALIAS_TO_CODE (legacy compat)
+    //   3. all 18 (last-resort fallback for providers with no coverage data at all)
+    // The rendered options always preserve MUNICIPALITY_REGISTRY order so the
+    // dropdown reads the same regardless of input ordering.
+    function buildMunicipalityDropdown(provider) {
+      const select = document.getElementById('municipalityInput');
+      if (!select) return;
+
+      let codeSet;
+      const mc = Array.isArray(provider?.municipality_codes) ? provider.municipality_codes : [];
+      if (mc.length > 0) {
+        codeSet = new Set(mc);
+      } else {
+        const sc = Array.isArray(provider?.service_cities) ? provider.service_cities : [];
+        const aliased = new Set();
+        for (const city of sc) {
+          const code = MUNICIPALITY_ALIAS_TO_CODE[String(city || '').trim().toLowerCase()];
+          if (code) aliased.add(code);
+        }
+        if (aliased.size > 0) {
+          codeSet = aliased;
+        } else {
+          // No structured codes, no recognizable service_cities — open to all 18.
+          codeSet = new Set(MUNICIPALITY_REGISTRY.map(([code]) => code));
+        }
+      }
+
+      const opts = ['<option value="">Select your service area…</option>'];
+      for (const [code, name] of MUNICIPALITY_REGISTRY) {
+        if (codeSet.has(code)) {
+          opts.push('<option value="' + escapeHtml(code) + '">' + escapeHtml(name) + '</option>');
+        }
+      }
+      select.innerHTML = opts.join('');
+      select.value = '';
+    }
 
     // Session memory — stores name, phone, consent with 24-hour expiry
     const SESSION_KEY = 'taskleaders_connect_session';
@@ -1450,6 +1534,11 @@
           ? cities.map(a => `<span class="area-tag">${escapeHtml(a)}</span>`).join('')
           : `<span class="area-tag">${escapeHtml(p.service_area || titleCaseFromSlug(currentCitySlug) || 'Vancouver')}</span>`;
       }
+
+      // Connect modal: restrict the municipality dropdown to this provider's
+      // actual coverage (P2). Uses municipality_codes first, falls back to
+      // service_cities[] aliasing, finally to all 18 if neither is populated.
+      buildMunicipalityDropdown(p);
 
       // Per-service rates from service_rates JSONB
       renderServiceRates(p.service_rates, p.primary_service);
