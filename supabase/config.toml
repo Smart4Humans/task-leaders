@@ -87,3 +87,22 @@ verify_jwt = false
 # Called internally after survey completion and by admin for recomputation.
 [functions.apply-reliability]
 verify_jwt = false
+
+# ── Provider profile management (private) ───────────────────────────────────
+
+# Returns all provider_accounts fields for the private management page prefill.
+# Auth: slug = identity. Distinct from get-provider (public fields only).
+[functions.get-provider-private]
+verify_jwt = false
+
+# Creates (or retrieves) a Stripe Customer and a SetupIntent for card-on-file setup.
+# Called before stripe.confirmCardSetup() on the frontend.
+# Auth: slug = identity.
+[functions.create-setup-intent]
+verify_jwt = false
+
+# Called after stripe.confirmCardSetup() succeeds. Attaches PaymentMethod to
+# Stripe Customer, sets as default, writes card_on_file = true to provider_accounts.
+# Auth: slug = identity.
+[functions.confirm-card-setup]
+verify_jwt = false

@@ -30,7 +30,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
-  getTwilioEnv, sendWhatsApp, logMessage, buildWC2,
+  getTwilioEnv, sendWhatsApp, sendTemplateWhatsApp, logMessage, buildWC2, buildWT8,
+  jobHeader,
 } from "../_shared/twilio.ts";
 import { CATEGORY_NAMES } from "../_shared/constants.ts";
 import { toPublicJobId } from "../_shared/job-ids.ts";
@@ -86,7 +87,11 @@ Deno.serve(async (req) => {
   const stripeKey      = Deno.env.get("STRIPE_SECRET_KEY");
   const adminPassword  = Deno.env.get("TASKLEADERS_ADMIN_PASSWORD") ?? "";
 
-  if (!supabaseUrl || !serviceRoleKey || !webhookSecret) {
+  // Base config required by every path (including simulation).
+  // STRIPE_WEBHOOK_SECRET is only required for the real Stripe event path and
+  // is checked after the simulation branch below so that the simulation path
+  // is not blocked when the secret is not yet configured.
+  if (!supabaseUrl || !serviceRoleKey) {
     return json({ ok: false, error: "Missing configuration" }, 500);
   }
 
@@ -139,6 +144,13 @@ Deno.serve(async (req) => {
     if (pr.payment_status === "paid") {
       return json({ ok: false, error: "Payment is already marked paid — nothing to simulate" }, 409);
     }
+    // Also block on 'released': a timed-out record (payment_status='released',
+    // assigned_provider_slug cleared by check_payment_timeouts) should not be
+    // re-simulated without first re-running the ACCEPT flow. Proceeding would
+    // create a confirmed_assigned job with a stale/wrong provider assignment.
+    if (pr.payment_status === "released") {
+      return json({ ok: false, error: "Payment record was released due to timeout — re-run the ACCEPT flow before simulating payment" }, 409);
+    }
 
     // paymentLinkId=null skips the card-save invite; pass skip_card_save: false
     // in the body if you want to include the card-save invite in the test.
@@ -148,6 +160,11 @@ Deno.serve(async (req) => {
     );
 
     return json({ ok: true, simulated: true, job_id: jobId, provider_slug: provSlug, card_save_skipped: skipCard });
+  }
+
+  // Real Stripe event path — webhook secret required from this point on.
+  if (!webhookSecret) {
+    return json({ ok: false, error: "Missing configuration" }, 500);
   }
 
   const rawBody   = await req.text();
@@ -295,13 +312,17 @@ async function handlePaymentConfirmed(
 
   if (!job) return;
 
-  // Advance job state
+  // Advance job state.
+  // assigned_provider_slug is set here authoritatively — this ensures it is
+  // correct even if check_payment_timeouts() cleared it between claim and
+  // payment confirmation (e.g. slow payment link or admin simulation delay).
   await supabase.from("jobs")
     .update({
-      state:          "confirmed_assigned",
-      status:         "assigned",
-      payment_status: "paid",
-      assigned_at:    new Date().toISOString(),
+      state:                  "confirmed_assigned",
+      status:                 "assigned",
+      payment_status:         "paid",
+      assigned_at:            new Date().toISOString(),
+      assigned_provider_slug: provSlug,
     })
     .eq("job_id", jobId);
 
@@ -348,7 +369,15 @@ async function handlePaymentConfirmed(
   const twilioEnv = getTwilioEnv();
   if (twilioEnv && job.client_whatsapp) {
     const msgBody = buildWC2(job.job_id, address, providerName, categoryName);
-    const result  = await sendWhatsApp(twilioEnv, job.client_whatsapp, msgBody);
+    const wc2Sid  = Deno.env.get("TWILIO_TEMPLATE_SID_WC2");
+    const result  = await sendTemplateWhatsApp(
+      twilioEnv, job.client_whatsapp,
+      // Template body uses {{1}} for the provider name and {{2}} for the job
+      // header. {{3}} is retained in the param map for backward compatibility
+      // with any future template revision that references categoryName.
+      wc2Sid, { "1": providerName, "2": jobHeader(job.job_id, address), "3": categoryName },
+      msgBody,
+    );
     logMessage({
       supabaseUrl, serviceRoleKey,
       direction: "outbound", jobId: job.job_id,
@@ -380,11 +409,87 @@ async function handlePaymentConfirmed(
       }, { onConflict: "whatsapp_e164" });
   }
 
+  // Send WT-8 to provider: payment confirmed / thread now live.
+  // Sent unconditionally — independent of skip_card_save or card_on_file.
+  // The card-save invite (below) is a separate follow-up, not the confirmation.
+  if (twilioEnv && provider.whatsapp_number) {
+    // Look up the client's first name so the WT-8 call-to-action can address
+    // the provider by the client's name. Falls back to "the Client" inside
+    // buildWT8 when the lookup returns null/empty. Lookup rules:
+    //   1. Prefer the direct id match, filtered to status='active' AND suspended=false
+    //      so a stale client_id reference pointing at a deactivated row does not
+    //      leak a wrong name into the message.
+    //   2. Fall back to whatsapp lookup with the same active/non-suspended filter.
+    //      Tolerates both +E.164 and digits-only storage formats (matching the
+    //      twilio-webhook sender-lookup pattern).
+    //   3. If more than one active row shares the whatsapp number, pick the most
+    //      recently created active row deterministically (`created_at DESC`).
+    //   4. Any network/DB failure is swallowed — WT-8 must not block thread open.
+    let clientFirstName: string | null = null;
+    if (job.client_id) {
+      try {
+        const { data } = await supabase
+          .from("concierge_clients")
+          .select("first_name")
+          .eq("id", job.client_id)
+          .eq("status", "active")
+          .eq("suspended", false)
+          .maybeSingle();
+        clientFirstName = (data?.first_name ?? null) as string | null;
+      } catch { /* non-fatal: fall through to whatsapp lookup */ }
+    }
+    if (!clientFirstName && job.client_whatsapp) {
+      try {
+        const wa       = String(job.client_whatsapp);
+        const waDigits = wa.replace(/^\+/, "");
+        const { data } = await supabase
+          .from("concierge_clients")
+          .select("first_name, created_at")
+          .in("whatsapp", [wa, waDigits])
+          .eq("status", "active")
+          .eq("suspended", false)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const rows = (data ?? []) as Array<{ first_name: string | null }>;
+        clientFirstName = rows[0]?.first_name ?? null;
+      } catch { /* non-fatal: buildWT8 falls back to "the Client" */ }
+    }
+
+    const wt8Body   = buildWT8(job.job_id, address, categoryName, clientFirstName);
+    const wt8Result = await sendWhatsApp(twilioEnv, provider.whatsapp_number, wt8Body);
+    logMessage({
+      supabaseUrl, serviceRoleKey,
+      direction: "outbound", jobId: job.job_id,
+      participantWhatsapp: provider.whatsapp_number,
+      templateName: "WT-8", body: wt8Body,
+      status: wt8Result.ok ? "sent" : "failed",
+    });
+  }
+
   // Advance broadcast_responses for winner
   await supabase.from("broadcast_responses")
     .update({ claim_successful: true })
     .eq("job_id", jobId)
     .eq("provider_slug", provSlug);
+
+  // Clear awaiting_accept sessions for providers who did not win this job.
+  // Payment confirmed = job is closed to new claims. These providers' sessions
+  // are stale. If they later reply ACCEPT, claim_lead() rejects them cleanly
+  // with "already claimed" regardless — but clearing here avoids indefinitely
+  // stale state accumulating across jobs.
+  // Guard: skip if provider.whatsapp_number is null (edge case; also prevents
+  // accidentally clearing the winner if somehow still awaiting_accept).
+  if (provider.whatsapp_number) {
+    await supabase.from("conversation_sessions")
+      .update({
+        session_state:    "idle",
+        current_job_id:   null,
+        last_activity_at: new Date().toISOString(),
+      })
+      .eq("current_job_id", jobId)
+      .eq("session_state",   "awaiting_accept")
+      .neq("whatsapp_e164",  provider.whatsapp_number);
+  }
 
   // Advance job state to thread_live
   await supabase.from("jobs")

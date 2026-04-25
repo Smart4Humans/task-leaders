@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
     }
 
     const address    = job.address ?? "address on file";
-    const paymentUrl = paymentRec?.stripe_payment_link_url ?? UPDATE_CARD_URL;
+    const paymentUrl = paymentRec?.stripe_payment_link_url ?? `${UPDATE_CARD_URL}?slug=${alert.provider_slug}`;
 
     let msgBody: string;
     let templateName: string;
@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
       templateName = "WT-6";
     } else {
       // payment_released
-      msgBody      = buildWT7(alert.job_id, address, UPDATE_CARD_URL);
+      msgBody      = buildWT7(alert.job_id, address, `${UPDATE_CARD_URL}?slug=${alert.provider_slug}`);
       templateName = "WT-7";
     }
 

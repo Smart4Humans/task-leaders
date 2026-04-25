@@ -110,11 +110,12 @@ Deno.serve(async (req) => {
   const timeoutAt = new Date(Date.now() + PAYMENT_WINDOW_MS).toISOString();
 
   // ── Payment path ──────────────────────────────────────────────────────────
-  let paymentIntentId:  string | null = null;
-  let paymentLinkId:    string | null = null;
-  let paymentLinkUrl:   string | null = null;
-  let paymentMethod:    string;
-  let nextState:        string;
+  let paymentIntentId:          string | null = null;
+  let paymentLinkId:            string | null = null;
+  let paymentLinkUrl:           string | null = null;
+  let paymentMethod:            string;
+  let nextState:                string;
+  let piImmediatelySucceeded:   boolean = false;
 
   const stripeBase  = "https://api.stripe.com/v1";
   const stripeAuth  = "Basic " + btoa(`${stripeKey}:`);
@@ -131,6 +132,7 @@ Deno.serve(async (req) => {
       payment_method:       provider.stripe_payment_method_id,
       description,
       confirm:              "true",
+      off_session:          "true",
       "metadata[job_id]":       job.job_id,
       "metadata[provider_slug]": provSlug,
     });
@@ -146,9 +148,10 @@ Deno.serve(async (req) => {
       return err("stripe_error", piData.error?.message ?? "PaymentIntent creation failed", 502);
     }
 
-    paymentIntentId = piData.id;
-    paymentMethod   = "card_on_file";
-    nextState       = "autocharge_pending";
+    paymentIntentId        = piData.id;
+    paymentMethod          = "card_on_file";
+    nextState              = "autocharge_pending";
+    piImmediatelySucceeded = (String(piData.status ?? "") === "succeeded");
 
   } else {
     // ── Payment link path ──────────────────────────────────────────────────
@@ -255,6 +258,55 @@ Deno.serve(async (req) => {
       payment_status:      "pending",
     })
     .eq("job_id", jobId);
+
+  // ── For card_on_file path: if PI confirmed immediately, trigger post-payment flow ──
+  // Stripe fires payment_intent.succeeded asynchronously via webhook, but for saved
+  // cards with confirm: true the PI is already 'succeeded' at creation time.
+  // Rather than relying solely on webhook delivery, we trigger the confirmation path
+  // (WC-2 to client, WT-8 to provider, job_participants, thread_live state) directly
+  // when the PI is already succeeded. If the Stripe webhook also fires later,
+  // the simulation path's payment_status='paid' guard returns 409 — treated as a no-op.
+  if (piImmediatelySucceeded && adminPassword) {
+    const fnBase = (supabaseUrl ?? "").split(".supabase.co")[0].replace("https://", "");
+    try {
+      const confirmRes = await fetch(
+        `https://${fnBase}.supabase.co/functions/v1/stripe-webhook`,
+        {
+          method:  "POST",
+          headers: {
+            "Content-Type":     "application/json",
+            "x-admin-simulate": adminPassword,
+          },
+          body: JSON.stringify({ job_id: jobId, provider_slug: provSlug, skip_card_save: true }),
+        },
+      );
+      if (!confirmRes.ok && confirmRes.status !== 409) {
+        // 409 = already paid (Stripe webhook processed it first) — fine.
+        // Any other non-OK status is a real failure that needs attention.
+        const errText = await confirmRes.text().catch(() => "(unreadable)");
+        await supabase.from("admin_alerts").insert({
+          alert_type:  "escalation",
+          priority:    "high",
+          job_id:      jobId,
+          description:
+            `Auto-charge PI [${paymentIntentId}] confirmed by Stripe but internal ` +
+            `post-payment confirmation call failed. Status: ${confirmRes.status}. ` +
+            `Body: ${errText.substring(0, 200)}`,
+          status: "open",
+        });
+      }
+    } catch (e) {
+      await supabase.from("admin_alerts").insert({
+        alert_type:  "escalation",
+        priority:    "high",
+        job_id:      jobId,
+        description:
+          `Auto-charge PI [${paymentIntentId}] confirmed by Stripe but internal ` +
+          `post-payment confirmation call threw: ${String(e)}`,
+        status: "open",
+      });
+    }
+  }
 
   // ── For payment_link path: send WT-6-style prompt to provider ─────────────
   // Note: this is the initial payment link notification, not the warning.
