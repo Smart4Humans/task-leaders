@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
   const [accountsRes, metricsRes] = await Promise.all([
     supabase
       .from("provider_accounts")
-      .select("slug, first_name, last_name, business_name, display_name_type, service_rates, base_rate, service_area, primary_service, profile_photo")
+      .select("slug, first_name, last_name, business_name, display_name_type, service_rates, base_rate, service_area, primary_service, profile_photo, service_cities, municipality_codes")
       .eq("status", "active")
       .eq("suspended", false),
     supabase
@@ -140,6 +140,11 @@ Deno.serve(async (req) => {
       display_name: displayName,
       profile_photo: p.profile_photo || null,
       service_area: p.service_area || null,
+      // Coverage data — exposed for the in-progress Marketplace discovery work
+      // (category filter, card coverage tags, profile dropdown restriction).
+      // Surfaced unfiltered; the front-end isn't reading these yet.
+      service_cities: Array.isArray(p.service_cities) ? p.service_cities : [],
+      municipality_codes: Array.isArray(p.municipality_codes) ? p.municipality_codes : [],
       response_time_minutes: metrics.response_time_minutes != null ? Number(metrics.response_time_minutes) : null,
       reliability_percent: metrics.reliability_percent != null ? Number(metrics.reliability_percent) : null,
       hourly_rate_cents: hourlyRateCents,

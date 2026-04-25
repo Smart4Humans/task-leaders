@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
   const { data, error: dbError } = await supabase
     .from("provider_accounts")
     .select(
-      "slug, status, suspended, first_name, last_name, business_name, email, whatsapp_number, service_area, primary_service, short_description, profile_photo, base_rate, service_rates, created_at, onboarded_at, display_name_type, backup_phone, address_line1, address_line2, city, province, postal_code, service_cities, additional_services, work_photos"
+      "slug, status, suspended, first_name, last_name, business_name, email, whatsapp_number, service_area, primary_service, short_description, profile_photo, base_rate, service_rates, created_at, onboarded_at, display_name_type, backup_phone, address_line1, address_line2, city, province, postal_code, service_cities, municipality_codes, additional_services, work_photos"
     )
     .eq("slug", slug)
     .single();
