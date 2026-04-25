@@ -874,6 +874,14 @@
     let connectMessage = 'Direct connect is not enabled yet.';
     let providerWhatsApp = null;
 
+    // P5 — Connect modal municipality preselect carried over from the category
+    // page filter via ?municipality=<CODE>. Set in init() after URL parse and
+    // registry validation; cleared if the code isn't recognized. Applied by
+    // applyMunicipalityPreselect() — once after buildMunicipalityDropdown(),
+    // and again on every openModal() so Cancel/reopen and Terms/Privacy
+    // round-trip preserve the preselection.
+    let pendingMunicipalityPreselect = '';
+
     // ── Marketplace municipality registry (mirrors _shared/constants.ts MUNICIPALITY_NAMES) ──
     // Ordered list of [code, display_name] for the 18 supported municipalities.
     // Used to render the Connect modal dropdown filtered to the loaded provider's
@@ -972,6 +980,19 @@
       }
       select.innerHTML = opts.join('');
       select.value = '';
+    }
+
+    // P5 — apply the URL-borne municipality preselect against the dropdown's
+    // currently rendered options. No-op when the preselect is empty, the
+    // dropdown isn't built yet, or the option doesn't exist (i.e. the provider
+    // doesn't actually serve that municipality). Stale/invalid input therefore
+    // falls back silently to "Select your service area…".
+    function applyMunicipalityPreselect() {
+      if (!pendingMunicipalityPreselect) return;
+      const select = document.getElementById('municipalityInput');
+      if (!select) return;
+      const ok = Array.from(select.options).some((o) => o.value === pendingMunicipalityPreselect);
+      if (ok) select.value = pendingMunicipalityPreselect;
     }
 
     // Session memory — stores name, phone, consent with 24-hour expiry
@@ -1269,6 +1290,11 @@
       if (asapRadio) { asapRadio.checked = true; }
       document.getElementById('datePicker').style.display = 'none';
 
+      // P5 — re-apply the municipality preselect after the wipe above so a
+      // valid carry-over from the category page is preserved across Cancel /
+      // reopen and the Terms/Privacy round-trip (?reopenConnect=1).
+      applyMunicipalityPreselect();
+
       document.getElementById('modal').classList.add('active');
       document.getElementById('nameInput').focus();
 
@@ -1540,6 +1566,10 @@
       // service_cities[] aliasing, finally to all 18 if neither is populated.
       buildMunicipalityDropdown(p);
 
+      // P5 — apply the URL-borne municipality preselect once the dropdown is
+      // populated. Silent no-op if the provider doesn't serve that code.
+      applyMunicipalityPreselect();
+
       // Per-service rates from service_rates JSONB
       renderServiceRates(p.service_rates, p.primary_service);
 
@@ -1585,6 +1615,16 @@
       currentProviderSlug = (getParam('slug', '') || getParam('provider', '')).toLowerCase();
       currentCitySlug = getParam('city', 'vancouver').toLowerCase();
       currentCategorySlug = getParam('category', '').toLowerCase();
+
+      // P5 — read & uppercase-normalize the municipality carry-over from the
+      // category page. Validate against MUNICIPALITY_REGISTRY (the same source
+      // that drives the Connect dropdown). Coverage-vs-this-provider check
+      // happens later inside applyMunicipalityPreselect() once the dropdown
+      // options exist; unrecognized codes are dropped here.
+      const rawMunicipality = getParam('municipality', '').toUpperCase();
+      pendingMunicipalityPreselect = MUNICIPALITY_REGISTRY.some(([c]) => c === rawMunicipality)
+        ? rawMunicipality
+        : '';
 
       // Clear template defaults while loading — never show Mike Johnson or any other provider
       setProviderName('');

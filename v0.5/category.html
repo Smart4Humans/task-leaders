@@ -809,6 +809,17 @@
       const params = new URLSearchParams();
       if (p.providerSlug) params.set('slug', p.providerSlug);
       params.set('category', currentCategorySlug);
+      // P5 — propagate the active municipality filter so the profile page can
+      // preselect it in the Connect modal. Defensive: only attach when the
+      // provider's own coverage array contains the code, so the link never
+      // makes a coverage promise the provider doesn't keep. P4's filter
+      // already guarantees this for the visible list, but the per-card check
+      // keeps the contract honest if the model ever drifts.
+      if (selectedMunicipality
+          && Array.isArray(p.municipalityCodes)
+          && p.municipalityCodes.some((c) => String(c).toUpperCase() === selectedMunicipality)) {
+        params.set('municipality', selectedMunicipality);
+      }
       return `profile.html?${params.toString()}`;
     }
 
