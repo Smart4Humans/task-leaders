@@ -5,6 +5,7 @@
 // Called on profile-setup form submission when a slug is present in the URL.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { extractMunicipalityFromAddress } from "../_shared/constants.ts";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -64,8 +65,11 @@ Deno.serve(async (req) => {
   }
 
   // Build the update payload — only include non-empty overrides
+  // Guard: do not regress an already-active provider back to pending_approval.
+  // complete-onboarding is called both from initial setup and from the return/edit
+  // management page — active providers must stay active after a profile update.
   const updates: Record<string, unknown> = {
-    status: "pending_approval",
+    status: existing.status === "active" ? "active" : "pending_approval",
     onboarded_at: new Date().toISOString(),
   };
 
@@ -93,6 +97,47 @@ Deno.serve(async (req) => {
   if (Array.isArray(body.serviceCities) && (body.serviceCities as unknown[]).length > 0) {
     updates.service_cities = (body.serviceCities as unknown[]).map((v) => cleanString(v)).filter(Boolean);
   }
+
+  // Derive structured municipality_codes from the same inputs that drive
+  // service_area + service_cities. Mirrors the post-backfill canonical shape
+  // (home-base first, then selected serviceCities order, deduped) so that new
+  // providers join the dataset already populated and the one-shot backfill
+  // doesn't decay over time. Names are mapped to registry codes via the shared
+  // extractMunicipalityFromAddress helper. Names that don't map are silently
+  // skipped — we never invent a code. We only write municipality_codes when at
+  // least one input was provided AND yielded a recognized code; otherwise the
+  // column is left untouched (preserving any prior valid value through partial
+  // edits to unrelated profile fields).
+  {
+    const baseCityRaw     = cleanString(body.baseCity);
+    const hasBaseCity     = baseCityRaw.length > 0;
+    const hasServiceCities = Array.isArray(body.serviceCities) && (body.serviceCities as unknown[]).length > 0;
+    if (hasBaseCity || hasServiceCities) {
+      const seen: Set<string> = new Set();
+      const ordered: string[] = [];
+
+      const addCode = (raw: string) => {
+        const hit = extractMunicipalityFromAddress(raw);
+        if (hit && !seen.has(hit.code)) {
+          seen.add(hit.code);
+          ordered.push(hit.code);
+        }
+      };
+
+      if (hasBaseCity) addCode(baseCityRaw);
+      if (hasServiceCities) {
+        for (const raw of body.serviceCities as unknown[]) {
+          const name = cleanString(raw);
+          if (name) addCode(name);
+        }
+      }
+
+      if (ordered.length > 0) {
+        updates.municipality_codes = ordered;
+      }
+    }
+  }
+
   if (Array.isArray(body.additionalServices) && (body.additionalServices as unknown[]).length > 0) {
     updates.additional_services = (body.additionalServices as unknown[]).map((v) => cleanString(v)).filter(Boolean);
   }
