@@ -138,6 +138,47 @@
       color: #fff;
     }
 
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 8px 0 6px;
+      flex-wrap: wrap;
+    }
+    .filter-label {
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .filter-select {
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.02);
+      color: rgba(255,255,255,0.85);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(255,255,255,0.55)' d='M0 0l5 6 5-6z'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      padding-right: 24px;
+    }
+    .filter-select:hover { border-color: rgba(255,255,255,0.22); color: #fff; }
+    .filter-select:focus {
+      outline: none;
+      border-color: rgba(0,102,255,0.45);
+    }
+    .filter-select.active {
+      background-color: rgba(0,102,255,0.14);
+      border-color: rgba(0,102,255,0.45);
+      color: #fff;
+    }
+    .filter-select option { background: #0a0a14; color: #fff; }
+
     .legend {
       margin: 8px 0 12px;
       color: rgba(255,255,255,0.5);
@@ -530,6 +571,13 @@
   <main>
     <div class="rank-hint">TaskLeaders ranked by response speed, reliability, and price.</div>
 
+    <div class="filter-bar">
+      <span class="filter-label">Filter by area</span>
+      <select id="municipalityFilter" class="filter-select" onchange="setMunicipality(this.value)">
+        <option value="">All municipalities</option>
+      </select>
+    </div>
+
     <div class="sort-bar">
       <span class="sort-label">Rank by</span>
       <button class="sort-btn active" onclick="setSort('response', event)">⚡ Response</button>
@@ -567,6 +615,33 @@
 
     // UI model providers (mapped from API)
     let providers = [];
+
+    // P4 — Municipality filter state. Empty string = no filter (all providers).
+    // Source-of-truth municipality_code → display name mirror of backend
+    // _shared/constants.ts MUNICIPALITY_NAMES (kept inline to avoid widening
+    // scope into a shared client constants file). Keep in sync if backend
+    // registry changes.
+    let selectedMunicipality = '';
+    const MUNI_NAMES = {
+      VANCOUVER: 'Vancouver',
+      NVAN:      'North Vancouver',
+      WVAN:      'West Vancouver',
+      BBY:       'Burnaby',
+      RMD:       'Richmond',
+      SRY:       'Surrey',
+      COQ:       'Coquitlam',
+      NWS:       'New Westminster',
+      PMD:       'Port Moody',
+      PRC:       'Port Coquitlam',
+      DLT:       'Delta',
+      LGL:       'Langley',
+      MPR:       'Maple Ridge',
+      PTM:       'Pitt Meadows',
+      WHR:       'White Rock',
+      ABB:       'Abbotsford',
+      CHK:       'Chilliwack',
+      MSN:       'Mission',
+    };
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -607,7 +682,7 @@
       return (params.get('category') || 'handyman').trim().toLowerCase();
     }
 
-    function setHeaderCopy() {
+    function setHeaderCopy(displayList) {
       // Update <h1> while preserving the required structure: emoji + <span>Category</span>
       const h1 = document.getElementById('categoryTitle');
       if (h1) {
@@ -626,15 +701,17 @@
       if (back) back.setAttribute('href', homeHref);
       if (logo) logo.setAttribute('href', homeHref);
 
-      // Summary pills
+      // Summary pills — reflect the currently displayed (post-filter) list so
+      // the count and avg-response stay truthful when a municipality is selected.
       const avgEl = document.getElementById('avgResponsePill');
       const countEl = document.getElementById('providerCountPill');
 
-      const responses = providers.map((p) => p.response).filter((v) => Number.isFinite(v));
+      const list = Array.isArray(displayList) ? displayList : providers;
+      const responses = list.map((p) => p.response).filter((v) => Number.isFinite(v));
       const avg = responses.length ? Math.round(responses.reduce((a, b) => a + b, 0) / responses.length) : null;
 
       if (avgEl) avgEl.textContent = `⚡ Avg response ${avg ? `~${avg} min` : '—'}`;
-      if (countEl) countEl.textContent = `${providers.length || '—'} TaskLeaders`;
+      if (countEl) countEl.textContent = `${list.length || '—'} TaskLeaders`;
     }
 
     function formatResp(min) {
@@ -652,12 +729,58 @@
       return `$${priceDollars}/hr`;
     }
 
-    function sortProviders() {
-      const sorted = [...providers];
+    function sortProviders(list) {
+      const sorted = [...(Array.isArray(list) ? list : providers)];
       if (sortBy === 'response') sorted.sort((a, b) => (a.response ?? 999999) - (b.response ?? 999999));
       else if (sortBy === 'reliability') sorted.sort((a, b) => (b.reliability ?? -1) - (a.reliability ?? -1));
       else if (sortBy === 'price') sorted.sort((a, b) => (a.price ?? 999999) - (b.price ?? 999999));
       return sorted;
+    }
+
+    // P4 — apply the selected municipality filter against canonical
+    // municipality_codes. No filter (empty selection) → return list unchanged.
+    function applyMunicipalityFilter(list) {
+      if (!selectedMunicipality) return list;
+      const target = String(selectedMunicipality).toUpperCase();
+      return list.filter((p) => Array.isArray(p.municipalityCodes)
+        && p.municipalityCodes.some((c) => String(c).toUpperCase() === target));
+    }
+
+    // P4 — populate the municipality <select> from the union of providers'
+    // municipality_codes for the currently loaded category. Avoids dead options
+    // by only listing municipalities at least one provider serves.
+    function buildMunicipalityFilter() {
+      const sel = document.getElementById('municipalityFilter');
+      if (!sel) return;
+
+      const codes = new Set();
+      for (const p of providers) {
+        if (!Array.isArray(p.municipalityCodes)) continue;
+        for (const c of p.municipalityCodes) {
+          if (typeof c === 'string' && c.trim()) codes.add(c.toUpperCase());
+        }
+      }
+
+      const ordered = Array.from(codes)
+        .map((code) => ({ code, name: MUNI_NAMES[code] || code }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      // Preserve the current selection if it's still valid; otherwise reset to "All".
+      const previous = selectedMunicipality;
+      const stillValid = ordered.some((o) => o.code === previous);
+      if (!stillValid) selectedMunicipality = '';
+
+      sel.innerHTML = '<option value="">All municipalities</option>'
+        + ordered.map((o) => `<option value="${escapeHtml(o.code)}"${o.code === selectedMunicipality ? ' selected' : ''}>${escapeHtml(o.name)}</option>`).join('');
+
+      sel.classList.toggle('active', !!selectedMunicipality);
+    }
+
+    function setMunicipality(code) {
+      selectedMunicipality = (code || '').trim().toUpperCase();
+      const sel = document.getElementById('municipalityFilter');
+      if (sel) sel.classList.toggle('active', !!selectedMunicipality);
+      render();
     }
 
     function renderBadges(p) {
@@ -769,12 +892,23 @@
       document.getElementById('top3Heading').textContent = `Top 3 by ${sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}`;
 
       if (!Array.isArray(providers) || providers.length === 0) {
-        setHeaderCopy();
+        setHeaderCopy([]);
         renderEmptyState('No TaskLeaders available yet for this category.');
         return;
       }
 
-      const sorted = sortProviders();
+      // P4 — filter first, then sort/slice. Empty filter result must show a
+      // friendly area-aware empty state without alarming copy.
+      const filtered = applyMunicipalityFilter(providers);
+
+      if (filtered.length === 0) {
+        setHeaderCopy([]);
+        const muniName = MUNI_NAMES[selectedMunicipality] || selectedMunicipality;
+        renderEmptyState(`No TaskLeaders serving ${muniName} yet.`);
+        return;
+      }
+
+      const sorted = sortProviders(filtered);
 
       const top3 = sorted.slice(0, 3);
       const rest = sorted.slice(3);
@@ -790,7 +924,7 @@
       document.getElementById('top3').innerHTML = top3Desktop + top3Mobile;
       document.getElementById('board').innerHTML = boardDesktop + boardMobile;
 
-      setHeaderCopy();
+      setHeaderCopy(filtered);
     }
 
     function setSort(mode, evt) {
@@ -846,6 +980,10 @@
             name: r.display_name,
             photoUrl: r.profile_photo || null,
             area: r.service_area ? r.service_area.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : currentCityName,
+            // P4 — coverage data carried for client-side municipality filter.
+            // municipalityCodes is canonical; serviceCities kept for parity / future use.
+            municipalityCodes: Array.isArray(r.municipality_codes) ? r.municipality_codes : [],
+            serviceCities: Array.isArray(r.service_cities) ? r.service_cities : [],
             response,
             reliability,
             price,
@@ -854,6 +992,7 @@
           };
         });
 
+        buildMunicipalityFilter();
         render();
       } catch (e) {
         renderEmptyState('TaskLeaders coming soon to your area.');
