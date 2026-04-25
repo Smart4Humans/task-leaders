@@ -61,6 +61,9 @@ export const CATEGORY_LEAD_FEES_CENTS: Record<string, number> = {
 
 export const GST_RATE = 0.05;
 
+/** Calculates 5% GST on a base amount in cents. Rounds to nearest cent. */
+export function calcGst(base: number): number { return Math.round(base * GST_RATE); }
+
 // ─── Payment timing (locked) ────────────────────────────────────────────────
 export const PAYMENT_WINDOW_MS         = 10 * 60 * 1000; // 10 minutes total
 export const PAYMENT_WARNING_OFFSET_MS =  5 * 60 * 1000; // warn at: timeout_at - 5 min
@@ -82,7 +85,10 @@ export const VALID_CATEGORY_CODES = new Set(Object.keys(CATEGORY_NAMES));
 // Municipalities are the specific geographic units used for provider matching.
 // These are NOT exposed in public job IDs (which suppress all geography prefixes).
 //
-// Metro Vancouver (VAN market) — extend as service area grows.
+// Covers the 18 municipalities surfaced in the provider application Service Area
+// dropdown. Metro Vancouver and Fraser Valley municipalities are both mapped to
+// the VAN market for v1 — splitting Fraser Valley into a separate market is a
+// future concern.
 export const MUNICIPALITY_NAMES: Record<string, string> = {
   VANCOUVER: "Vancouver",
   NVAN:      "North Vancouver",
@@ -94,6 +100,14 @@ export const MUNICIPALITY_NAMES: Record<string, string> = {
   NWS:       "New Westminster",
   PMD:       "Port Moody",
   PRC:       "Port Coquitlam",
+  DLT:       "Delta",
+  LGL:       "Langley",
+  MPR:       "Maple Ridge",
+  PTM:       "Pitt Meadows",
+  WHR:       "White Rock",
+  ABB:       "Abbotsford",
+  CHK:       "Chilliwack",
+  MSN:       "Mission",
 };
 
 // municipality_code → market_code — used to verify a municipality belongs to
@@ -109,6 +123,14 @@ export const MUNICIPALITY_TO_MARKET: Record<string, string> = {
   NWS:       "VAN",
   PMD:       "VAN",
   PRC:       "VAN",
+  DLT:       "VAN",
+  LGL:       "VAN",
+  MPR:       "VAN",
+  PTM:       "VAN",
+  WHR:       "VAN",
+  ABB:       "VAN",
+  CHK:       "VAN",
+  MSN:       "VAN",
 };
 
 // municipality_code → free-text aliases for matching against service_cities[].
@@ -125,6 +147,14 @@ export const MUNICIPALITY_ALIASES: Record<string, string[]> = {
   NWS:       ["New Westminster", "New West"],
   PMD:       ["Port Moody"],
   PRC:       ["Port Coquitlam", "Port Coq", "PoCo"],
+  DLT:       ["Delta"],
+  LGL:       ["Langley", "City of Langley", "Langley City", "Township of Langley", "Langley Township"],
+  MPR:       ["Maple Ridge"],
+  PTM:       ["Pitt Meadows"],
+  WHR:       ["White Rock"],
+  ABB:       ["Abbotsford"],
+  CHK:       ["Chilliwack"],
+  MSN:       ["Mission", "District of Mission"],
 };
 
 export interface MunicipalityResult {
@@ -133,19 +163,35 @@ export interface MunicipalityResult {
 }
 
 // Ordered patterns — specific/longer names must precede shorter ambiguous ones.
-// "West Vancouver" before "Vancouver"; "Port Coquitlam" before "Coquitlam".
+// Two-word municipalities come first (prevents their constituent words from
+// matching via single-word patterns further down), followed by single-word
+// municipalities, with the generic "vancouver" catch-all last.
+// Examples handled by this ordering:
+//   "1234 Burnaby St, Maple Ridge" → Maple Ridge (two-word pattern wins over
+//     the single-word Burnaby street-name match).
+//   "Langley Township" → LGL (specific multi-word pattern wins over bare Langley).
+//   "West Vancouver" → WVAN (before the bare Vancouver catch-all).
 const MUNICIPALITY_PATTERNS: Array<[RegExp, string, string]> = [
-  [/\bwest\s*vancouver\b/i,   "WVAN",      "West Vancouver"],
-  [/\bnorth\s*vancouver\b/i,  "NVAN",      "North Vancouver"],
-  [/\bnew\s*westminster\b/i,  "NWS",       "New Westminster"],
-  [/\bport\s*coquitlam\b/i,   "PRC",       "Port Coquitlam"],
-  [/\bpoco\b/i,               "PRC",       "Port Coquitlam"],
-  [/\bport\s*moody\b/i,       "PMD",       "Port Moody"],
-  [/\bcoquitlam\b/i,          "COQ",       "Coquitlam"],
-  [/\bburnaby\b/i,            "BBY",       "Burnaby"],
-  [/\brichmond\b/i,           "RMD",       "Richmond"],
-  [/\bsurrey\b/i,             "SRY",       "Surrey"],
-  [/\bvancouver\b/i,          "VANCOUVER", "Vancouver"],
+  [/\bwest\s*vancouver\b/i,                                                                  "WVAN",      "West Vancouver"],
+  [/\bnorth\s*vancouver\b/i,                                                                 "NVAN",      "North Vancouver"],
+  [/\bnew\s*westminster\b/i,                                                                 "NWS",       "New Westminster"],
+  [/\bport\s*coquitlam\b/i,                                                                  "PRC",       "Port Coquitlam"],
+  [/\bpoco\b/i,                                                                              "PRC",       "Port Coquitlam"],
+  [/\bport\s*moody\b/i,                                                                      "PMD",       "Port Moody"],
+  [/\bmaple\s+ridge\b/i,                                                                     "MPR",       "Maple Ridge"],
+  [/\bpitt\s+meadows\b/i,                                                                    "PTM",       "Pitt Meadows"],
+  [/\bwhite\s+rock\b/i,                                                                      "WHR",       "White Rock"],
+  [/\b(?:township\s+of\s+langley|langley\s+township|city\s+of\s+langley|langley\s+city)\b/i, "LGL",       "Langley"],
+  [/\bcoquitlam\b/i,                                                                         "COQ",       "Coquitlam"],
+  [/\bburnaby\b/i,                                                                           "BBY",       "Burnaby"],
+  [/\brichmond\b/i,                                                                          "RMD",       "Richmond"],
+  [/\bsurrey\b/i,                                                                            "SRY",       "Surrey"],
+  [/\bdelta\b/i,                                                                             "DLT",       "Delta"],
+  [/\babbotsford\b/i,                                                                        "ABB",       "Abbotsford"],
+  [/\bchilliwack\b/i,                                                                        "CHK",       "Chilliwack"],
+  [/\bmission\b/i,                                                                           "MSN",       "Mission"],
+  [/\blangley\b/i,                                                                           "LGL",       "Langley"],
+  [/\bvancouver\b/i,                                                                         "VANCOUVER", "Vancouver"],
 ];
 
 /**
@@ -169,6 +215,8 @@ export function extractMunicipalityFromAddress(address: string): MunicipalityRes
  *   1. Exact code match in municipality_codes[] (structured — preferred going forward)
  *   2. Free-text match in service_cities[] against MUNICIPALITY_ALIASES
  *      (backward compat for providers who don't yet have municipality_codes)
+ *   3. Free-text match in service_area string against MUNICIPALITY_ALIASES
+ *      (covers providers whose profile only has service_area populated, e.g. "Delta")
  *
  * Does NOT fall back to market-level matching. Callers must combine this with
  * providerCoversCityWithFallback() for the full compatibility chain.
@@ -177,6 +225,7 @@ export function providerCoversMunicipality(
   municipalityCodes: string[] | null | undefined,
   serviceCities:     string[] | null | undefined,
   municipalityCode:  string,
+  serviceArea?:      string | null,
 ): boolean {
   // 1. Structured municipality_codes — exact code match
   if (Array.isArray(municipalityCodes) && municipalityCodes.length > 0) {
@@ -184,10 +233,11 @@ export function providerCoversMunicipality(
     if (municipalityCodes.some((c) => typeof c === "string" && c.toUpperCase() === target)) return true;
   }
 
-  // 2. Free-text service_cities against municipality aliases
   const aliases = MUNICIPALITY_ALIASES[municipalityCode];
+
+  // 2. Free-text service_cities against municipality aliases
   if (aliases && Array.isArray(serviceCities) && serviceCities.length > 0) {
-    return serviceCities.some((city) => {
+    const matched = serviceCities.some((city) => {
       const cityLower = (city ?? "").toLowerCase().trim();
       if (!cityLower) return false;
       return aliases.some((alias) => {
@@ -200,6 +250,14 @@ export function providerCoversMunicipality(
         return false;
       });
     });
+    if (matched) return true;
+  }
+
+  // 3. service_area free-text against municipality aliases
+  // Handles providers with only service_area populated (e.g. service_area = "Delta").
+  if (aliases && serviceArea) {
+    const areaLower = serviceArea.toLowerCase().trim();
+    if (aliases.some((alias) => areaLower.includes(alias.toLowerCase()))) return true;
   }
 
   return false;
@@ -407,10 +465,14 @@ export const KW_ACCEPT    = "ACCEPT";
 export const KW_PASS      = "PASS";
 export const KW_DECLINE   = "DECLINE";
 export const KW_HELP      = "HELP";
-export const KW_KEEP_OPEN = "KEEP OPEN";
-export const KW_CANCEL    = "CANCEL";
+export const KW_KEEP_OPEN      = "KEEP OPEN";         // legacy label — retained for back-compat
+export const KW_KEEP_SEARCHING = "KEEP SEARCHING";    // current WC-4 Quick Reply button label
+export const KW_CANCEL         = "CANCEL";            // legacy label — retained for back-compat
+export const KW_CLOSE_NOW      = "CLOSE NOW";         // current WC-4 Quick Reply button label
 export const KW_YES       = "YES";
 export const KW_NO        = "NO";
+export const KW_CLOSE     = "CLOSE";   // close an active job thread (client or provider)
+export const KW_DONE      = "DONE";    // provider signals job is complete; also closes thread
 
 /** Normalizes inbound message body for keyword matching. */
 export function normalizeKeyword(body: string): string {

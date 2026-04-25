@@ -80,6 +80,9 @@ export async function validateTwilioSignature(
  * Sends a WhatsApp message via Twilio Messages API.
  * All messages originate from the TaskLeaders WhatsApp number (TWILIO_WHATSAPP_NUMBER).
  * The recipient (to) is an E.164 number without the whatsapp: prefix.
+ *
+ * Use this for in-session/free-form messages (WT-6, WT-7, WT-8, relay messages).
+ * For business-initiated sends that require Meta-approved templates, use sendTemplateWhatsApp().
  */
 export async function sendWhatsApp(
   env: TwilioEnv,
@@ -101,6 +104,68 @@ export async function sendWhatsApp(
         "Authorization": "Basic " + btoa(`${env.accountSid}:${env.authToken}`),
       },
       body: params,
+    });
+
+    const data = await res.json();
+    if (res.ok && data.sid) {
+      return { ok: true, messageSid: data.sid, error: null };
+    }
+    return { ok: false, messageSid: null, error: data.message ?? "Twilio send failed" };
+  } catch (e) {
+    return { ok: false, messageSid: null, error: String(e) };
+  }
+}
+
+/**
+ * Sends a business-initiated WhatsApp message using a Meta-approved Content Template.
+ *
+ * Production path (contentSid set):
+ *   Sends via ContentSid + ContentVariables. The approved template body is rendered
+ *   by Twilio/Meta — the fallbackBody is NOT sent, but IS used for message_log.
+ *
+ * Sandbox / development path (contentSid absent or null):
+ *   Falls through to plain Body send (same as sendWhatsApp). Sandbox does not
+ *   enforce template approval, so this works for testing without SIDs configured.
+ *
+ * Use for all 9 business-initiated sends: WC-1..WC-4, WT-1..WT-5.
+ * Configure template SIDs via Supabase Edge Function secrets:
+ *   TWILIO_TEMPLATE_SID_WC1, TWILIO_TEMPLATE_SID_WC2, ... TWILIO_TEMPLATE_SID_WT5
+ *
+ * contentVariables keys must match the {{N}} placeholder indices in the registered
+ * Twilio Content Template exactly (e.g. {"1": "Alice", "2": "Cleaning"}).
+ */
+export async function sendTemplateWhatsApp(
+  env: TwilioEnv,
+  to: string,                                              // E.164, e.g. +16041234567
+  contentSid: string | null | undefined,                   // HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  contentVariables: Record<string, string> | null | undefined,
+  fallbackBody: string,                                    // buildXxx() output — logged always
+): Promise<SendResult> {
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${env.accountSid}/Messages.json`;
+
+  const params: Record<string, string> = {
+    From: `whatsapp:${env.whatsappNumber}`,
+    To:   `whatsapp:${to}`,
+  };
+
+  if (contentSid) {
+    params["ContentSid"] = contentSid;
+    if (contentVariables && Object.keys(contentVariables).length > 0) {
+      params["ContentVariables"] = JSON.stringify(contentVariables);
+    }
+  } else {
+    // No SID configured — fall through to plain body (Sandbox / pre-production)
+    params["Body"] = fallbackBody;
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type":  "application/x-www-form-urlencoded",
+        "Authorization": "Basic " + btoa(`${env.accountSid}:${env.authToken}`),
+      },
+      body: new URLSearchParams(params),
     });
 
     const data = await res.json();
@@ -202,7 +267,7 @@ export function buildWC4(
   return (
     `${hdr} We apologize — we weren't able to confirm a ${categoryName} match for you just yet.\n\n` +
     `Your request is still open.\n\n` +
-    `Reply KEEP OPEN if you'd like us to keep trying, or CANCEL if you'd like us to close this request.`
+    `Reply KEEP SEARCHING if you'd like us to keep trying, or CLOSE NOW if you'd like us to close this request.`
   );
 }
 
@@ -253,17 +318,40 @@ export function buildWT3(
   );
 }
 
-/** WT-4 — Lead Guarantee claim confirmation (sent to client) */
+/**
+ * WT-4 — Lead Guarantee factual confirmation (sent to provider / TaskLeader)
+ * Registered in Twilio with YES/NO Quick Reply buttons. In production the interactive
+ * buttons render from the approved Content Template. The fallback body below is used
+ * for sandbox testing and message_log.
+ */
 export function buildWT4(
+  jobId: string,
+  address: string,
+): string {
+  const hdr = jobHeader(jobId, address);
+  return (
+    `${hdr} We have received your Lead Guarantee request for this job.\n\n` +
+    `To process this claim, we need your factual confirmation: did any work take place, or was any work arranged to take place, for this job?\n\n` +
+    `Please reply YES or NO.`
+  );
+}
+
+/**
+ * WC-5 — Lead Guarantee client factual check (sent to client)
+ * Registered in Twilio with YES/NO Quick Reply buttons. In production the interactive
+ * buttons render from the approved Content Template. The fallback body below is used
+ * for sandbox testing and message_log.
+ */
+export function buildWC5(
   jobId: string,
   address: string,
   providerName: string,
 ): string {
   const hdr = jobHeader(jobId, address);
   return (
-    `${hdr} We have received notification from ${providerName} that work related to this job never has and never will take place.\n\n` +
+    `${hdr} We have received a report from ${providerName} indicating that no work related to this job has taken place or will take place.\n\n` +
     `Did or will any work take place for the original job request you submitted?\n\n` +
-    `Please reply YES or NO in this chat.`
+    `Please reply YES or NO.`
   );
 }
 
@@ -307,6 +395,99 @@ export function buildWT7(
     `${hdr} This lead has been released because we did not receive payment within the required time window.\n\n` +
     `This will affect your Reliability score.\n\n` +
     `To avoid this in future, add or update your payment card on file here: ${updateCardUrl}`
+  );
+}
+
+/** WT-8 — Payment confirmed / job thread open (sent to provider after successful payment)
+ *
+ * Concierge providers should initiate promptly — responsiveness and proactive
+ * coordination are part of the TaskLeaders reliability standard. If the client's
+ * first name is known, address the provider's call-to-action by name; otherwise
+ * fall back to "the Client".
+ */
+export function buildWT8(
+  jobId: string,
+  address: string,
+  categoryName: string,
+  clientFirstName?: string | null,
+): string {
+  const hdr     = jobHeader(jobId, address);
+  const whoRaw  = (clientFirstName ?? "").trim();
+  const who     = whoRaw.length > 0 ? whoRaw : "the Client";
+  return (
+    `Payment received — you're confirmed on this ${categoryName} job.\n\n` +
+    `Job ID: ${hdr}\n\n` +
+    `We've opened your TaskLeaders job thread with ${who}. ` +
+    `Please message ${who} here now to confirm job details, timing, and next steps.`
+  );
+}
+
+/**
+ * WT-9 — Lead Guarantee claim approved (sent to provider / TaskLeader)
+ * Business-initiated: must be sent via an approved template to cross the 24-hour
+ * session window (admin may resolve the claim hours or days after WT-4).
+ */
+export function buildWT9(
+  jobId: string,
+  address: string,
+): string {
+  const hdr = jobHeader(jobId, address);
+  return (
+    `${hdr} Your Lead Guarantee claim has been approved.\n\n` +
+    `Your lead fee will be refunded to your original payment method within 7 business days. ` +
+    `Refund processing is handled manually — we will follow up in this thread once the refund has been issued.\n\n` +
+    `Reply HELP if you have any questions.`
+  );
+}
+
+/**
+ * WT-10 — Lead Guarantee claim denied (sent to provider / TaskLeader)
+ * Business-initiated: must be sent via an approved template to cross the 24-hour
+ * session window.
+ */
+export function buildWT10(
+  jobId: string,
+  address: string,
+): string {
+  const hdr = jobHeader(jobId, address);
+  return (
+    `${hdr} Your Lead Guarantee claim has been reviewed and was not approved.\n\n` +
+    `No refund will be issued for this claim.\n\n` +
+    `Reply HELP if you have questions about this outcome.`
+  );
+}
+
+/**
+ * WC-7 — Lead Guarantee claim approved (sent to client)
+ * Business-initiated: must be sent via an approved template to cross the 24-hour
+ * session window.
+ */
+export function buildWC7(
+  jobId: string,
+  address: string,
+): string {
+  const hdr = jobHeader(jobId, address);
+  return (
+    `${hdr} The Lead Guarantee claim for your job has been reviewed and approved.\n\n` +
+    `No further action is required on your part.\n\n` +
+    `Reply HELP if you have any questions.`
+  );
+}
+
+/**
+ * WC-8 — Lead Guarantee claim denied (sent to client)
+ * Business-initiated: must be sent via an approved template to cross the 24-hour
+ * session window.
+ */
+export function buildWC8(
+  jobId: string,
+  address: string,
+): string {
+  const hdr = jobHeader(jobId, address);
+  return (
+    `${hdr} The Lead Guarantee claim for your job has been reviewed.\n\n` +
+    `No further action is required on your part.\n\n` +
+    `Reply HELP if you have any questions.`
   );
 }
 
