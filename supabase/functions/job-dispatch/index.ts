@@ -20,11 +20,13 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
-  getTwilioEnv, sendWhatsApp, logMessage, buildWT2, buildWC4,
+  getTwilioEnv, sendWhatsApp, sendTemplateWhatsApp, logMessage, buildWT2, buildWC4,
+  jobHeader,
 } from "../_shared/twilio.ts";
 import {
   CATEGORY_NAMES, normalizeToCategoryCode, providerCoversCity,
   CITY_CODE_TO_NAMES, providerCoversMunicipality,
+  MUNICIPALITY_TO_MARKET, MUNICIPALITY_ALIASES,
 } from "../_shared/constants.ts";
 import { getCategoryLeadFee } from "../_shared/fees.ts";
 import { toPublicJobId } from "../_shared/job-ids.ts";
@@ -92,10 +94,24 @@ function providerCoversCityWithFallback(
 
   // Fallback: service_area text (only if service_cities is empty/null)
   if (serviceArea) {
-    const areaLower   = serviceArea.toLowerCase();
-    const aliases     = CITY_CODE_TO_NAMES[cityCode] ?? [];
-    // Only match aliases >= 4 chars in fallback text search
-    return aliases.some((a) => a.length >= 4 && areaLower.includes(a.toLowerCase()));
+    const areaLower = serviceArea.toLowerCase();
+
+    // Step 1: match against market-level city aliases (e.g. "Vancouver", "Metro Vancouver")
+    const cityAliases = CITY_CODE_TO_NAMES[cityCode] ?? [];
+    if (cityAliases.some((a) => a.length >= 4 && areaLower.includes(a.toLowerCase()))) {
+      return true;
+    }
+
+    // Step 2: match against municipality aliases that belong to this market
+    // Handles providers whose service_area is a municipality name (e.g. "burnaby", "Richmond")
+    // rather than a market-level term. BBY → "VAN" means a Burnaby provider covers the VAN market.
+    for (const [munCode, marketCode] of Object.entries(MUNICIPALITY_TO_MARKET)) {
+      if (marketCode !== cityCode) continue;
+      const munAliases = MUNICIPALITY_ALIASES[munCode] ?? [];
+      if (munAliases.some((a) => a.length >= 4 && areaLower.includes(a.toLowerCase()))) {
+        return true;
+      }
+    }
   }
 
   return false;
@@ -136,7 +152,7 @@ Deno.serve(async (req) => {
   // ── Load job ───────────────────────────────────────────────────────────────
   const { data: job, error: jobErr } = await supabase
     .from("jobs")
-    .select("job_id, city_code, market_code, municipality_code, category_code, category_name, state, address, description, client_id, client_whatsapp, lead_fee_cents, gst_cents, source")
+    .select("job_id, city_code, market_code, municipality_code, municipality_name, category_code, category_name, state, address, description, job_timing, client_id, client_whatsapp, lead_fee_cents, gst_cents, source")
     .eq("job_id", jobId)
     .single();
 
@@ -156,6 +172,12 @@ Deno.serve(async (req) => {
 
   const categoryName = CATEGORY_NAMES[job.category_code] ?? job.category_name ?? job.category_code;
   const address      = job.address ?? "address on file";
+
+  // Broadcast-safe location: municipality name/code only — never the civic address.
+  // Full address is revealed post-ACCEPT via job context resolution in twilio-webhook.
+  const broadcastArea = (job.municipality_name as string | null)
+                     ?? (job.municipality_code as string | null)
+                     ?? "Vancouver area";
 
   // ── Query Concierge-eligible providers ────────────────────────────────────
   // Only concierge_eligible = true providers are fetched.
@@ -200,11 +222,14 @@ Deno.serve(async (req) => {
     if (!hasCategory) return false;
 
     // Tier 1: municipality match (only possible when job has municipality_code)
+    // Checks municipality_codes[], service_cities[], and service_area in that order.
+    // service_area handles providers whose profile only has that field populated.
     if (job.municipality_code) {
       const munMatch = providerCoversMunicipality(
         p.municipality_codes,
         p.service_cities,
         job.municipality_code,
+        p.service_area,
       );
       if (munMatch) return true;
     }
@@ -227,11 +252,16 @@ Deno.serve(async (req) => {
       const twilioEnv = getTwilioEnv();
       if (twilioEnv) {
         const msgBody = buildWC4(job.job_id, address, categoryName);
-        await sendWhatsApp(twilioEnv, job.client_whatsapp, msgBody);
+        const wc4Sid  = Deno.env.get("TWILIO_TEMPLATE_SID_WC4");
+        const result  = await sendTemplateWhatsApp(
+          twilioEnv, job.client_whatsapp,
+          wc4Sid, { "1": jobHeader(job.job_id, address), "2": categoryName },
+          msgBody,
+        );
         logMessage({
           supabaseUrl, serviceRoleKey, direction: "outbound",
           jobId: job.job_id, participantWhatsapp: job.client_whatsapp,
-          templateName: "WC-4", body: msgBody, status: "sent",
+          templateName: "WC-4", body: msgBody, status: result.ok ? "sent" : "failed",
         });
         await supabase.from("conversation_sessions").upsert({
           whatsapp_e164:   job.client_whatsapp,
@@ -259,20 +289,43 @@ Deno.serve(async (req) => {
   const twilioEnv = getTwilioEnv();
   if (!twilioEnv) return err("server_error", "Twilio not configured", 500);
 
-  const timing     = job.description
-    ? job.description.split("\n")[0].substring(0, 100)
-    : "Contact client for timing";
-  const desc       = job.description ?? "Details provided by client";
+  // job_timing holds the scheduling preference ("tomorrow morning", "ASAP", etc.)
+  // description holds the specific job details collected in the awaiting_details step.
+  // Both are kept separate so WT-2 variables "When" and "Details" show distinct text.
+  const rawTiming = String((job as Record<string, unknown>).job_timing ?? "").trim();
+  const timing    = rawTiming || "Contact client for timing";
+  const desc      = job.description ?? "Details provided by client";
 
   const broadcastRows: Record<string, unknown>[] = [];
   let sentCount = 0;
 
+  const wt2Sid = Deno.env.get("TWILIO_TEMPLATE_SID_WT2");
+
   for (const provider of eligible) {
     const msgBody = buildWT2(
-      job.job_id, address, categoryName, timing, desc, feeDollars,
+      job.job_id, broadcastArea, categoryName, timing, desc, feeDollars,
     );
 
-    const result = await sendWhatsApp(twilioEnv, provider.whatsapp_number, msgBody);
+    // Approved WT-2 template variable layout:
+    //   {{1}} = header line ("[Job #PUB-NNNNN | <Area>]")
+    //   {{2}} = Service / category
+    //   {{3}} = Timing
+    //   {{4}} = Details
+    //   {{5}} = Lead Fee
+    // The municipality is included inside the header line via jobHeader(), so
+    // there is no separate Area variable — Service occupies the {{2}} slot in
+    // the updated template. Matches buildWT2() fallback body structure.
+    const result = await sendTemplateWhatsApp(
+      twilioEnv, provider.whatsapp_number,
+      wt2Sid, {
+        "1": jobHeader(job.job_id, broadcastArea),
+        "2": categoryName,
+        "3": timing,
+        "4": desc,
+        "5": feeDollars,
+      },
+      msgBody,
+    );
 
     broadcastRows.push({
       job_id:            job.job_id,

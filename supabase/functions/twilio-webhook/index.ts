@@ -25,13 +25,13 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 import {
   validateTwilioSignature, getTwilioEnv, sendWhatsApp, logMessage,
   buildWC4, buildWC2, buildRelayToProvider, buildRelayToClient,
-  SURVEY_QUESTIONS, buildMKT2Declined,
+  SURVEY_QUESTIONS, buildMKT2Declined, jobHeader,
 } from "../_shared/twilio.ts";
 import {
   normalizeKeyword,
   KW_ACCEPT, KW_PASS, KW_DECLINE, KW_HELP,
-  KW_KEEP_OPEN, KW_CANCEL, KW_YES, KW_NO,
-  CATEGORY_NAMES, CATEGORY_PROVIDER_NOUNS, CATEGORY_LEAD_FEES_CENTS, calcGst as calcGstFn,
+  KW_KEEP_OPEN, KW_KEEP_SEARCHING, KW_CANCEL, KW_CLOSE_NOW, KW_YES, KW_NO, KW_CLOSE, KW_DONE,
+  CATEGORY_NAMES, CATEGORY_LEAD_FEES_CENTS, calcGst as calcGstFn,
   SLUG_TO_CATEGORY_CODE, extractMunicipalityFromAddress,
 } from "../_shared/constants.ts";
 import { toPublicJobId } from "../_shared/job-ids.ts";
@@ -46,6 +46,15 @@ function calcGst(base: number) { return Math.round(base * 0.05); }
 function isCancelCommand(body: string): boolean {
   const lower = body.trim().toLowerCase();
   return lower === "cancel" || lower === "stop" || lower === "never mind" || lower === "nevermind";
+}
+
+// ─── Thread-close commands ───────────────────────────────────────────────────
+// Intercepted in active (open) thread sessions — BEFORE relay — so they are
+// never forwarded to the other participant as chat messages.
+// Triggers the two-step close confirmation flow (prompt → YES/NO).
+
+function isThreadCloseCommand(kw: string): boolean {
+  return kw === KW_CLOSE || kw === KW_CANCEL || kw === KW_DONE;
 }
 
 // ─── TwiML response (no auto-reply) ──────────────────────────────────────────
@@ -206,25 +215,48 @@ Deno.serve(async (req) => {
   } catch { /* non-fatal: log insert failure does not block webhook processing */ }
 
   // ── Identify sender ────────────────────────────────────────────────────────
-  // Both lookups use OR to match the stored number in either +E164 or plain-digits
-  // format. concierge-apply and provider onboarding do not normalize phone numbers
-  // before storage, so both formats may exist in production.
+  // Match the stored number in either +E164 or plain-digits format, and filter
+  // at the DB level to a single usable (active, not suspended) row.
+  //
+  // Uses .in() instead of .or() so a literal '+' in the E.164 form never reaches
+  // PostgREST URL decoding. Uses .limit(1) instead of .maybeSingle() so multi-row
+  // matches (duplicate rows across number formats, or shared numbers) cannot
+  // silently poison the lookup with PGRST116. Any PostgrestError is surfaced to
+  // admin_alerts so a broken lookup cannot fall through to "we don't have a record".
   const [clientRes, providerRes] = await Promise.all([
     supabase
       .from("concierge_clients")
       .select("id, first_name, last_name, name, status, suspended, risk_flags")
-      .or(`whatsapp.eq.${fromNumber},whatsapp.eq.${fromNumberDigits}`)
-      .maybeSingle(),
+      .in("whatsapp", [fromNumber, fromNumberDigits])
+      .eq("status", "active")
+      .eq("suspended", false)
+      .limit(1),
     supabase
       .from("provider_accounts")
       .select("slug, first_name, last_name, status, suspended, concierge_eligible, card_on_file")
-      .or(`whatsapp_number.eq.${fromNumber},whatsapp_number.eq.${fromNumberDigits}`)
-      .eq("suspended", false)   // exclude deactivated providers — shared test numbers must not collide
-      .maybeSingle(),
+      .in("whatsapp_number", [fromNumber, fromNumberDigits])
+      .eq("status", "active")
+      .eq("suspended", false)
+      .limit(1),
   ]);
 
-  const client   = clientRes.data;
-  const provider = providerRes.data;
+  if (clientRes.error || providerRes.error) {
+    try {
+      await supabase.from("admin_alerts").insert({
+        alert_type:          "escalation",
+        priority:            "high",
+        participant_whatsapp: fromNumber,
+        description:
+          `Sender lookup failed. ` +
+          `client_err=${clientRes.error?.code ?? "-"}:${clientRes.error?.message ?? "-"} ` +
+          `provider_err=${providerRes.error?.code ?? "-"}:${providerRes.error?.message ?? "-"}`,
+        status: "open",
+      });
+    } catch { /* non-fatal: alert insert failure does not block webhook processing */ }
+  }
+
+  const client   = clientRes.data?.[0] ?? null;
+  const provider = providerRes.data?.[0] ?? null;
 
   // ── Load conversation session ─────────────────────────────────────────────
   const { data: session } = await supabase
@@ -351,8 +383,54 @@ async function handleClientMessage(
     return;
   }
 
+  // ── Awaiting match (job broadcast sent; pre-ACCEPT/payment) ───────────────
+  // Set by finalizeAndDispatch so a subsequent inbound from the client cannot
+  // silently start a second intake while the first is still being matched.
+  // Accepts a cancel command to abort the current job; any other message gets
+  // a "still searching" acknowledgement without falling through to a new intake.
+  if (sessionState === "awaiting_match") {
+    await handleAwaitingMatchMessage(ctx, currentJobId, body, updateSession);
+    return;
+  }
+
+  // ── Structured intake wizard states (Phase 1 + 2) ──────────────────────────
+  // Each handler owns its own cancel check so NO / CANCEL at any pre-finalize
+  // step cleanly resets the session and cancels the draft job if one exists.
+  if (sessionState === "awaiting_service") {
+    await handleAwaitingService(ctx, client, updateSession);
+    return;
+  }
+  if (sessionState === "awaiting_service_confirm") {
+    await handleAwaitingServiceConfirm(ctx, client, updateSession);
+    return;
+  }
+  if (sessionState === "awaiting_municipality") {
+    await handleAwaitingMunicipality(ctx, updateSession);
+    return;
+  }
+  if (sessionState === "awaiting_final_confirm") {
+    await handleAwaitingFinalConfirm(ctx, updateSession);
+    return;
+  }
+  if (sessionState === "awaiting_edit_choice") {
+    await handleAwaitingEditChoice(ctx, updateSession);
+    return;
+  }
+
+  // ── Thread-close confirmation ──────────────────────────────────────────────
+  // Client has already been shown the close prompt and is answering YES/NO.
+  if (sessionState === "awaiting_close_confirm") {
+    await handleCloseConfirm(ctx, currentJobId, kw, "client", updateSession);
+    return;
+  }
+
   // ── Active thread: relay to provider ──────────────────────────────────────
   if (sessionState === "open" || sessionState === "active") {
+    // Intercept close commands BEFORE relay — never forward them as chat messages.
+    if (isThreadCloseCommand(kw) && currentJobId) {
+      await handleCloseRequest(ctx, currentJobId, updateSession);
+      return;
+    }
     const jctx = await resolveJobContext(ctx.supabase, fromNumber, currentJobId, body);
     if (jctx === "ambiguous") {
       await sendDisambiguationPrompt(ctx, updateSession);
@@ -413,6 +491,184 @@ async function sendDisambiguationPrompt(
   await updateSession({ session_state: "open", last_prompt: prompt });
 }
 
+// ─── Timing phrase extractor ──────────────────────────────────────────────────
+// Extracts the specific timing signal from free-text, not the whole sentence.
+// Patterns are ordered most-specific → least-specific so compound phrases like
+// "tomorrow morning" match before their individual words.
+// Returns the matched substring (original casing preserved) or null if no match.
+
+function extractTimingPhrase(text: string): string | null {
+  const patterns: RegExp[] = [
+    /\b(tomorrow\s+(?:morning|afternoon|evening))\b/i,
+    /\b(this\s+(?:morning|afternoon|evening|weekend|week))\b/i,
+    /\b(next\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|weekend|week))\b/i,
+    /\b((?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+(?:morning|afternoon|evening))\b/i,
+    /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+    /\b(tomorrow)\b/i,
+    /\b(today)\b/i,
+    /\b(asap)\b/i,
+    /\b(weekend)\b/i,
+    /\b(morning|afternoon|evening)\b/i,
+  ];
+  for (const p of patterns) {
+    const m = text.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+// ─── Inline address extractor ────────────────────────────────────────────────
+// Used on the FIRST intake message only, to detect whether a complete address
+// was included up-front (e.g. "I need a cleaner at 123 Main St, New Westminster").
+//
+// Two independent guards must both pass — this is what keeps false-positive risk low:
+//   1. Known municipality via extractMunicipalityFromAddress() — precise, exhaustive list.
+//   2. A plausible street-number pattern via one of two sub-tests:
+//        a. Contextual: number directly follows "at ", "@", or message start (^).
+//           "at" + number eliminates most quantity phrases ("at 10 units" is
+//           unrealistic; "I need 10 units" has no "at" before the digit).
+//        b. Structural: number followed by a common BC street-type abbreviation
+//           (St, Ave, Blvd, Rd, Dr, Way, Ln, Crt, Pl, Cres, Terr, Hwy).
+//           Catches "123 Main Ave, Vancouver" without a leading "at".
+//
+// 2+ digit minimum for contextual path (eliminates "1 plumber").
+// Street-type path uses 2+ digits plus an explicit suffix — very low false-positive risk.
+//
+// Returns the composed address string and municipality info, or null if either
+// guard fails.
+
+function extractInlineAddress(
+  text: string,
+): { address: string; code: string; name: string } | null {
+  // Guard 1: known municipality
+  const munResult = extractMunicipalityFromAddress(text);
+  if (!munResult) return null;
+
+  // Guard 2a: contextual — number following "at", "@", or start-of-message
+  const contextualMatch = /(?:^|\bat\s+|@\s*)(\d{2,}[A-Za-z]?\s+[A-Za-z][^,]*)/i.exec(text);
+  // Guard 2b: structural — number followed by a recognised BC street-type suffix
+  const structuralMatch = /\b(\d{2,}[A-Za-z]?\s+[A-Za-z][A-Za-z0-9\s.-]*\b(?:street|avenue|boulevard|road|drive|way|lane|court|place|crescent|terrace|highway|st|ave|blvd|rd|dr|ln|crt|pl|cres|terr|hwy)\b)/i.exec(text);
+
+  const rawFragment = (contextualMatch?.[1] ?? structuralMatch?.[1] ?? "").trim();
+  if (!rawFragment) return null;
+
+  // Trim the fragment to end at the municipality name, discarding any trailing
+  // words (e.g. "123 Main St New Westminster please" → "123 Main St New Westminster").
+  const munNameEscaped = munResult.name.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&").replace(/\s+/g, "\\s+");
+  const munInFrag = new RegExp(munNameEscaped, "i").exec(rawFragment);
+  const fragment  = munInFrag
+    ? rawFragment.slice(0, munInFrag.index + munInFrag[0].length).trim()
+    : rawFragment.trim();
+
+  // Compose: append municipality name if not already present in the fragment.
+  const address = extractMunicipalityFromAddress(fragment)
+    ? fragment
+    : `${fragment}, ${munResult.name}`;
+
+  return { address, code: munResult.code, name: munResult.name };
+}
+
+// ─── Category keyword matching ────────────────────────────────────────────────
+// Module-level so both the fresh-intake path and the opening-remainder helper
+// can see the keyword that fired without re-deriving it.
+
+const CATEGORY_KEYWORDS: [string[], string][] = [
+  [["plumb", "pipe", "leak", "drain"],                 "PLM"],
+  [["clean"],                                          "CLN"],
+  [["handyman", "repair", "fix", "install"],           "HND"],
+  [["electric", "outlet", "wiring", "breaker"],        "ELC"],
+  [["paint"],                                          "PLT"],
+  [["hvac", "heat", "furnace", "air condition", "ac"], "HVC"],
+  [["mov", "transport", "haul"],                       "MVG"],
+  [["yard", "lawn", "garden", "snow"],                 "YRD"],
+];
+
+function matchCategoryKeyword(text: string): { code: string; keyword: string } | null {
+  const lower = text.toLowerCase();
+  for (const [keywords, code] of CATEGORY_KEYWORDS) {
+    const hit = keywords.find((kw) => lower.includes(kw));
+    if (hit) return { code, keyword: hit };
+  }
+  return null;
+}
+
+// ─── Opening-message details remainder ────────────────────────────────────────
+// After address + timing are captured from the client's opening message, see
+// whether the leftover text is substantial enough to treat as the service
+// description — letting us skip the extra "briefly describe…" prompt.
+//
+// Conservative thresholds: at least 4 content words (stopwords excluded) AND
+// at least 15 non-whitespace chars in the remainder. Stopwords are excluded
+// from the count but preserved in the returned string so it reads naturally.
+
+const OPENING_REMAINDER_STOPWORDS = new Set([
+  "i", "need", "a", "an", "the", "please", "to", "for", "in", "at", "on", "my", "our",
+]);
+const OPENING_REMAINDER_MIN_CONTENT_WORDS = 4;
+const OPENING_REMAINDER_MIN_CHARS         = 15;
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractOpeningRemainder(
+  opening: string,
+  parts: {
+    address?: string | null;
+    timingPhrase?: string | null;
+    categoryKeyword?: string | null;
+  },
+): string | null {
+  if (!opening) return null;
+  let remainder = opening;
+
+  // Strip the address phrase along with any immediately preceding connector word
+  // (at / @ / in / on / near / by) so we don't leave fragments like "I need help at."
+  // after the address is removed. Falls back to bare-phrase strip if no connector is
+  // adjacent.
+  if (parts.address) {
+    const addr = escapeRegExp(parts.address);
+    const re = new RegExp(`\\b(?:at|@|in|on|near|by)\\s+${addr}|${addr}`, "i");
+    remainder = remainder.replace(re, " ");
+  }
+
+  // Strip the timing phrase as a plain substring (first occurrence, case-insensitive).
+  if (parts.timingPhrase) {
+    const re = new RegExp(escapeRegExp(parts.timingPhrase), "i");
+    remainder = remainder.replace(re, " ");
+  }
+
+  // Strip the category keyword only at a word boundary so compound forms like
+  // "cleaner", "cleaning", or "deep-clean" are preserved in the description.
+  if (parts.categoryKeyword) {
+    const re = new RegExp(`\\b${escapeRegExp(parts.categoryKeyword)}\\b`, "i");
+    remainder = remainder.replace(re, " ");
+  }
+
+  // Collapse whitespace; pull punctuation back to the preceding word so we don't
+  // emit "service . Furnace"; trim stranded separators introduced by the strips above.
+  remainder = remainder
+    .replace(/\s+([.,;:!?])/g, "$1")
+    .replace(/\s+/g, " ")
+    .replace(/^[\s,.\-—:;]+|[\s,.\-—:;]+$/g, "")
+    .trim();
+
+  if (remainder.replace(/\s+/g, "").length < OPENING_REMAINDER_MIN_CHARS) return null;
+
+  const contentWordCount = remainder
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => {
+      const alpha = w.replace(/[^a-z]/g, "");
+      return alpha.length > 0 && !OPENING_REMAINDER_STOPWORDS.has(alpha);
+    })
+    .length;
+
+  if (contentWordCount < OPENING_REMAINDER_MIN_CONTENT_WORDS) return null;
+
+  return remainder;
+}
+
 // ─── Concierge intake ─────────────────────────────────────────────────────────
 
 async function handleConciergeIntake(
@@ -427,7 +683,7 @@ async function handleConciergeIntake(
   // ── Reserved cancel commands — checked before any input parsing ───────────
   // Aborts intake at any pre-finalize state. "cancel", "stop", "never mind",
   // "nevermind" are all treated as explicit abandonment intent.
-  const PRE_FINALIZE_STATES = new Set(["awaiting_address", "awaiting_timing"]);
+  const PRE_FINALIZE_STATES = new Set(["awaiting_address", "awaiting_timing", "awaiting_details"]);
   if (PRE_FINALIZE_STATES.has(sessionState) && isCancelCommand(body)) {
     if (currentJobId) {
       await supabase.from("jobs")
@@ -440,104 +696,446 @@ async function handleConciergeIntake(
     return;
   }
 
-  // ── Awaiting address ───────────────────────────────────────────────────────
+  // ── Awaiting address (street-only; city is already on record) ─────────────
+  // Structured wizard: when the user is asked for an address, the municipality
+  // has already been confirmed and saved to jobs.municipality_code/name. This
+  // handler only requires a street number; we compose "{street}, {city}" using
+  // the already-stored city. No municipality parsing runs on the reply — that
+  // structurally eliminates the single-word-municipality street-name collision
+  // class of bug flagged in CLAUDE.md §11.
   if (sessionState === "awaiting_address" && currentJobId) {
-    // Validate: address must contain (a) at least one digit (street number) AND
-    // (b) a recognizable municipality/city that maps into the geography system.
-    // Both conditions are required — a street number alone (e.g. "999 Stud Ave")
-    // is not enough because we cannot route to a provider without knowing the city.
-    // Cancel commands have already been intercepted above and never reach here.
     const hasStreetNumber = /\d/.test(body);
-    const munResult       = extractMunicipalityFromAddress(body);
-    const isValidAddress  = hasStreetNumber && munResult !== null;
-    if (!isValidAddress) {
-      const prompt = `Please provide a complete address including street number and city (e.g. "123 Main St, Vancouver" or "456 Oak Ave, Burnaby").`;
+    if (!hasStreetNumber) {
+      const prompt = `Please include a street number (e.g. "123 Main St").`;
       await sendAndLog(ctx, fromNumber, prompt, { jobId: currentJobId, templateName: "INTAKE_ADDRESS_INVALID" });
-      // Stay in awaiting_address — do not write to jobs or advance the session
       return;
     }
 
-    // Municipality already extracted above — reuse it when writing the address.
-    // Populates municipality_code + municipality_name for precise dispatch matching.
-    const addressUpdate: Record<string, unknown> = { address: body };
-    if (munResult) {
-      addressUpdate.municipality_code = munResult.code;
-      addressUpdate.municipality_name = munResult.name;
-    }
-    await supabase.from("jobs").update(addressUpdate).eq("job_id", currentJobId);
-    // Check the original intake message (stored as description) for timing info.
-    // description is always set (it's the initial intake body), so we must inspect
-    // its content — not just its existence — to decide whether timing is already known.
-    const { data: job } = await supabase.from("jobs").select("description").eq("job_id", currentJobId).single();
-    const timingPattern = /asap|today|tomorrow|morning|afternoon|evening|mon|tue|wed|thu|fri|sat|sun|weekend/i;
-    const hasTimingInDescription = timingPattern.test(job?.description ?? "");
-    if (!hasTimingInDescription) {
-      const prompt = `Thank you. When do you need this done? (e.g. "tomorrow morning", "ASAP")`;
-      if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, prompt);
-      logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: currentJobId, participantWhatsapp: fromNumber, body: prompt, status: "sent" });
-      await updateSession({ session_state: "awaiting_timing", current_job_id: currentJobId, last_prompt: prompt });
-    } else {
-      await finalizeAndDispatch(ctx, currentJobId, updateSession);
-    }
+    const { data: job } = await supabase
+      .from("jobs").select("municipality_name").eq("job_id", currentJobId).single();
+    const cityName = String((job as Record<string, unknown> | null)?.municipality_name ?? "").trim();
+    const composed = cityName ? `${body.trim()}, ${cityName}` : body.trim();
+
+    await supabase.from("jobs").update({ address: composed }).eq("job_id", currentJobId);
+    await advanceToNextIntakeStep(ctx, currentJobId, updateSession);
     return;
   }
 
   // ── Awaiting timing ────────────────────────────────────────────────────────
   if (sessionState === "awaiting_timing" && currentJobId) {
+    // Race-condition guard: a concurrent webhook may have already captured timing.
+    // If so, treat this message as the details reply instead of overwriting timing.
+    const { data: jCheck } = await supabase
+      .from("jobs").select("job_timing").eq("job_id", currentJobId).single();
+    const alreadyHasTiming = !!(jCheck as Record<string, unknown> | null)?.job_timing;
+
+    if (alreadyHasTiming) {
+      await supabase.from("jobs").update({ description: body }).eq("job_id", currentJobId);
+      await advanceToNextIntakeStep(ctx, currentJobId, updateSession);
+      return;
+    }
+
+    await supabase.from("jobs").update({ job_timing: body }).eq("job_id", currentJobId);
+    await advanceToNextIntakeStep(ctx, currentJobId, updateSession);
+    return;
+  }
+
+  // ── Awaiting details ───────────────────────────────────────────────────────
+  // Terminal transition no longer calls finalizeAndDispatch directly; it renders
+  // the final summary and moves to awaiting_final_confirm. Dispatch is gated on
+  // explicit YES at the summary step.
+  if (sessionState === "awaiting_details" && currentJobId) {
     await supabase.from("jobs").update({ description: body }).eq("job_id", currentJobId);
-    await finalizeAndDispatch(ctx, currentJobId, updateSession);
+    await advanceToNextIntakeStep(ctx, currentJobId, updateSession);
     return;
   }
 
-  // ── Parse fresh request ────────────────────────────────────────────────────
-  // Require at least one recognized service keyword before creating a new job.
-  // Without this guard, unrecognized messages (e.g. "Thank you", "OK", courtesy
-  // replies after dispatch) fall through here and silently create a new job with
-  // the hardcoded default category. No keyword match → not a new intake.
-  const bodyLower = body.toLowerCase();
-  const keywordMap: [string[], string][] = [
-    [["plumb", "pipe", "leak", "drain"],               "PLM"],
-    [["clean"],                                         "CLN"],
-    [["handyman", "repair", "fix", "install"],          "HND"],
-    [["electric", "outlet", "wiring", "breaker"],       "ELC"],
-    [["paint"],                                         "PLT"],
-    [["hvac", "heat", "furnace", "air condition", "ac"],"HVC"],
-    [["mov", "transport", "haul"],                      "MVG"],
-    [["yard", "lawn", "garden", "snow"],                "YRD"],
-  ];
-  let categoryCode: string | null = null;
-  for (const [keywords, code] of keywordMap) {
-    if (keywords.some((kw) => bodyLower.includes(kw))) { categoryCode = code; break; }
+  // ── Fresh inbound: route to service wizard ────────────────────────────────
+  // No job row is inserted here anymore. The job is created on service_confirm=YES
+  // in handleAwaitingServiceConfirm, after the user has confirmed the detected
+  // service. If the opening message contains no recognized service keyword, we
+  // start with the welcome/awaiting_service prompt instead of silently ignoring.
+  const categoryMatch = matchCategoryKeyword(body);
+  if (!categoryMatch) {
+    const prompt =
+      "Hi — how can we help you today? We connect you with vetted local TaskLeaders " +
+      "for Cleaning, Plumbing, Electrical, HVAC, Handyman, Painting, Moving, and Yard Work.";
+    await sendAndLog(ctx, fromNumber, prompt, { templateName: "INTAKE_WELCOME" });
+    await updateSession({ session_state: "awaiting_service", sender_type: "client", last_prompt: prompt });
+    return;
   }
+
+  const categoryName = CATEGORY_NAMES[categoryMatch.code];
+  const confirmPrompt = `Just to confirm — you need ${categoryName}? Reply YES or NO.`;
+  await sendAndLog(ctx, fromNumber, confirmPrompt, { templateName: "INTAKE_SERVICE_CONFIRM_PROMPT" });
+  await updateSession({ session_state: "awaiting_service_confirm", sender_type: "client", last_prompt: confirmPrompt });
+}
+
+// ─── Structured intake wizard: prompt helpers ────────────────────────────────
+// Each helper sends a single prompt and sets the session to the matching state.
+// The prompt copy lives here so the state-advance helper and the edit-menu
+// handler both issue identical text.
+
+async function promptMunicipality(
+  ctx: Ctx,
+  jobId: string,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const prompt =
+    "Great. Which city is the job in? " +
+    "(e.g. Vancouver, Burnaby, Surrey, New Westminster, Coquitlam, Maple Ridge, Mission…)";
+  await sendAndLog(ctx, ctx.fromNumber, prompt, { jobId, templateName: "INTAKE_MUNICIPALITY_PROMPT" });
+  await updateSession({
+    session_state:  "awaiting_municipality",
+    current_job_id: jobId,
+    sender_type:    "client",
+    last_prompt:    prompt,
+  });
+}
+
+async function promptStreetAddress(
+  ctx: Ctx,
+  jobId: string,
+  cityName: string,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const prompt = cityName
+    ? `Got it — ${cityName}. What's the street address? (e.g. "123 Main St")`
+    : `What's the street address? (e.g. "123 Main St")`;
+  await sendAndLog(ctx, ctx.fromNumber, prompt, { jobId, templateName: "INTAKE_ADDRESS_PROMPT" });
+  await updateSession({
+    session_state:  "awaiting_address",
+    current_job_id: jobId,
+    sender_type:    "client",
+    last_prompt:    prompt,
+  });
+}
+
+async function promptTiming(
+  ctx: Ctx,
+  jobId: string,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const prompt = `When do you need this done? (e.g. "tomorrow morning", "ASAP", "this weekend")`;
+  await sendAndLog(ctx, ctx.fromNumber, prompt, { jobId, templateName: "INTAKE_TIMING_PROMPT" });
+  await updateSession({
+    session_state:  "awaiting_timing",
+    current_job_id: jobId,
+    sender_type:    "client",
+    last_prompt:    prompt,
+  });
+}
+
+async function promptDetails(
+  ctx: Ctx,
+  jobId: string,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const prompt = `Briefly describe what needs to be done (e.g. "fix a leaking kitchen faucet", "3-bedroom deep clean").`;
+  await sendAndLog(ctx, ctx.fromNumber, prompt, { jobId, templateName: "INTAKE_DETAILS_PROMPT" });
+  await updateSession({
+    session_state:  "awaiting_details",
+    current_job_id: jobId,
+    sender_type:    "client",
+    last_prompt:    prompt,
+  });
+}
+
+async function promptFinalSummary(
+  ctx: Ctx,
+  jobId: string,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase, fromNumber } = ctx;
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("category_code, category_name, address, job_timing, description")
+    .eq("job_id", jobId)
+    .single();
+
+  const j = (job ?? {}) as Record<string, unknown>;
+  const categoryName = CATEGORY_NAMES[String(j.category_code ?? "")] ?? String(j.category_name ?? "");
+  const address      = String(j.address ?? "(missing)");
+  const timing       = String(j.job_timing ?? "(missing)");
+  const description  = String(j.description ?? "(missing)");
+
+  const summary =
+    `Here's your request:\n\n` +
+    `• Service: ${categoryName}\n` +
+    `• Address: ${address}\n` +
+    `• When: ${timing}\n` +
+    `• Details: ${description}\n\n` +
+    `Reply YES to submit, EDIT to change something, or NO to cancel.`;
+
+  await sendAndLog(ctx, fromNumber, summary, { jobId, templateName: "INTAKE_FINAL_SUMMARY" });
+  await updateSession({
+    session_state:  "awaiting_final_confirm",
+    current_job_id: jobId,
+    sender_type:    "client",
+    last_prompt:    summary,
+  });
+}
+
+// ─── advanceToNextIntakeStep ─────────────────────────────────────────────────
+// Completeness-driven step chooser. After any field write (including post-edit
+// re-collection), this picks the earliest unfilled field and prompts for it,
+// or renders the final summary if all fields are present. This means the wizard
+// and the EDIT menu share a single forward path — editing one field returns the
+// client directly to the summary when the other fields are still filled.
+
+async function advanceToNextIntakeStep(
+  ctx: Ctx,
+  jobId: string,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase } = ctx;
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("municipality_code, municipality_name, address, job_timing, description")
+    .eq("job_id", jobId)
+    .single();
+
+  const j = (job ?? {}) as Record<string, unknown>;
+
+  if (!j.municipality_code || !j.municipality_name) {
+    await promptMunicipality(ctx, jobId, updateSession);
+    return;
+  }
+  if (!j.address) {
+    await promptStreetAddress(ctx, jobId, String(j.municipality_name), updateSession);
+    return;
+  }
+  if (!j.job_timing) {
+    await promptTiming(ctx, jobId, updateSession);
+    return;
+  }
+  if (!j.description) {
+    await promptDetails(ctx, jobId, updateSession);
+    return;
+  }
+  await promptFinalSummary(ctx, jobId, updateSession);
+}
+
+// ─── Load opening message for conservative pre-fill ──────────────────────────
+// At service-confirm YES, the current inbound ("YES") is already written to
+// message_log. The category-bearing opening message is the second-most-recent
+// inbound for this sender. We read two rows and return the prior one.
+
+async function loadOpeningMessage(ctx: Ctx): Promise<string | null> {
+  const { supabase, fromNumber } = ctx;
+  const { data } = await supabase
+    .from("message_log")
+    .select("body, created_at")
+    .eq("participant_whatsapp", fromNumber)
+    .eq("direction", "inbound")
+    .order("created_at", { ascending: false })
+    .limit(2);
+  const rows = (data ?? []) as Array<{ body: string | null }>;
+  return rows[1]?.body ?? null;
+}
+
+// ─── categoryCodeFromServiceConfirmPrompt ────────────────────────────────────
+// The service_confirm prompt contains "you need {CategoryName}?". Reverse-lookup
+// the name against CATEGORY_NAMES to recover the code when handling the YES reply.
+// No DB writes depend on this — we derive it fresh from the stored last_prompt.
+
+function categoryCodeFromServiceConfirmPrompt(prompt: string | null | undefined): string | null {
+  if (!prompt) return null;
+  const match = prompt.match(/you need\s+([^?]+?)\?/i);
+  if (!match) return null;
+  const nameLower = match[1].trim().toLowerCase();
+  for (const [code, name] of Object.entries(CATEGORY_NAMES)) {
+    if (name.toLowerCase() === nameLower) return code;
+  }
+  return null;
+}
+
+// ─── Cancel helper: shared across all structured-intake handlers ─────────────
+// NO and CANCEL before dispatch cancel the draft job (if one exists) and reset
+// the session to idle with the existing INTAKE_CANCELLED copy. Used by each new
+// handler at entry to keep cancel behavior uniform across the wizard.
+
+async function cancelDraftIntake(
+  ctx: Ctx,
+  jobId: string | undefined,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase, fromNumber } = ctx;
+  if (jobId) {
+    await supabase.from("jobs")
+      .update({ state: "cancelled", status: "completed" })
+      .eq("job_id", jobId);
+  }
+  await updateSession({ session_state: "idle", current_job_id: null });
+  await sendAndLog(
+    ctx, fromNumber,
+    "No problem — your request has been cancelled. Message us any time you need help.",
+    { jobId: jobId ?? null, templateName: "INTAKE_CANCELLED" },
+  );
+}
+
+// ─── handleAwaitingService ───────────────────────────────────────────────────
+// Reached when the client's first message lacked a recognizable service keyword.
+// Parses the reply for a category; on match, promotes to awaiting_service_confirm.
+// Also handles the edit-flow "change service" path: if currentJobId is set, it
+// is preserved across the transition so the YES handler updates the existing
+// job rather than creating a new one.
+
+async function handleAwaitingService(
+  ctx: Ctx,
+  _client: Record<string, unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { body, fromNumber, session } = ctx;
+  const currentJobId = session?.current_job_id as string | undefined;
+
+  if (isCancelCommand(body)) {
+    await cancelDraftIntake(ctx, currentJobId, updateSession);
+    return;
+  }
+
+  const match = matchCategoryKeyword(body);
+  if (!match) {
+    const prompt =
+      "We connect you with vetted local TaskLeaders for Cleaning, Plumbing, " +
+      "Electrical, HVAC, Handyman, Painting, Moving, and Yard Work. Which do you need?";
+    await sendAndLog(ctx, fromNumber, prompt, { jobId: currentJobId ?? null, templateName: "INTAKE_SERVICE_REPROMPT" });
+    await updateSession({
+      session_state:  "awaiting_service",
+      current_job_id: currentJobId ?? null,
+      sender_type:    "client",
+      last_prompt:    prompt,
+    });
+    return;
+  }
+
+  const categoryName = CATEGORY_NAMES[match.code];
+  const prompt = `Just to confirm — you need ${categoryName}? Reply YES or NO.`;
+  await sendAndLog(ctx, fromNumber, prompt, { jobId: currentJobId ?? null, templateName: "INTAKE_SERVICE_CONFIRM_PROMPT" });
+  await updateSession({
+    session_state:  "awaiting_service_confirm",
+    current_job_id: currentJobId ?? null,
+    sender_type:    "client",
+    last_prompt:    prompt,
+  });
+}
+
+// ─── handleAwaitingServiceConfirm ────────────────────────────────────────────
+// YES → create job row (fresh) or update category (edit), apply conservative
+// pre-fill from the opening message, advance to next step.
+// NO  → return to awaiting_service and ask what service they need.
+// Anything else → re-prompt YES/NO.
+
+async function handleAwaitingServiceConfirm(
+  ctx: Ctx,
+  client: Record<string, unknown>,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase, body, fromNumber, session } = ctx;
+  const currentJobId = session?.current_job_id as string | undefined;
+  const lastPrompt   = session?.last_prompt as string | undefined;
+  const kw           = normalizeKeyword(body);
+
+  if (isCancelCommand(body)) {
+    await cancelDraftIntake(ctx, currentJobId, updateSession);
+    return;
+  }
+
+  if (kw === KW_NO) {
+    const prompt =
+      "No problem — what service do you need? " +
+      "(Cleaning, Plumbing, Electrical, HVAC, Handyman, Painting, Moving, or Yard Work)";
+    await sendAndLog(ctx, fromNumber, prompt, { jobId: currentJobId ?? null, templateName: "INTAKE_SERVICE_RETRY" });
+    await updateSession({
+      session_state:  "awaiting_service",
+      current_job_id: currentJobId ?? null,
+      sender_type:    "client",
+      last_prompt:    prompt,
+    });
+    return;
+  }
+
+  if (kw !== KW_YES) {
+    await sendAndLog(ctx, fromNumber, "Please reply YES or NO.", { jobId: currentJobId ?? null });
+    return;
+  }
+
+  // YES — recover the category from the prompt we sent.
+  const categoryCode = categoryCodeFromServiceConfirmPrompt(lastPrompt);
   if (!categoryCode) {
-    // No recognized service keyword — not a new intake. Ignore silently.
+    // Prompt state was lost or mangled — restart at awaiting_service.
+    const prompt =
+      "Let's start over — what service do you need? " +
+      "(Cleaning, Plumbing, Electrical, HVAC, Handyman, Painting, Moving, or Yard Work)";
+    await sendAndLog(ctx, fromNumber, prompt, { jobId: currentJobId ?? null, templateName: "INTAKE_SERVICE_RETRY" });
+    await updateSession({
+      session_state:  "awaiting_service",
+      current_job_id: currentJobId ?? null,
+      sender_type:    "client",
+      last_prompt:    prompt,
+    });
     return;
   }
+
   const categoryName = CATEGORY_NAMES[categoryCode];
+  const baseFee      = CATEGORY_LEAD_FEES_CENTS[categoryCode] ?? 0;
+  const gst          = calcGst(baseFee);
 
-  // Address is always collected via the multi-step prompt flow (address → timing → dispatch).
-  // Do NOT attempt to extract an address from the first intake message.
-  // The previous regex /\d+\s+[A-Za-z][\w\s,.]+/ was too permissive: it matched
-  // quantities, ordinals, and any digit-preceded text (e.g. "1 plumber", "2nd floor"),
-  // producing false positives that bypassed address collection and sent execution
-  // directly to finalizeAndDispatch, leaving session_state = "idle" on first message.
+  // ── Edit-flow path: job already exists, update category only ───────────────
+  // Triggered by the EDIT menu "1 = Service" branch, which holds currentJobId
+  // across the awaiting_service → awaiting_service_confirm transition. Update
+  // category + recompute fees in place, then advance — usually straight to the
+  // summary since the other fields are still filled.
+  if (currentJobId) {
+    await supabase.from("jobs").update({
+      category_code:       categoryCode,
+      category_name:       categoryName,
+      lead_fee_cents:      baseFee,
+      gst_cents:           gst,
+      total_charged_cents: baseFee + gst,
+    }).eq("job_id", currentJobId);
+    await advanceToNextIntakeStep(ctx, currentJobId, updateSession);
+    return;
+  }
 
-  const cityCode = "VAN"; // default — derive from client profile in a future phase
+  // ── Fresh-intake path: create job row and apply conservative pre-fill ──────
+  const opening = await loadOpeningMessage(ctx);
+
+  const prefill: Record<string, unknown> = {};
+  if (opening) {
+    const inline = extractInlineAddress(opening);
+    const muni   = inline ? null : extractMunicipalityFromAddress(opening);
+    const timing = extractTimingPhrase(opening);
+    if (inline) {
+      prefill.address           = inline.address;
+      prefill.municipality_code = inline.code;
+      prefill.municipality_name = inline.name;
+    } else if (muni) {
+      prefill.municipality_code = muni.code;
+      prefill.municipality_name = muni.name;
+    }
+    if (timing) {
+      prefill.job_timing = timing;
+    }
+  }
+
+  const cityCode = "VAN";
   const { data: jobIdData } = await supabase.rpc("generate_job_id", {
     p_city_code: cityCode, p_category_code: categoryCode,
   });
   if (!jobIdData) {
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, "We're having trouble processing your request right now. Please try again in a moment.");
+    await sendAndLog(
+      ctx, fromNumber,
+      "We're having trouble processing your request right now. Please try again in a moment.",
+      { templateName: "INTAKE_JOB_ID_FAIL" },
+    );
     return;
   }
-
-  const baseFee = CATEGORY_LEAD_FEES_CENTS[categoryCode] ?? 0;
-  const gst     = calcGst(baseFee);
 
   const { data: job } = await supabase.from("jobs").insert({
     job_id:              jobIdData,
     city_code:           cityCode,
-    market_code:         cityCode,  // explicit market field — same value until markets diverge
+    market_code:         cityCode,
     category_code:       categoryCode,
     category_name:       categoryName,
     status:              "pending",
@@ -545,34 +1143,207 @@ async function handleConciergeIntake(
     source:              "concierge",
     client_id:           client.id ?? null,
     client_whatsapp:     fromNumber,
-    address:             null,   // always null on first intake — collected via address prompt
-    description:         body,
     lead_fee_cents:      baseFee,
     gst_cents:           gst,
     total_charged_cents: baseFee + gst,
-    // municipality_code and municipality_name are populated later when
-    // the client replies with their address (awaiting_address handler).
-  }).select("job_id, address, description").single();
+    ...prefill,
+  }).select("job_id").single();
 
-  if (!job) return;
-
-  if (!job.address) {
-    const providerNoun = CATEGORY_PROVIDER_NOUNS[categoryCode] ?? categoryName.toLowerCase();
-    const prompt = `Got it — we'll find you a ${providerNoun}. What's the service address?`;
-    await sendAndLog(ctx, fromNumber, prompt, { jobId: job.job_id, templateName: "INTAKE_ADDRESS_PROMPT" });
-    await updateSession({ session_state: "awaiting_address", current_job_id: job.job_id, sender_type: "client", last_prompt: prompt });
+  if (!job) {
+    await sendAndLog(
+      ctx, fromNumber,
+      "We're having trouble processing your request right now. Please try again in a moment.",
+      { templateName: "INTAKE_INSERT_FAIL" },
+    );
     return;
   }
 
-  const hasTimingKeyword = /asap|today|tomorrow|morning|afternoon|evening|mon|tue|wed|thu|fri|sat|sun|weekend/i.test(body);
-  if (!hasTimingKeyword) {
-    const prompt = `Thanks — when do you need this? (e.g. "tomorrow morning", "ASAP")`;
-    await sendAndLog(ctx, fromNumber, prompt, { jobId: job.job_id, templateName: "INTAKE_TIMING_PROMPT" });
-    await updateSession({ session_state: "awaiting_timing", current_job_id: job.job_id, sender_type: "client", last_prompt: prompt });
+  await advanceToNextIntakeStep(ctx, String(job.job_id), updateSession);
+}
+
+// ─── handleAwaitingMunicipality ──────────────────────────────────────────────
+// Validates the city reply against the existing 18-code municipality registry.
+// On match, saves municipality_code/name and advances (usually to awaiting_address
+// with city already known). On miss, re-prompts with the valid list.
+
+async function handleAwaitingMunicipality(
+  ctx: Ctx,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase, body, fromNumber, session } = ctx;
+  const currentJobId = session?.current_job_id as string | undefined;
+
+  if (isCancelCommand(body)) {
+    await cancelDraftIntake(ctx, currentJobId, updateSession);
     return;
   }
 
-  await finalizeAndDispatch(ctx, job.job_id, updateSession);
+  if (!currentJobId) {
+    // Session lost its draft — reset cleanly.
+    await updateSession({ session_state: "idle", current_job_id: null });
+    return;
+  }
+
+  const muni = extractMunicipalityFromAddress(body);
+  if (!muni) {
+    const prompt =
+      "We don't currently cover that area. We serve: Vancouver, North Vancouver, " +
+      "West Vancouver, Burnaby, Richmond, Surrey, Coquitlam, New Westminster, " +
+      "Port Moody, Port Coquitlam, Delta, Langley, Maple Ridge, Pitt Meadows, " +
+      "White Rock, Abbotsford, Chilliwack, Mission. Please reply with one of these.";
+    await sendAndLog(ctx, fromNumber, prompt, { jobId: currentJobId, templateName: "INTAKE_MUNICIPALITY_INVALID" });
+    return; // Stay in awaiting_municipality
+  }
+
+  await supabase.from("jobs").update({
+    municipality_code: muni.code,
+    municipality_name: muni.name,
+  }).eq("job_id", currentJobId);
+
+  await advanceToNextIntakeStep(ctx, currentJobId, updateSession);
+}
+
+// ─── handleAwaitingFinalConfirm ──────────────────────────────────────────────
+// YES  → finalizeAndDispatch (the single client-intake entry to dispatch).
+// EDIT → show numbered edit menu, move to awaiting_edit_choice.
+// NO   → cancel draft, reset session.
+// Other → re-prompt.
+
+async function handleAwaitingFinalConfirm(
+  ctx: Ctx,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { body, fromNumber, session } = ctx;
+  const currentJobId = session?.current_job_id as string | undefined;
+  const kw           = normalizeKeyword(body);
+
+  if (isCancelCommand(body)) {
+    await cancelDraftIntake(ctx, currentJobId, updateSession);
+    return;
+  }
+
+  if (!currentJobId) {
+    await updateSession({ session_state: "idle", current_job_id: null });
+    return;
+  }
+
+  if (kw === "EDIT") {
+    const prompt =
+      "What would you like to change?\n" +
+      "  1. Service\n" +
+      "  2. City\n" +
+      "  3. Address\n" +
+      "  4. When\n" +
+      "  5. Details\n\n" +
+      "Reply with the number.";
+    await sendAndLog(ctx, fromNumber, prompt, { jobId: currentJobId, templateName: "INTAKE_EDIT_MENU" });
+    await updateSession({
+      session_state:  "awaiting_edit_choice",
+      current_job_id: currentJobId,
+      sender_type:    "client",
+      last_prompt:    prompt,
+    });
+    return;
+  }
+
+  if (kw === KW_YES) {
+    await finalizeAndDispatch(ctx, currentJobId, updateSession);
+    return;
+  }
+
+  if (kw === KW_NO) {
+    await cancelDraftIntake(ctx, currentJobId, updateSession);
+    return;
+  }
+
+  await sendAndLog(
+    ctx, fromNumber,
+    "Please reply YES to submit, EDIT to change something, or NO to cancel.",
+    { jobId: currentJobId },
+  );
+}
+
+// ─── handleAwaitingEditChoice ────────────────────────────────────────────────
+// Parses a 1-5 selection, clears the corresponding field(s), and jumps to the
+// matching prompt. Once the field is re-collected, advanceToNextIntakeStep will
+// route the user straight back to the summary (the other fields are still full).
+
+async function handleAwaitingEditChoice(
+  ctx: Ctx,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase, body, fromNumber, session } = ctx;
+  const currentJobId = session?.current_job_id as string | undefined;
+
+  if (isCancelCommand(body)) {
+    await cancelDraftIntake(ctx, currentJobId, updateSession);
+    return;
+  }
+
+  if (!currentJobId) {
+    await updateSession({ session_state: "idle", current_job_id: null });
+    return;
+  }
+
+  const digit = parseInt(body.trim(), 10);
+  if (isNaN(digit) || digit < 1 || digit > 5) {
+    await sendAndLog(
+      ctx, fromNumber,
+      "Please reply with a number from 1 to 5, or CANCEL to cancel your request.",
+      { jobId: currentJobId },
+    );
+    return;
+  }
+
+  switch (digit) {
+    case 1: {
+      // Service edit: cancel the current draft and restart at awaiting_service so
+      // the next service_confirm YES generates a new job_id whose category prefix
+      // matches the confirmed category. Mutating category on the existing row
+      // would leave the VAN-{OLD}-{seq} prefix misaligned with the new category.
+      await supabase.from("jobs")
+        .update({ state: "cancelled", status: "completed" })
+        .eq("job_id", currentJobId);
+      const prompt =
+        "No problem — what service do you need? " +
+        "We can help with Cleaning, Plumbing, Electrical, HVAC, Handyman, Painting, Moving, and Yard Work.";
+      await sendAndLog(ctx, fromNumber, prompt, { jobId: currentJobId, templateName: "INTAKE_EDIT_SERVICE" });
+      await updateSession({
+        session_state:  "awaiting_service",
+        current_job_id: null,
+        sender_type:    "client",
+        last_prompt:    prompt,
+      });
+      return;
+    }
+    case 2: {
+      // City — changing city invalidates the stored street-only address too,
+      // since the composed "street, city" record would be wrong for the new city.
+      await supabase.from("jobs")
+        .update({ municipality_code: null, municipality_name: null, address: null })
+        .eq("job_id", currentJobId);
+      await promptMunicipality(ctx, currentJobId, updateSession);
+      return;
+    }
+    case 3: {
+      await supabase.from("jobs").update({ address: null }).eq("job_id", currentJobId);
+      const { data: job } = await supabase
+        .from("jobs").select("municipality_name").eq("job_id", currentJobId).single();
+      const cityName = String((job as Record<string, unknown> | null)?.municipality_name ?? "");
+      await promptStreetAddress(ctx, currentJobId, cityName, updateSession);
+      return;
+    }
+    case 4: {
+      await supabase.from("jobs").update({ job_timing: null }).eq("job_id", currentJobId);
+      await promptTiming(ctx, currentJobId, updateSession);
+      return;
+    }
+    case 5: {
+      await supabase.from("jobs").update({ description: null }).eq("job_id", currentJobId);
+      await promptDetails(ctx, currentJobId, updateSession);
+      return;
+    }
+  }
 }
 
 async function finalizeAndDispatch(
@@ -586,7 +1357,12 @@ async function finalizeAndDispatch(
   await sendAndLog(ctx, fromNumber, confirm, { jobId, templateName: "INTAKE_CONFIRM" });
 
   await supabase.from("jobs").update({ state: "intake_confirmed" }).eq("job_id", jobId);
-  await updateSession({ session_state: "idle", current_job_id: jobId, sender_type: "client" });
+  // awaiting_match holds the client until job-dispatch either (a) upserts the
+  // session to awaiting_no_match_decision on a no-match outcome, or (b) stripe-webhook
+  // upserts the session to 'open' after provider ACCEPT and payment. Prevents a
+  // duplicate intake while the job is still being matched, and routes CANCEL via
+  // handleAwaitingMatchMessage.
+  await updateSession({ session_state: "awaiting_match", current_job_id: jobId, sender_type: "client" });
 
   // Trigger dispatch — awaited so the edge function doesn't terminate before
   // the HTTP call is sent. A failed dispatch is written to admin_alerts so it
@@ -618,6 +1394,56 @@ async function finalizeAndDispatch(
       status:      "open",
     });
   }
+}
+
+// ─── Awaiting-match handler ───────────────────────────────────────────────────
+// Runs when the client's session is 'awaiting_match' — the window between
+// finalizeAndDispatch and either a no-match outcome or a provider ACCEPT+payment.
+// Two responsibilities only:
+//   1. If the client sends a cancel command, cancel the job and reset the session.
+//   2. Otherwise, send a "still searching" reply and stay in awaiting_match —
+//      do NOT fall through to handleConciergeIntake (that would create a duplicate job).
+
+async function handleAwaitingMatchMessage(
+  ctx: Ctx,
+  jobId: string | undefined,
+  body: string,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase, fromNumber } = ctx;
+
+  if (isCancelCommand(body)) {
+    if (jobId) {
+      await supabase.from("jobs")
+        .update({ state: "cancelled", status: "completed" })
+        .eq("job_id", jobId);
+
+      // Sweep provider sessions still parked on this cancelled broadcast.
+      // Scoped strictly to providers whose session_state is still awaiting_accept
+      // for THIS job_id. Winners who already claimed (now 'idle' pending payment)
+      // and thread participants ('open') are intentionally untouched — see the
+      // client-cancel-after-provider-accept race, which is a separate concern.
+      // Non-fatal: a failure here does not block client-side cancel confirmation.
+      try {
+        await supabase.from("conversation_sessions")
+          .update({
+            session_state:    "idle",
+            current_job_id:   null,
+            last_prompt:      null,
+            last_activity_at: new Date().toISOString(),
+          })
+          .eq("current_job_id", jobId)
+          .eq("session_state", "awaiting_accept");
+      } catch { /* non-fatal: client cancel path must not block on sweep */ }
+    }
+    await updateSession({ session_state: "idle", current_job_id: null });
+    const msg = "No problem — your request has been cancelled. Message us any time you need help.";
+    await sendAndLog(ctx, fromNumber, msg, { jobId: jobId ?? null, templateName: "INTAKE_CANCELLED" });
+    return;
+  }
+
+  const msg = "We're still searching for a match on your previous request. Reply CANCEL to cancel it, or wait — we'll reach out as soon as we find a TaskLeader.";
+  await sendAndLog(ctx, fromNumber, msg, { jobId: jobId ?? null, templateName: "AWAITING_MATCH_STILL_SEARCHING" });
 }
 
 // ─── Survey answer handler ────────────────────────────────────────────────────
@@ -690,6 +1516,26 @@ async function handleSurveyAnswer(
 
     if (completedJob?.assigned_provider_slug) {
       triggerApplyReliability(completedJob.assigned_provider_slug, jobId);
+
+      // Reset provider session now that the job is fully closed.
+      // updateSession() only resets the client (the survey respondent). The
+      // provider's session has been open on this job since payment confirmation
+      // and is never otherwise reset — leaving it stale indefinitely.
+      // Look up the provider's WhatsApp number to target the correct session row.
+      const { data: providerAcct } = await supabase
+        .from("provider_accounts")
+        .select("whatsapp_number")
+        .eq("slug", completedJob.assigned_provider_slug)
+        .maybeSingle();
+
+      if (providerAcct?.whatsapp_number) {
+        await supabase.from("conversation_sessions").upsert({
+          whatsapp_e164:    providerAcct.whatsapp_number,
+          session_state:    "idle",
+          current_job_id:   null,
+          last_activity_at: new Date().toISOString(),
+        }, { onConflict: "whatsapp_e164" });
+      }
     }
   }
 }
@@ -711,13 +1557,42 @@ async function handleGuaranteeConfirmation(
     return;
   }
 
-  const nextClaimState = response === "YES" ? "client_confirmed_yes" : "client_confirmed_no";
-  await supabase.from("guarantee_claims").update({
-    client_response:     response,
-    client_responded_at: new Date().toISOString(),
-    claim_state:         nextClaimState,
-  }).eq("job_id", jobId).eq("client_whatsapp", fromNumber);
+  // Load the active claim to determine whether the sender is the client or provider
+  const { data: claim } = await supabase
+    .from("guarantee_claims")
+    .select("id, client_whatsapp, claim_state")
+    .eq("job_id", jobId)
+    .not("claim_state", "in", '("closed","denied","approved")')
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
+  if (!claim) {
+    const noClaimMsg = "We couldn't find an active guarantee claim for this job. Please contact us for support.";
+    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, noClaimMsg);
+    await updateSession({ session_state: "idle", current_job_id: null });
+    return;
+  }
+
+  const isClient = claim.client_whatsapp === fromNumber;
+  const now = new Date().toISOString();
+
+  if (isClient) {
+    await supabase.from("guarantee_claims").update({
+      client_response:     response,
+      client_responded_at: now,
+      claim_state:         response === "YES" ? "client_confirmed_yes" : "client_confirmed_no",
+    }).eq("id", claim.id);
+  } else {
+    // Provider (TaskLeader) response — writes to provider_response columns
+    await supabase.from("guarantee_claims").update({
+      provider_response:     response,
+      provider_responded_at: now,
+      claim_state:           response === "YES" ? "provider_confirmed_yes" : "provider_confirmed_no",
+    }).eq("id", claim.id);
+  }
+
+  const party = isClient ? "client" : "provider";
   const reply = response === "YES"
     ? "Thank you. We'll continue reviewing this request and will be in touch."
     : "Thank you for confirming. We'll update this claim accordingly.";
@@ -728,7 +1603,7 @@ async function handleGuaranteeConfirmation(
   await supabase.from("admin_alerts").insert({
     alert_type: "guarantee_claim", priority: "high", job_id: jobId,
     participant_whatsapp: fromNumber,
-    description: `Client responded ${response} to guarantee claim confirmation.`,
+    description: `${party === "client" ? "Client" : "Provider"} responded ${response} to guarantee claim confirmation.`,
     status: "open",
   });
   await updateSession({ session_state: "idle", current_job_id: null });
@@ -745,20 +1620,183 @@ async function handleNoMatchDecision(
   const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
   if (!jobId) return;
 
-  if (kw === KW_KEEP_OPEN) {
+  // Accept both current WC-4 Quick Reply button labels (KEEP SEARCHING / CLOSE NOW)
+  // and the legacy keyword labels (KEEP OPEN / CANCEL) so typed replies using
+  // either wording still resolve. Match against both in each branch.
+  if (kw === KW_KEEP_SEARCHING || kw === KW_KEEP_OPEN) {
     const reply = "Understood — we'll keep searching and let you know as soon as we have a match.";
     if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, reply);
     logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: reply, status: "sent" });
     await supabase.from("jobs").update({ state: "no_match" }).eq("job_id", jobId);
     await updateSession({ session_state: "idle", current_job_id: jobId });
-  } else if (kw === KW_CANCEL) {
+  } else if (kw === KW_CLOSE_NOW || kw === KW_CANCEL) {
     const reply = "No problem — this request has been closed. Message us any time you need a TaskLeader.";
     if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, reply);
     logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: reply, status: "sent" });
     await supabase.from("jobs").update({ state: "closed", status: "completed" }).eq("job_id", jobId);
     await updateSession({ session_state: "idle", current_job_id: null });
   } else {
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, "Please reply KEEP OPEN or CANCEL.");
+    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, "Please reply KEEP SEARCHING or CLOSE NOW.");
+  }
+}
+
+// ─── Thread-close request ────────────────────────────────────────────────────
+// Intercepts CLOSE / CANCEL / DONE in an active (open) session.
+// Sends a confirmation prompt to the sender and moves them to awaiting_close_confirm.
+// The other participant is NOT notified until the sender confirms with YES.
+
+async function handleCloseRequest(
+  ctx:          Ctx,
+  jobId:        string,
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase, fromNumber } = ctx;
+
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("job_id, address, state")
+    .eq("job_id", jobId)
+    .maybeSingle();
+
+  // Guard: if already closed, just reset the session cleanly
+  if (!job || job.state === "closed" || job.state === "cancelled") {
+    await updateSession({ session_state: "idle", current_job_id: null });
+    await sendAndLog(ctx, fromNumber, "This thread is already closed.", { jobId });
+    return;
+  }
+
+  const hdr    = jobHeader(job.job_id, job.address ?? "address on file");
+  const prompt = (
+    `${hdr} Are you sure you want to close this job thread?\n\n` +
+    `Reply YES to close it, or NO to continue.`
+  );
+
+  await sendAndLog(ctx, fromNumber, prompt, { jobId, templateName: "THREAD_CLOSE_PROMPT" });
+  await updateSession({
+    session_state:  "awaiting_close_confirm",
+    current_job_id: jobId,
+    last_prompt:    prompt,
+  });
+}
+
+// ─── Thread-close confirmation ────────────────────────────────────────────────
+// Handles YES/NO reply after a CLOSE/CANCEL/DONE prompt.
+//
+// YES path:
+//   • jobs → state='closed', status='completed'
+//   • job_participants → session_state='inactive' (removed from resolveJobContext)
+//   • sender session → idle / null
+//   • other participant session → idle / null
+//   • sends confirmation to sender; sends notification to other participant
+//
+// NO path:
+//   • restores sender session to open
+//   • sends "your thread is still active" ack
+//   • other participant is never notified (they saw nothing)
+//
+// Other reply (not YES or NO):
+//   • re-prompts without changing session state
+
+async function handleCloseConfirm(
+  ctx:          Ctx,
+  jobId:        string | undefined,
+  kw:           string,
+  senderType:   "client" | "provider",
+  updateSession: (p: Record<string, unknown>) => Promise<unknown>,
+) {
+  const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber } = ctx;
+
+  if (!jobId) {
+    await updateSession({ session_state: "idle", current_job_id: null });
+    return;
+  }
+
+  // Re-prompt if sender replied with something other than YES or NO
+  if (kw !== KW_YES && kw !== KW_NO) {
+    await sendAndLog(ctx, fromNumber,
+      "Please reply YES to close the thread, or NO to continue.",
+      { jobId },
+    );
+    return;
+  }
+
+  if (kw === KW_NO) {
+    await sendAndLog(ctx, fromNumber,
+      "No problem — your job thread is still active.",
+      { jobId, templateName: "THREAD_CLOSE_CANCELLED" },
+    );
+    await updateSession({ session_state: "open", current_job_id: jobId });
+    return;
+  }
+
+  // ── YES: execute close ─────────────────────────────────────────────────────
+
+  // 1. Load job for display header (before updating state)
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("job_id, address")
+    .eq("job_id", jobId)
+    .maybeSingle();
+
+  const hdr = job
+    ? jobHeader(job.job_id, job.address ?? "address on file")
+    : `[Job #${jobId}]`;
+
+  // 2. Close the job
+  await supabase.from("jobs")
+    .update({
+      state:      "closed",
+      status:     "completed",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("job_id", jobId);
+
+  // 3. Deactivate job_participants — removes them from resolveJobContext step 3
+  await supabase.from("job_participants")
+    .update({ session_state: "inactive" })
+    .eq("job_id", jobId);
+
+  // 4. Find the other participant so we can reset their session and notify them
+  const otherType = senderType === "client" ? "provider" : "client";
+  const { data: otherParticipant } = await supabase
+    .from("job_participants")
+    .select("whatsapp_e164")
+    .eq("job_id", jobId)
+    .eq("participant_type", otherType)
+    .maybeSingle();
+
+  // 5. Reset sender session
+  await updateSession({ session_state: "idle", current_job_id: null });
+
+  // 6. Reset other participant session
+  if (otherParticipant?.whatsapp_e164) {
+    await supabase.from("conversation_sessions").upsert({
+      whatsapp_e164:    otherParticipant.whatsapp_e164,
+      session_state:    "idle",
+      current_job_id:   null,
+      last_activity_at: new Date().toISOString(),
+    }, { onConflict: "whatsapp_e164" });
+  }
+
+  // 7. Confirm to sender
+  await sendAndLog(ctx, fromNumber,
+    `${hdr} This job thread has been closed. Thank you for using TaskLeaders.`,
+    { jobId, templateName: "THREAD_CLOSED_SENDER" },
+  );
+
+  // 8. Notify other participant (in-session — no template SID needed)
+  if (otherParticipant?.whatsapp_e164 && twilioEnv) {
+    const notifBody = `${hdr} This job thread has been closed.`;
+    const result    = await sendWhatsApp(twilioEnv, otherParticipant.whatsapp_e164, notifBody);
+    logMessage({
+      supabaseUrl, serviceRoleKey,
+      direction:           "outbound",
+      jobId,
+      participantWhatsapp: otherParticipant.whatsapp_e164,
+      templateName:        "THREAD_CLOSED_OTHER",
+      body:                notifBody,
+      status:              result.ok ? "sent" : "failed",
+    });
   }
 }
 
@@ -792,8 +1830,14 @@ async function relayClientToProvider(
   // Always include job header so provider can distinguish jobs if they have multiple
   const relayBody = buildRelayToProvider(jctx.jobId, jctx.address, body);
   if (twilioEnv) {
-    const result = await sendWhatsApp(twilioEnv, participant.whatsapp_e164, relayBody);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: jctx.jobId, participantWhatsapp: participant.whatsapp_e164, body: relayBody, status: result.ok ? "sent" : "failed" });
+    // Route through sendAndLog so a Twilio failure (e.g. recipient WhatsApp
+    // session window closed, error code 63016) writes an admin_alerts row in
+    // addition to the failed message_log entry. Phase 0 visibility only —
+    // no reactivation template, no queue, no sender feedback.
+    await sendAndLog(ctx, participant.whatsapp_e164, relayBody, {
+      jobId:        jctx.jobId,
+      templateName: "RELAY_CLIENT_TO_PROVIDER",
+    });
   }
 
   // Update job-level message log with inbound as well
@@ -827,19 +1871,28 @@ async function relayProviderToClient(
   const relayBody = buildRelayToClient(jctx.jobId, jctx.address, firstName, body);
 
   if (twilioEnv) {
-    const result = await sendWhatsApp(twilioEnv, participant.whatsapp_e164, relayBody);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: jctx.jobId, participantWhatsapp: participant.whatsapp_e164, body: relayBody, status: result.ok ? "sent" : "failed" });
+    // Route through sendAndLog so a Twilio failure (e.g. recipient WhatsApp
+    // session window closed, error code 63016) writes an admin_alerts row in
+    // addition to the failed message_log entry. Phase 0 visibility only.
+    await sendAndLog(ctx, participant.whatsapp_e164, relayBody, {
+      jobId:        jctx.jobId,
+      templateName: "RELAY_PROVIDER_TO_CLIENT",
+    });
   }
 
   logMessage({ supabaseUrl, serviceRoleKey, direction: "inbound", jobId: jctx.jobId, participantWhatsapp: fromNumber, body, status: "received" });
 
-  // Update both sides of session with this job as current
+  // Update the sender's (provider's) session normally — their inbound just arrived.
   await updateSession({ session_state: "open", current_job_id: jctx.jobId });
-  await supabase.from("conversation_sessions").upsert({
-    whatsapp_e164:   participant.whatsapp_e164,
-    current_job_id:  jctx.jobId,
-    last_activity_at: new Date().toISOString(),
-  }, { onConflict: "whatsapp_e164" });
+
+  // Recipient-side (client) session: maintain current_job_id for multi-job routing
+  // but DO NOT stamp last_activity_at. That field must only reflect participant
+  // inbound activity, not passive receipt of a relayed message — otherwise any
+  // downstream use of last_activity_at as a 24-hour-window signal produces false
+  // positives for recipients who have not actually messaged in recently.
+  await supabase.from("conversation_sessions")
+    .update({ current_job_id: jctx.jobId })
+    .eq("whatsapp_e164", participant.whatsapp_e164);
 }
 
 // ─── Provider message handler ─────────────────────────────────────────────────
@@ -899,8 +1952,26 @@ async function handleProviderMessage(
     return;
   }
 
+  // ── Guarantee claim confirmation ──────────────────────────────────────────
+  if (sessionState === "awaiting_guarantee_confirm") {
+    await handleGuaranteeConfirmation(ctx, currentJobId, kw, updateSession);
+    return;
+  }
+
+  // ── Thread-close confirmation ──────────────────────────────────────────────
+  // Provider has already been shown the close prompt and is answering YES/NO.
+  if (sessionState === "awaiting_close_confirm") {
+    await handleCloseConfirm(ctx, currentJobId, kw, "provider", updateSession);
+    return;
+  }
+
   // ── Active thread: relay to client ────────────────────────────────────────
   if (sessionState === "open" || sessionState === "active") {
+    // Intercept close commands BEFORE relay — never forward them as chat messages.
+    if (isThreadCloseCommand(kw) && currentJobId) {
+      await handleCloseRequest(ctx, currentJobId, updateSession);
+      return;
+    }
     const jctx = await resolveJobContext(supabase, fromNumber, currentJobId, body);
     if (jctx === "ambiguous") {
       await sendDisambiguationPrompt(ctx, updateSession);
@@ -982,7 +2053,7 @@ async function handleProviderAccept(
 
   // Load job to determine flow (Concierge vs Marketplace)
   const { data: job } = await supabase.from("jobs")
-    .select("job_id, source, state, address, category_code, category_name, client_whatsapp, client_id, assigned_provider_slug")
+    .select("job_id, source, state, address, category_code, category_name, client_whatsapp, client_id, assigned_provider_slug, marketplace_provider_slug")
     .eq("job_id", jobId)
     .single();
 
@@ -1157,6 +2228,26 @@ async function handleMarketplaceDecline(
     const notif   = buildMKT2Declined(jctx.jobId, jctx.address, catName);
     await sendWhatsApp(twilioEnv, job.client_whatsapp, notif);
     logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: jctx.jobId, participantWhatsapp: job.client_whatsapp, templateName: "MKT-2-DECLINED", body: notif, status: "sent" });
+  }
+
+  // Reset the client's conversation session if (and only if) it is still tied
+  // to this declined Marketplace job. The dual-eq guard (whatsapp_e164 AND
+  // current_job_id) ensures we never clear a session that has already moved
+  // on to a newer active request — e.g. if the client submitted a different
+  // Marketplace Connect since this job was created, marketplace-connect would
+  // have overwritten current_job_id with the new job, and that one stays.
+  // Non-fatal: a failure here must not block the provider's session reset.
+  if (job?.client_whatsapp) {
+    try {
+      await supabase.from("conversation_sessions")
+        .update({
+          session_state:    "idle",
+          current_job_id:   null,
+          last_activity_at: new Date().toISOString(),
+        })
+        .eq("whatsapp_e164", job.client_whatsapp)
+        .eq("current_job_id", jctx.jobId);
+    } catch { /* non-fatal: provider-side reset below must still run */ }
   }
 
   await updateSession({ session_state: "idle", current_job_id: null });
