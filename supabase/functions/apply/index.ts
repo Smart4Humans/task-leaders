@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
   if (!whatsappRaw) return error("validation_error", "WhatsApp number is required", { field: "whatsapp" });
   if (!categorySlug) return error("validation_error", "Primary service is required", { field: "category_slug" });
   if (!serviceArea) return error("validation_error", "Service area is required", { field: "service_area" });
-  if (!description) return error("validation_error", "Description is required", { field: "description" });
+  // description is optional — the form labels it as such; do not require it here
 
   const whatsappE164 = normalizeWhatsAppE164(whatsappRaw);
   if (!whatsappE164) return error("validation_error", "Please enter a valid WhatsApp number", { field: "whatsapp" });
