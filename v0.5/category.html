@@ -820,6 +820,33 @@
       return `<img src="${fallback}" alt="">`;
     }
 
+    // P3 — service-area label.
+    // Shows whether the visible city on a card is the provider's base location
+    // or broader coverage, so a provider that surfaces under (e.g.) a Vancouver
+    // filter while based elsewhere isn't mistaken for a Vancouver-only TaskLeader.
+    //   Canonical base = municipality_codes[0] (complete-onboarding writes
+    //   baseCity first, then serviceCities, deduped). Falls back to the
+    //   service_area display string when codes are empty (legacy / pre-backfill).
+    //   coversMore is true when the provider serves >1 municipality.
+    //   Selected-filter case is unreachable when codes are empty because
+    //   applyMunicipalityFilter requires a code-array hit.
+    function locationLabel(p) {
+      const codes    = Array.isArray(p.municipalityCodes) ? p.municipalityCodes : [];
+      const baseCode = codes[0] ? String(codes[0]).toUpperCase() : null;
+      const baseName = baseCode ? (MUNI_NAMES[baseCode] || p.area) : (p.area || '');
+      const coversMore = codes.length > 1;
+      const sel = selectedMunicipality ? String(selectedMunicipality).toUpperCase() : '';
+
+      if (!sel) {
+        return coversMore ? `Based in ${baseName} · Serves more areas` : `Based in ${baseName}`;
+      }
+      const selName = MUNI_NAMES[sel] || sel;
+      if (baseCode && sel === baseCode) {
+        return coversMore ? `Based in ${baseName} · Serves more areas` : `Based in ${baseName}`;
+      }
+      return baseName ? `Serves ${selName} · Based in ${baseName}` : `Serves ${selName}`;
+    }
+
     function renderRow(p, rank) {
       const href = providerProfileHref(p);
       return `
@@ -829,7 +856,7 @@
             <div class="avatar">${avatarImg(p)}</div>
             <div class="name-col">
               <a class="name" href="${href}">${escapeHtml(p.name)}</a>
-              <div class="area">Base: ${escapeHtml(p.area)}</div>
+              <div class="area">${escapeHtml(locationLabel(p))}</div>
             </div>
           </div>
           <div class="metric response">${formatResp(p.response)}</div>
@@ -851,7 +878,7 @@
               <div class="avatar">${avatarImg(p)}</div>
               <div class="card-title">
                 <a class="card-name" href="${href}">${escapeHtml(p.name)}</a>
-                <div class="card-area">📍 ${escapeHtml(p.area)}</div>
+                <div class="card-area">📍 ${escapeHtml(locationLabel(p))}</div>
               </div>
             </div>
           </div>
