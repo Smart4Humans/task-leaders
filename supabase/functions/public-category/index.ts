@@ -9,7 +9,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const CATEGORY_META: Record<string, { display_name: string; icon: string }> = {
   handyman:    { display_name: "Handyman",          icon: "🔧" },
   cleaning:    { display_name: "Cleaning",           icon: "🧹" },
-  painting:    { display_name: "Painting",           icon: "🖌️" },
+  painting:    { display_name: "Painting",           icon: "🪜" },
   electrical:  { display_name: "Electrical",         icon: "⚡" },
   plumbing:    { display_name: "Plumbing",           icon: "🔧" },
   "yard-work": { display_name: "Yard Work",          icon: "🌿" },
