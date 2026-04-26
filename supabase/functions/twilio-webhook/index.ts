@@ -1768,13 +1768,14 @@ async function handleCloseConfirm(
   // 5. Reset sender session
   await updateSession({ session_state: "idle", current_job_id: null });
 
-  // 6. Reset other participant session
+  // 6. Reset other participant session — recipient-only event, do not stamp
+  // last_activity_at (the other participant did not inbound; they are about
+  // to receive a notification of the close).
   if (otherParticipant?.whatsapp_e164) {
     await supabase.from("conversation_sessions").upsert({
       whatsapp_e164:    otherParticipant.whatsapp_e164,
       session_state:    "idle",
       current_job_id:   null,
-      last_activity_at: new Date().toISOString(),
     }, { onConflict: "whatsapp_e164" });
   }
 
@@ -1785,17 +1786,11 @@ async function handleCloseConfirm(
   );
 
   // 8. Notify other participant (in-session — no template SID needed)
-  if (otherParticipant?.whatsapp_e164 && twilioEnv) {
+  if (otherParticipant?.whatsapp_e164) {
     const notifBody = `${hdr} This job thread has been closed.`;
-    const result    = await sendWhatsApp(twilioEnv, otherParticipant.whatsapp_e164, notifBody);
-    logMessage({
-      supabaseUrl, serviceRoleKey,
-      direction:           "outbound",
+    await sendAndLog(ctx, otherParticipant.whatsapp_e164, notifBody, {
       jobId,
-      participantWhatsapp: otherParticipant.whatsapp_e164,
-      templateName:        "THREAD_CLOSED_OTHER",
-      body:                notifBody,
-      status:              result.ok ? "sent" : "failed",
+      templateName: "THREAD_CLOSED_OTHER",
     });
   }
 }
@@ -2058,7 +2053,10 @@ async function handleProviderAccept(
     .single();
 
   if (!job) {
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, `We couldn't find that job. Please contact support.`);
+    await sendAndLog(ctx, fromNumber, `We couldn't find that job. Please contact support.`, {
+      jobId,
+      templateName: "JOB_NOT_FOUND",
+    });
     return;
   }
 
@@ -2069,7 +2067,10 @@ async function handleProviderAccept(
 
     if (job.state !== "sent_to_provider" || job.marketplace_provider_slug !== String(provider.slug)) {
       const msg = `[Job #${toPublicJobId(jobId)}] This request is no longer available.`;
-      if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, msg);
+      await sendAndLog(ctx, fromNumber, msg, {
+        jobId,
+        templateName: "MARKETPLACE_NO_LONGER_AVAILABLE",
+      });
       return;
     }
     await handleMarketplaceAccept(ctx, provider, job, updateSession);
@@ -2167,8 +2168,10 @@ async function handleMarketplaceAccept(
 
   // Acknowledge to provider
   const ack = `[Job #${toPublicJobId(jobId)}] You've accepted this ${categoryName} request. We'll open the job thread now.`;
-  if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, ack);
-  logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: ack, status: "sent" });
+  await sendAndLog(ctx, fromNumber, ack, {
+    jobId,
+    templateName: "MKT_ACCEPT_PROVIDER_ACK",
+  });
 
   // Add job_participants
   const participants: Record<string, unknown>[] = [
@@ -2179,19 +2182,24 @@ async function handleMarketplaceAccept(
   }
   await supabase.from("job_participants").upsert(participants, { onConflict: "job_id,whatsapp_e164" });
 
-  // Send WC-2 to client (Marketplace uses same assignment template)
-  if (twilioEnv && clientWa) {
+  // Send WC-2 to client (Marketplace uses same assignment template).
+  // Routed through sendAndLog so a Twilio failure (e.g. closed 24-hour session
+  // window for a first-time web-submitted client) raises an admin_alerts row
+  // in addition to the failed message_log entry. Phase 0 visibility only.
+  if (clientWa) {
     const wc2 = buildWC2(jobId, address, providerName, categoryName);
-    const result = await sendWhatsApp(twilioEnv, clientWa, wc2);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: clientWa, templateName: "WC-2", body: wc2, status: result.ok ? "sent" : "failed" });
+    await sendAndLog(ctx, clientWa, wc2, {
+      jobId,
+      templateName: "MKT_ACCEPT_CLIENT_WC2",
+    });
 
-    // Update client session
+    // Update client session — recipient-only event, do not stamp
+    // last_activity_at (the client did not inbound; they're being notified).
     await supabase.from("conversation_sessions").upsert({
       whatsapp_e164:   clientWa,
       sender_type:     "client",
       session_state:   "open",
       current_job_id:  jobId,
-      last_activity_at: new Date().toISOString(),
     }, { onConflict: "whatsapp_e164" });
   }
 
@@ -2215,19 +2223,23 @@ async function handleMarketplaceDecline(
 
   // Acknowledge to provider
   const ack = `[Job #${toPublicJobId(jctx.jobId)}] Understood — you've declined this request.`;
-  if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, ack);
-  logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: jctx.jobId, participantWhatsapp: fromNumber, body: ack, status: "sent" });
+  await sendAndLog(ctx, fromNumber, ack, {
+    jobId: jctx.jobId,
+    templateName: "MKT_DECLINE_PROVIDER_ACK",
+  });
 
   // Load client WhatsApp
   const { data: job } = await supabase.from("jobs")
     .select("client_whatsapp, category_code, category_name")
     .eq("job_id", jctx.jobId).single();
 
-  if (job?.client_whatsapp && twilioEnv) {
+  if (job?.client_whatsapp) {
     const catName = CATEGORY_NAMES[job.category_code] ?? job.category_name ?? job.category_code;
     const notif   = buildMKT2Declined(jctx.jobId, jctx.address, catName);
-    await sendWhatsApp(twilioEnv, job.client_whatsapp, notif);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: jctx.jobId, participantWhatsapp: job.client_whatsapp, templateName: "MKT-2-DECLINED", body: notif, status: "sent" });
+    await sendAndLog(ctx, job.client_whatsapp, notif, {
+      jobId: jctx.jobId,
+      templateName: "MKT_2_DECLINED",
+    });
   }
 
   // Reset the client's conversation session if (and only if) it is still tied
@@ -2237,13 +2249,14 @@ async function handleMarketplaceDecline(
   // Marketplace Connect since this job was created, marketplace-connect would
   // have overwritten current_job_id with the new job, and that one stays.
   // Non-fatal: a failure here must not block the provider's session reset.
+  // Recipient-only event — do not stamp last_activity_at (the client did not
+  // inbound; they are about to receive the MKT-2-DECLINED notification).
   if (job?.client_whatsapp) {
     try {
       await supabase.from("conversation_sessions")
         .update({
           session_state:    "idle",
           current_job_id:   null,
-          last_activity_at: new Date().toISOString(),
         })
         .eq("whatsapp_e164", job.client_whatsapp)
         .eq("current_job_id", jctx.jobId);
@@ -2271,12 +2284,11 @@ async function escalateAmbiguousReply(
     status:              "open",
   });
 
-  if (twilioEnv) {
-    await sendWhatsApp(
-      twilioEnv, fromNumber,
-      "We received your message but couldn't match it to an active job. Our team will follow up shortly. Reply HELP if you need support.",
-    );
-  }
+  await sendAndLog(
+    ctx, fromNumber,
+    "We received your message but couldn't match it to an active job. Our team will follow up shortly. Reply HELP if you need support.",
+    { templateName: "AMBIGUOUS_REPLY_ACK" },
+  );
 }
 
 // ─── Unknown sender handler ───────────────────────────────────────────────────

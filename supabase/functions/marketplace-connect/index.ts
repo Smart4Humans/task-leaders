@@ -304,6 +304,11 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Recipient-only events: neither participant has WhatsApp-inbounded at this
+    // point. The provider is being notified for the first time via MKT-1; the
+    // client only submitted the public HTTP form. Do not stamp last_activity_at
+    // on either upsert — that field must reflect inbound participant activity
+    // only, so the 24-hour-window heuristic stays meaningful.
     stage = "upsert_provider_session";
     await supabase.from("conversation_sessions")
       .upsert({
@@ -312,7 +317,6 @@ Deno.serve(async (req) => {
         session_state:   "awaiting_accept",
         current_job_id:  job.job_id,
         last_prompt:     msgBody,
-        last_activity_at: new Date().toISOString(),
       }, { onConflict: "whatsapp_e164" });
 
     stage = "upsert_client_session";
@@ -322,7 +326,6 @@ Deno.serve(async (req) => {
         sender_type:     "client",
         session_state:   "idle",
         current_job_id:  job.job_id,
-        last_activity_at: new Date().toISOString(),
       }, { onConflict: "whatsapp_e164" });
 
     stage = "log_lead_event";
