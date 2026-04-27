@@ -283,7 +283,18 @@ Deno.serve(async (req) => {
       service_areas:    serviceAreas,
       service_rates:    acct.service_rates ?? null,
     };
-    if (catRes.data?.id) upsertPayload.category_id = catRes.data.id;
+    if (!catRes.data?.id) {
+      return json({
+        ok: true,
+        data: {
+          slug,
+          status: "active",
+          marketplace_synced: false,
+          reason: `category not found: ${categorySlug}`,
+        },
+      });
+    }
+    upsertPayload.category_id = catRes.data.id;
 
     const { error: upsertErr } = await supabase
       .from("providers")
