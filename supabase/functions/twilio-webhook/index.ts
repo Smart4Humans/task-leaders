@@ -548,7 +548,7 @@ function extractInlineAddress(
   // Guard 2b: structural — number followed by a recognised BC street-type suffix
   const structuralMatch = /\b(\d{2,}[A-Za-z]?\s+[A-Za-z][A-Za-z0-9\s.-]*\b(?:street|avenue|boulevard|road|drive|way|lane|court|place|crescent|terrace|highway|st|ave|blvd|rd|dr|ln|crt|pl|cres|terr|hwy)\b)/i.exec(text);
 
-  const rawFragment = (contextualMatch?.[1] ?? structuralMatch?.[1] ?? "").trim();
+  const rawFragment = (structuralMatch?.[1] ?? contextualMatch?.[1] ?? "").trim();
   if (!rawFragment) return null;
 
   // Trim the fragment to end at the municipality name, discarding any trailing
