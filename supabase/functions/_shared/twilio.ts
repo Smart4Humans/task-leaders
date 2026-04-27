@@ -519,9 +519,10 @@ export function buildWC8(
 export function buildRelayToProvider(
   jobId: string,
   address: string,
+  clientFirstName: string,
   clientMessage: string,
 ): string {
-  return `${jobHeader(jobId, address)}\n[Client] ${clientMessage}`;
+  return `${jobHeader(jobId, address)}\n[${clientFirstName}] ${clientMessage}`;
 }
 
 /**

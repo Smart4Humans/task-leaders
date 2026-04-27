@@ -437,7 +437,7 @@ async function handleClientMessage(
       return;
     }
     if (jctx) {
-      await relayClientToProvider(ctx, jctx, updateSession);
+      await relayClientToProvider(ctx, jctx, client, updateSession);
       return;
     }
     // Session says open but no active job — fall through to intake
@@ -1794,6 +1794,7 @@ async function handleCloseConfirm(
 async function relayClientToProvider(
   ctx: Ctx,
   jctx: JobContext,
+  client: Record<string, unknown>,
   updateSession: (p: Record<string, unknown>) => Promise<unknown>,
 ) {
   const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body } = ctx;
@@ -1817,7 +1818,8 @@ async function relayClientToProvider(
   }
 
   // Always include job header so provider can distinguish jobs if they have multiple
-  const relayBody = buildRelayToProvider(jctx.jobId, jctx.address, body);
+  const firstName = String(client.first_name ?? "").trim() || "Client";
+  const relayBody = buildRelayToProvider(jctx.jobId, jctx.address, firstName, body);
   if (twilioEnv) {
     // Route through sendAndLog so a Twilio failure (e.g. recipient WhatsApp
     // session window closed, error code 63016) writes an admin_alerts row in
