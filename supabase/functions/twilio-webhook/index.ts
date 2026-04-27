@@ -1929,6 +1929,11 @@ async function handleProviderMessage(
     if (jctx && jctx !== "ambiguous") {
       // Check if this is a Marketplace decline
       if (jctx.source === "marketplace") {
+        // Record first response time symmetrically with Marketplace ACCEPT
+        // (handleProviderAccept) and Concierge PASS (below). Without this,
+        // jobs.first_provider_response_at stays NULL on declines and the
+        // provider's rolling response_time_minutes never reflects fast no's.
+        await recordProviderResponseTime(supabase, provider, jctx.jobId, jctx.source);
         await handleMarketplaceDecline(ctx, jctx, provider, updateSession);
       } else {
         // Concierge pass — record first response time before updating DB
