@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
         `\n  ${a.description ?? "No description"}`
       ));
 
-      const subject  = `[TaskLeaders Admin] ${escalations.length} alert${escalations.length > 1 ? "s" : ""} require attention`;
+      const subject  = `[TaskLeaders Admin] ${escalations.length} ${escalations.length === 1 ? "alert requires" : "alerts require"} attention`;
       const textBody = `TaskLeaders Admin Alerts\n\n${alertLines.join("\n\n")}\n\nReview in the Admin Panel.`;
       const htmlBody = `
         <html><head><meta charset="utf-8"></head>
