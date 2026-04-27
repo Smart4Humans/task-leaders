@@ -274,6 +274,7 @@ Deno.serve(async (req) => {
       direction:           "outbound",
       jobId:               job.job_id,
       participantWhatsapp: provider.whatsapp_number,
+      messageSid:          sendResult.messageSid,
       templateName:        "MKT-1",
       body:                msgBody,
       status:              sendResult.ok ? "sent" : "failed",
