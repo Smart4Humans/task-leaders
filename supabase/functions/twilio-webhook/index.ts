@@ -1742,7 +1742,6 @@ async function handleCloseConfirm(
     .update({
       state:      "closed",
       status:     "completed",
-      updated_at: new Date().toISOString(),
     })
     .eq("job_id", jobId);
 
