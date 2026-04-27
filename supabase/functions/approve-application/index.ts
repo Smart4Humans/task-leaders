@@ -488,7 +488,7 @@ Deno.serve(async (req) => {
         `<body style="font-family:sans-serif;font-size:16px;color:#000000;line-height:1.6;">`,
         `<p>Hi ${firstName},</p>`,
         "<p>Your access to the TaskLeaders Concierge service has been approved.</p>",
-        "<p>Save this WhatsApp number: <strong>[TASKLEADERS_WHATSAPP_NUMBER]</strong></p>",
+        "<p>Save this WhatsApp number: <strong>+1 604 699 6168</strong></p>",
         "<p>When you need a service provider, just send us a message and we'll handle the rest.</p>",
         "<p>— The TaskLeaders Team</p>",
         "</body></html>",
@@ -498,7 +498,7 @@ Deno.serve(async (req) => {
         resendKey, fromEmail, client.email,
         "You're In — TaskLeaders Concierge Access",
         html,
-        `Hi ${firstName},\n\nYour access to the TaskLeaders Concierge service has been approved.\n\nSave this WhatsApp number: [TASKLEADERS_WHATSAPP_NUMBER]\n\nWhen you need a service provider, just send us a message and we'll handle the rest.\n\n— The TaskLeaders Team`,
+        `Hi ${firstName},\n\nYour access to the TaskLeaders Concierge service has been approved.\n\nSave this WhatsApp number: +1 604 699 6168\n\nWhen you need a service provider, just send us a message and we'll handle the rest.\n\n— The TaskLeaders Team`,
       );
     }
 
