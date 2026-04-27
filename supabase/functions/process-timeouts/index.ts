@@ -312,6 +312,37 @@ Deno.serve(async (req) => {
           .update({ email_sent: true })
           .in("id", ids);
         emailsSent = escalations.length;
+      } else {
+        // Slice 3c: surface Resend-side rejection so it's visible without manual log inspection.
+        // The original digest-eligible alerts are intentionally NOT mutated — they remain
+        // open / email_sent=false so they will be retried on the next cron tick once the
+        // Resend issue is resolved. De-dupe per-failure: insert at most one open
+        // admin_alerts row per acknowledgment cycle so persistent failures don't spam the queue.
+        const errText = await emailRes.text().catch(() => "(unreadable)");
+        console.error(
+          `Resend digest send FAILED: HTTP ${emailRes.status}. Body: ${errText.substring(0, 500)}`,
+        );
+
+        const { data: existing } = await supabase
+          .from("admin_alerts")
+          .select("id")
+          .eq("alert_type", "escalation")
+          .eq("priority", "high")
+          .eq("status", "open")
+          .like("description", "Resend digest send FAILED%")
+          .limit(1);
+
+        if (!existing || existing.length === 0) {
+          await supabase.from("admin_alerts").insert({
+            alert_type:  "escalation",
+            priority:    "high",
+            description:
+              `Resend digest send FAILED. HTTP ${emailRes.status}. ` +
+              `Body: ${errText.substring(0, 500)}. ` +
+              `Affected ${escalations.length} alerts queued.`,
+            status:      "open",
+          });
+        }
       }
     } else {
       // No Resend key — mark acknowledged to prevent queue buildup
