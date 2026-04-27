@@ -486,8 +486,7 @@ async function sendDisambiguationPrompt(
     jobLines.join("\n") + `\n\nExample: "${toPublicJobId(parts[0].job_id)}: your message here"`
   );
 
-  if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, prompt);
-  logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", participantWhatsapp: fromNumber, body: prompt, status: "sent" });
+  await sendAndLog(ctx, fromNumber, prompt, { templateName: "DISAMBIGUATION_PROMPT" });
   await updateSession({ session_state: "open", last_prompt: prompt });
 }
 
@@ -1460,7 +1459,7 @@ async function handleSurveyAnswer(
 
   const score = parseInt(kw, 10);
   if (isNaN(score) || score < 1 || score > 5) {
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, "Please reply with a number from 1 to 5.");
+    await sendAndLog(ctx, fromNumber, "Please reply with a number from 1 to 5.", { jobId, templateName: "SURVEY_RATING_RETRY" });
     return;
   }
 
@@ -1489,8 +1488,7 @@ async function handleSurveyAnswer(
 
   if (!isLast) {
     const nextQ = nextState === "awaiting_survey_q2" ? SURVEY_QUESTIONS.q2 : SURVEY_QUESTIONS.q3;
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, nextQ);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: nextQ, status: "sent" });
+    await sendAndLog(ctx, fromNumber, nextQ, { jobId, templateName: "SURVEY_NEXT_QUESTION" });
     await updateSession({ session_state: nextState, current_job_id: jobId, last_prompt: nextQ });
   } else {
     // Survey complete — advance job state
@@ -1500,8 +1498,7 @@ async function handleSurveyAnswer(
     }).eq("job_id", jobId);
 
     const thanks = "Thank you for your feedback. We appreciate it.";
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, thanks);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: thanks, status: "sent" });
+    await sendAndLog(ctx, fromNumber, thanks, { jobId, templateName: "SURVEY_THANKS" });
     await updateSession({ session_state: "idle", current_job_id: null });
 
     // Trigger reliability pipeline (fire-and-forget).
@@ -1625,18 +1622,16 @@ async function handleNoMatchDecision(
   // either wording still resolve. Match against both in each branch.
   if (kw === KW_KEEP_SEARCHING || kw === KW_KEEP_OPEN) {
     const reply = "Understood — we'll keep searching and let you know as soon as we have a match.";
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, reply);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: reply, status: "sent" });
+    await sendAndLog(ctx, fromNumber, reply, { jobId, templateName: "NO_MATCH_KEEP_SEARCHING" });
     await supabase.from("jobs").update({ state: "no_match" }).eq("job_id", jobId);
     await updateSession({ session_state: "idle", current_job_id: jobId });
   } else if (kw === KW_CLOSE_NOW || kw === KW_CANCEL) {
     const reply = "No problem — this request has been closed. Message us any time you need a TaskLeader.";
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, reply);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: reply, status: "sent" });
+    await sendAndLog(ctx, fromNumber, reply, { jobId, templateName: "NO_MATCH_CLOSE_NOW" });
     await supabase.from("jobs").update({ state: "closed", status: "completed" }).eq("job_id", jobId);
     await updateSession({ session_state: "idle", current_job_id: null });
   } else {
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, "Please reply KEEP SEARCHING or CLOSE NOW.");
+    await sendAndLog(ctx, fromNumber, "Please reply KEEP SEARCHING or CLOSE NOW.", { jobId, templateName: "NO_MATCH_RETRY" });
   }
 }
 
@@ -1911,7 +1906,7 @@ async function handleProviderMessage(
       description: "Provider requested HELP.",
       status: "open",
     });
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, "We've received your support request. Our team will be in touch shortly.");
+    await sendAndLog(ctx, fromNumber, "We've received your support request. Our team will be in touch shortly.", { templateName: "PROVIDER_HELP_ACK" });
     return;
   }
 
@@ -1942,8 +1937,7 @@ async function handleProviderMessage(
           response: kw, responded_at: new Date().toISOString(),
         }).eq("job_id", jctx.jobId).eq("provider_slug", String(provider.slug));
         const ack = "Understood — you've passed on this job.";
-        if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, ack);
-        logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId: jctx.jobId, participantWhatsapp: fromNumber, body: ack, status: "sent" });
+        await sendAndLog(ctx, fromNumber, ack, { jobId: jctx.jobId, templateName: "CONCIERGE_PASS_ACK" });
       }
       await updateSession({ session_state: "idle", current_job_id: null });
     } else {
@@ -2093,8 +2087,7 @@ async function handleProviderAccept(
 
   if (!claimed) {
     const lostMsg = `[Job #${toPublicJobId(jobId)}] This job has already been claimed. Keep an eye out for the next one.`;
-    if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, lostMsg);
-    logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: lostMsg, status: "sent" });
+    await sendAndLog(ctx, fromNumber, lostMsg, { jobId, templateName: "CONCIERGE_CLAIM_LOST" });
     await updateSession({ session_state: "idle", current_job_id: null });
     return;
   }
@@ -2141,8 +2134,7 @@ async function handleProviderAccept(
       ? "Your card on file will be charged now to confirm your assignment."
       : "Please complete payment using the link we're sending you now."
   }`;
-  if (twilioEnv) await sendWhatsApp(twilioEnv, fromNumber, ackMsg);
-  logMessage({ supabaseUrl, serviceRoleKey, direction: "outbound", jobId, participantWhatsapp: fromNumber, body: ackMsg, status: "sent" });
+  await sendAndLog(ctx, fromNumber, ackMsg, { jobId, templateName: "CONCIERGE_ACCEPT_ACK" });
 }
 
 // ─── Marketplace: provider ACCEPT ────────────────────────────────────────────
@@ -2306,10 +2298,9 @@ async function handleUnknownSender(
   const { supabase, supabaseUrl, serviceRoleKey, twilioEnv, fromNumber, body } = ctx;
 
   if (client?.suspended || provider?.suspended) {
-    if (twilioEnv) {
-      await sendWhatsApp(twilioEnv, fromNumber,
-        "Your access has been temporarily suspended. Please contact info@task-leaders.com for assistance.");
-    }
+    await sendAndLog(ctx, fromNumber,
+      "Your access has been temporarily suspended. Please contact info@task-leaders.com for assistance.",
+      { templateName: "UNKNOWN_SENDER_SUSPENDED" });
     return;
   }
 
@@ -2318,10 +2309,9 @@ async function handleUnknownSender(
     provider?.status === "pending_onboarding" ||
     provider?.status === "pending_approval"
   ) {
-    if (twilioEnv) {
-      await sendWhatsApp(twilioEnv, fromNumber,
-        "Your account is currently under review. We'll reach out once it's approved.");
-    }
+    await sendAndLog(ctx, fromNumber,
+      "Your account is currently under review. We'll reach out once it's approved.",
+      { templateName: "UNKNOWN_SENDER_PENDING" });
     return;
   }
 
@@ -2333,10 +2323,9 @@ async function handleUnknownSender(
     status:              "open",
   });
 
-  if (twilioEnv) {
-    await sendWhatsApp(twilioEnv, fromNumber,
-      "Hi — we don't have a record matching your number. If you'd like to learn more about TaskLeaders, visit task-leaders.com.");
-  }
+  await sendAndLog(ctx, fromNumber,
+    "Hi — we don't have a record matching your number. If you'd like to learn more about TaskLeaders, visit task-leaders.com.",
+    { templateName: "UNKNOWN_SENDER_INVITE" });
 }
 
 // ─── Response time recording ─────────────────────────────────────────────────
