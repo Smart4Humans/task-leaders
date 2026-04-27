@@ -96,6 +96,15 @@ export async function sendWhatsApp(
     Body: body,
   });
 
+  // Phase 0.5: include StatusCallback when configured so Twilio fires
+  // post-delivery state updates (delivered / read / undelivered / failed)
+  // to the twilio-status-callback endpoint. Env-var-gated for backwards
+  // compatibility — behavior is byte-identical to pre-Phase-0.5 when unset.
+  const statusCallbackUrl = Deno.env.get("TWILIO_STATUS_CALLBACK_URL");
+  if (statusCallbackUrl) {
+    params.append("StatusCallback", statusCallbackUrl);
+  }
+
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -156,6 +165,13 @@ export async function sendTemplateWhatsApp(
   } else {
     // No SID configured — fall through to plain body (Sandbox / pre-production)
     params["Body"] = fallbackBody;
+  }
+
+  // Phase 0.5: include StatusCallback when configured. Same env-var-gated
+  // behavior as sendWhatsApp — see that function for rationale.
+  const statusCallbackUrl = Deno.env.get("TWILIO_STATUS_CALLBACK_URL");
+  if (statusCallbackUrl) {
+    params["StatusCallback"] = statusCallbackUrl;
   }
 
   try {

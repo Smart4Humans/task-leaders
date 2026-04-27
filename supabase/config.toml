@@ -45,6 +45,13 @@ verify_jwt = false
 [functions.twilio-webhook]
 verify_jwt = false
 
+# Twilio Programmable Messaging status callback receiver (Phase 0.5).
+# Updates message_log.status post-delivery (delivered / read / undelivered /
+# failed) and raises admin_alerts on terminal failures. Auth: X-Twilio-Signature
+# validated against TWILIO_STATUS_CALLBACK_URL env var.
+[functions.twilio-status-callback]
+verify_jwt = false
+
 # Concierge broadcast engine. Sends WT-2 to all eligible Concierge TaskLeaders.
 # Eligibility: concierge_eligible=true, category match, city match, not suspended.
 # Auth: x-internal-secret or admin_password.
