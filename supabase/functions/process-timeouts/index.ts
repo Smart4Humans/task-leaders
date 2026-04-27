@@ -128,14 +128,10 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: alertErr.message }, 500);
   }
 
-  if (!alerts || alerts.length === 0) {
-    return json({ ok: true, data: { processed: 0, check_result: checkResult } });
-  }
-
   const twilioEnv = getTwilioEnv();
   let processed = 0;
 
-  for (const alert of alerts) {
+  for (const alert of alerts ?? []) {
     if (!alert.job_id || !alert.provider_slug) continue;
 
     // Load job + provider details
