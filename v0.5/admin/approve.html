@@ -324,7 +324,7 @@
 
     /* ── Pipeline horizontal scroll wrapper (mobile parity with Jobs/Queue) ── */
     .pipe-table-wrap  { overflow-x: auto; }
-    .pipe-table-inner { min-width: 720px; }
+    .pipe-table-inner { min-width: 1000px; }
 
     /* ── Pipeline cards ── */
     .pipe-card {
@@ -838,8 +838,8 @@
         showApp();
         renderPending(data.data.pending || [], data.data.pending_onboarding || []);
         renderPipeline(data.data.approved         || []);
-        renderJobs(data.data.jobs                 || []);
         renderConciergeQueue(data.data.concierge_clients || []);
+        renderJobs(data.data.jobs                 || []);
 
       } catch (err) {
         document.getElementById('pendingList').innerHTML =
