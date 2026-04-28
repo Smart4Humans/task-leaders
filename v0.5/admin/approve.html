@@ -322,6 +322,10 @@
     /* ── Pipeline section ── */
     .pipeline-section { margin-top: 48px; }
 
+    /* ── Pipeline horizontal scroll wrapper (mobile parity with Jobs/Queue) ── */
+    .pipe-table-wrap  { overflow-x: auto; }
+    .pipe-table-inner { min-width: 720px; }
+
     /* ── Pipeline cards ── */
     .pipe-card {
       background: var(--card);
@@ -573,10 +577,12 @@
 
     @media (max-width: 700px) {
       .pipe-col-email, .pipe-col-wa { display: none; }
+      .pipe-table-inner { min-width: 460px; }
       .page-title { font-size: 22px; }
     }
     @media (max-width: 500px) {
       .pipe-col-area { display: none; }
+      .pipe-table-inner { min-width: 380px; }
     }
   </style>
 </head>
@@ -668,20 +674,24 @@
           oninput="applyPipelineFilters()"
         />
 
-        <div class="pipe-header">
-          <div class="pipe-header-main">Name</div>
-          <div class="pipe-col pipe-col-service">Service</div>
-          <div class="pipe-col pipe-col-area">Area</div>
-          <div class="pipe-col pipe-col-email">Email</div>
-          <div class="pipe-col pipe-col-wa">WhatsApp</div>
-          <div class="pipe-slots">
-            <div class="pipe-slot-status">Status</div>
-            <div class="pipe-slot-action"></div>
-            <span class="pipe-chevron" style="visibility:hidden;">▾</span>
+        <div class="pipe-table-wrap">
+          <div class="pipe-table-inner">
+            <div class="pipe-header">
+              <div class="pipe-header-main">Name</div>
+              <div class="pipe-col pipe-col-service">Service</div>
+              <div class="pipe-col pipe-col-area">Area</div>
+              <div class="pipe-col pipe-col-email">Email</div>
+              <div class="pipe-col pipe-col-wa">WhatsApp</div>
+              <div class="pipe-slots">
+                <div class="pipe-slot-status">Status</div>
+                <div class="pipe-slot-action"></div>
+                <span class="pipe-chevron" style="visibility:hidden;">▾</span>
+              </div>
+            </div>
+
+            <div id="pipelineList"><div class="loading-row">Loading…</div></div>
           </div>
         </div>
-
-        <div id="pipelineList"><div class="loading-row">Loading…</div></div>
       </div>
 
       <!-- ── Active Jobs ── -->
