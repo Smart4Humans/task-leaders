@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
 
       supabase
         .from("jobs")
-        .select("id, job_id, city_code, category_code, category_name, status, client_id, address, description, created_at, assigned_at, completed_at")
+        .select("id, job_id, city_code, category_code, category_name, status, client_id, client_whatsapp, address, municipality_name, description, created_at, assigned_at, completed_at")
         .order("created_at", { ascending: false })
         .limit(500),
 

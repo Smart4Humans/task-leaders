@@ -1226,8 +1226,8 @@
         return `<tr>
           <td><span class="job-id">${escHtml(displayId)}</span></td>
           <td>${escHtml(j.category_name || j.category_code || '—')}</td>
-          <td>${escHtml(j.address || '—')}</td>
-          <td>${escHtml(clientName || '—')}</td>
+          <td>${escHtml(j.address || j.municipality_name || '—')}</td>
+          <td>${escHtml(clientName || j.client_whatsapp || '—')}</td>
           <td>${jobStatusBadge(j.status)}</td>
           <td><span class="job-muted">${date}</span></td>
         </tr>`;
