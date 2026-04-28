@@ -1152,11 +1152,9 @@
     }
 
     function applyJobsFilters() {
-      const q       = (document.getElementById('jobsSearch')?.value || '').toLowerCase().trim();
-      const noFilters = jobsFilter === 'all' && !q;
-      const limit   = noFilters ? 10 : Infinity;
+      const q = (document.getElementById('jobsSearch')?.value || '').toLowerCase().trim();
 
-      // Default view excludes completed; specific status filter overrides this
+      // Default "all" view excludes completed; specific status filter overrides this
       let filtered = jobsFilter === 'all'
         ? allJobs.filter(j => j.status !== 'completed')
         : allJobs;
@@ -1177,8 +1175,7 @@
         });
       }
 
-      const visible = filtered.slice(0, limit);
-      renderJobsTable(visible, filtered.length, allJobs.length);
+      renderJobsTable(filtered, filtered.length, allJobs.length);
     }
 
     /** Strip city prefix for display: VAN-PLM-00042 → PLM-00042 */
@@ -1211,7 +1208,7 @@
       const count = document.getElementById('jobsCount');
       const q     = document.getElementById('jobsSearch')?.value || '';
       count.textContent = jobsFilter === 'all' && !q
-        ? `${allJobs.filter(j => j.status !== 'completed').length} active — showing ${Math.min(10, allJobs.filter(j => j.status !== 'completed').length)} most recent`
+        ? `${allJobs.filter(j => j.status !== 'completed').length} active`
         : `${filteredTotal} record${filteredTotal !== 1 ? 's' : ''}`;
 
       if (jobs.length === 0) {
