@@ -1175,7 +1175,11 @@
         });
       }
 
-      renderJobsTable(filtered, filtered.length, allJobs.length);
+      // Cap default "all" view at 10 most recent for mobile usability;
+      // search and specific status filters remain uncapped.
+      const noFilters = jobsFilter === 'all' && !q;
+      const visible   = noFilters ? filtered.slice(0, 10) : filtered;
+      renderJobsTable(visible, filtered.length, allJobs.length);
     }
 
     /** Strip city prefix for display: VAN-PLM-00042 → PLM-00042 */
@@ -1208,7 +1212,7 @@
       const count = document.getElementById('jobsCount');
       const q     = document.getElementById('jobsSearch')?.value || '';
       count.textContent = jobsFilter === 'all' && !q
-        ? `${allJobs.filter(j => j.status !== 'completed').length} active`
+        ? `${allJobs.filter(j => j.status !== 'completed').length} active — showing 10 most recent. Use search or status filters to view more.`
         : `${filteredTotal} record${filteredTotal !== 1 ? 's' : ''}`;
 
       if (jobs.length === 0) {
