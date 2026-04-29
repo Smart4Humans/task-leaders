@@ -37,7 +37,12 @@
 // - admin_alerts insert failure: non-fatal — return 200 OK regardless.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { validateTwilioSignature } from "../_shared/twilio.ts";
+import {
+  getTwilioEnv,
+  logMessage,
+  sendWhatsApp,
+  validateTwilioSignature,
+} from "../_shared/twilio.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
@@ -154,6 +159,89 @@ Deno.serve(async (req) => {
       console.error(
         `twilio-status-callback admin_alert insert failed. SID=${messageSid} err=${String(e)}`,
       );
+    }
+
+    // ── Slice F1 — sender-facing relay-failure feedback ────────────────────
+    // When a routed-thread relay fails (recipient WhatsApp window closed —
+    // typically Twilio error 63016), notify the original sender in-session
+    // that their message did not land. The sender's own session window is
+    // open by definition (their inbound is what triggered the relay attempt),
+    // so this free-form reply succeeds without a template.
+    //
+    // Phase 0.5 boundary: this notice does NOT redeliver the original
+    // message. Phase 1 (queue + reactivation template + on-next-inbound
+    // redelivery) remains the proper delivery fix and is unchanged backlog.
+    //
+    // Loop / dedupe safety:
+    //   - Gated on RELAY_PROVIDER_TO_CLIENT / RELAY_CLIENT_TO_PROVIDER only.
+    //     The notice itself is logged as RELAY_DELIVERY_FAILED_NOTICE, which
+    //     never matches the gate, so its own future delivery callbacks
+    //     cannot re-enter this branch.
+    //   - Sent via raw sendWhatsApp (not sendAndLog), so a notice failure
+    //     does NOT raise another admin_alert.
+    //   - The outer `.neq("status", messageStatus).select().maybeSingle()`
+    //     guard above ensures Twilio retries of the same status callback
+    //     are no-ops at the message_log layer, so this branch only runs
+    //     once per terminal-status transition.
+    //   - last_activity_at is NOT touched (recipient nor sender) — Phase 0
+    //     Class B hygiene is preserved.
+    const tplFailed = updated.template_name ?? "";
+    if (
+      (tplFailed === "RELAY_PROVIDER_TO_CLIENT" ||
+        tplFailed === "RELAY_CLIENT_TO_PROVIDER") &&
+      updated.job_id
+    ) {
+      // Sender is the OPPOSITE participant_type from the recipient of the
+      // failed relay.
+      const senderType =
+        tplFailed === "RELAY_PROVIDER_TO_CLIENT" ? "provider" : "client";
+
+      const { data: sender } = await supabase
+        .from("job_participants")
+        .select("whatsapp_e164")
+        .eq("job_id", updated.job_id)
+        .eq("participant_type", senderType)
+        .eq("session_state", "active")
+        .maybeSingle();
+
+      if (sender?.whatsapp_e164) {
+        const noticeBody =
+          "We couldn't deliver that message because the other party may " +
+          "need to re-open the TaskLeaders WhatsApp thread. TaskLeaders " +
+          "has been alerted and will follow up.";
+
+        const twilioEnv = getTwilioEnv();
+        let noticeSid:    string | null = null;
+        let noticeStatus: string        = "no_twilio_env";
+        if (twilioEnv) {
+          const result = await sendWhatsApp(
+            twilioEnv,
+            sender.whatsapp_e164,
+            noticeBody,
+          );
+          noticeSid    = result.messageSid;
+          noticeStatus = result.ok ? "sent" : "failed";
+        }
+
+        try {
+          await logMessage({
+            supabaseUrl,
+            serviceRoleKey,
+            direction:           "outbound",
+            jobId:               updated.job_id,
+            participantWhatsapp: sender.whatsapp_e164,
+            messageSid:          noticeSid,
+            templateName:        "RELAY_DELIVERY_FAILED_NOTICE",
+            body:                noticeBody,
+            status:              noticeStatus,
+          });
+        } catch (e) {
+          console.error(
+            `twilio-status-callback RELAY_DELIVERY_FAILED_NOTICE log failed. ` +
+              `SID=${messageSid} senderType=${senderType} err=${String(e)}`,
+          );
+        }
+      }
     }
   }
 
