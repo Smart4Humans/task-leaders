@@ -138,6 +138,7 @@ Deno.serve(async (req) => {
     logMessage({
       supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id,
       participantWhatsapp: job.client_whatsapp,
+      messageSid: wc3Result.messageSid,
       templateName: "WC-3", body: wc3Body, status: wc3Result.ok ? "sent" : "failed",
     });
 
@@ -150,6 +151,7 @@ Deno.serve(async (req) => {
     logMessage({
       supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id,
       participantWhatsapp: job.client_whatsapp,
+      messageSid: q1Result.messageSid,
       templateName: "SURVEY_Q1", body: SURVEY_QUESTIONS.q1,
       status: q1Result.ok ? "sent" : "failed",
     });
@@ -192,6 +194,7 @@ Deno.serve(async (req) => {
       logMessage({
         supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id,
         participantWhatsapp: providerAcct.whatsapp_number,
+        messageSid: wt5Result.messageSid,
         templateName: "WT-5", body: wt5Body, status: wt5Result.ok ? "sent" : "failed",
       });
     }
@@ -268,6 +271,7 @@ Deno.serve(async (req) => {
     logMessage({
       supabaseUrl, serviceRoleKey, direction: "outbound", jobId: job.job_id,
       participantWhatsapp: provAcct.whatsapp_number,
+      messageSid: wt3Result.messageSid,
       templateName: "WT-3", body: wt3Body, status: wt3Result.ok ? "sent" : "failed",
     });
 

@@ -325,6 +325,7 @@ Deno.serve(async (req) => {
         supabaseUrl, serviceRoleKey,
         direction: "outbound", jobId: job.job_id,
         participantWhatsapp: provider.whatsapp_number,
+        messageSid: result.messageSid,
         templateName: "PAYMENT_LINK_PROMPT",
         body: promptBody, status: result.ok ? "sent" : "failed",
       });

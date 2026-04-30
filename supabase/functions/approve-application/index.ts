@@ -448,7 +448,7 @@ Deno.serve(async (req) => {
 
     const { data: client, error: fetchErr } = await supabase
       .from("concierge_clients")
-      .select("id, first_name, last_name, name, email, status")
+      .select("id, first_name, last_name, name, email, whatsapp, status")
       .eq("id", clientId)
       .single();
 

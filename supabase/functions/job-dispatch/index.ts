@@ -261,6 +261,7 @@ Deno.serve(async (req) => {
         logMessage({
           supabaseUrl, serviceRoleKey, direction: "outbound",
           jobId: job.job_id, participantWhatsapp: job.client_whatsapp,
+          messageSid: result.messageSid,
           templateName: "WC-4", body: msgBody, status: result.ok ? "sent" : "failed",
         });
         await supabase.from("conversation_sessions").upsert({
@@ -337,6 +338,7 @@ Deno.serve(async (req) => {
     logMessage({
       supabaseUrl, serviceRoleKey, direction: "outbound",
       jobId: job.job_id, participantWhatsapp: provider.whatsapp_number,
+      messageSid: result.messageSid,
       templateName: "WT-2", body: msgBody,
       status: result.ok ? "sent" : "failed",
     });

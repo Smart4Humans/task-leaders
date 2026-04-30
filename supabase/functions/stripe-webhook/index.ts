@@ -382,6 +382,7 @@ async function handlePaymentConfirmed(
       supabaseUrl, serviceRoleKey,
       direction: "outbound", jobId: job.job_id,
       participantWhatsapp: job.client_whatsapp,
+      messageSid: result.messageSid,
       templateName: "WC-2", body: msgBody,
       status: result.ok ? "sent" : "failed",
     });
@@ -461,6 +462,7 @@ async function handlePaymentConfirmed(
       supabaseUrl, serviceRoleKey,
       direction: "outbound", jobId: job.job_id,
       participantWhatsapp: provider.whatsapp_number,
+      messageSid: wt8Result.messageSid,
       templateName: "WT-8", body: wt8Body,
       status: wt8Result.ok ? "sent" : "failed",
     });
@@ -591,6 +593,7 @@ async function handleCardSaveInvite(
       supabaseUrl, serviceRoleKey,
       direction: "outbound",
       participantWhatsapp: providerWhatsapp,
+      messageSid: result.messageSid,
       templateName: "CARD_SAVE_INVITE",
       body: msgBody, status: result.ok ? "sent" : "failed",
     });
@@ -723,6 +726,7 @@ async function handleCardSaveSetupComplete(
       supabaseUrl, serviceRoleKey,
       direction: "outbound",
       participantWhatsapp: provider.whatsapp_number,
+      messageSid: result.messageSid,
       templateName: "CARD_SAVE_CONFIRMED",
       body: msgBody, status: result.ok ? "sent" : "failed",
     });
