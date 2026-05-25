@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <meta name="theme-color" content="#0a0a14" />
-  <title>Mike Johnson — TaskLeaders</title>
+  <title>TaskLeader Profile — TaskLeaders</title>
   <style>
     :root {
       --blue: #0066ff;
@@ -653,7 +653,7 @@
       <div class="hero-photo">
         <img id="providerPhoto" src="" alt="" style="display:none;" />
       </div>
-      <h1 class="hero-name" id="providerNameHero">Mike Johnson</h1>
+      <h1 class="hero-name" id="providerNameHero">Loading profile…</h1>
       <span class="hero-category" id="heroCategory">Painting</span>
       <div class="hero-location" id="heroLocation">Vancouver</div>
     </section>
@@ -663,17 +663,17 @@
       <div class="trust-item">
         <div class="trust-icon">⚡</div>
         <div class="trust-label">Responds in</div>
-        <div class="trust-value response" id="trustResponse">~2 min</div>
+        <div class="trust-value response" id="trustResponse">—</div>
       </div>
       <div class="trust-item">
         <div class="trust-icon">✓</div>
         <div class="trust-label">Reliability</div>
-        <div class="trust-value reliability" id="trustReliability">96%</div>
+        <div class="trust-value reliability" id="trustReliability">—</div>
       </div>
       <div class="trust-item">
         <div class="trust-icon">$</div>
         <div class="trust-label">From</div>
-        <div class="trust-value" id="trustPrice">$40/hr</div>
+        <div class="trust-value" id="trustPrice">—</div>
       </div>
     </section>
 
@@ -685,23 +685,14 @@
       <p class="connect-note">via <span style="color:var(--success);">WhatsApp</span></p>
     </section>
 
-    <!-- Services &amp; Rates - hidden once real API data loads -->
-    <section class="section" id="servicesRatesSection">
+    <!-- Services & Rates — hidden by default; populated by renderServiceRates() once API data loads -->
+    <section class="section" id="servicesRatesSection" style="display:none;">
       <h2>Services & Rates</h2>
-      
+
       <div class="service-item">
-        <span class="service-name">🪜 Painting</span>
-        <span class="service-rate">$45/hr</span>
+        <span class="service-name">Services loading…</span>
       </div>
-      <div class="service-item">
-        <span class="service-name">🔧 Handyman</span>
-        <span class="service-rate">$50/hr</span>
-      </div>
-      <div class="service-item">
-        <span class="service-name">🧹 Cleaning</span>
-        <span class="service-rate">$40/hr</span>
-      </div>
-      
+
       <p class="pricing-note">
         Listed rates are a general guide. Final pricing may vary based on the details of your job, materials required, location, and timing.
       </p>
@@ -717,14 +708,8 @@
 
     <!-- About Section -->
     <section class="section">
-      <h2 id="aboutHeading">About Mike</h2>
-      <p class="about-text" id="aboutText">
-        I'm a multi-skilled professional with over 8 years of experience helping homeowners in Vancouver. 
-        I specialize in interior and exterior painting, but I'm also happy to tackle handyman jobs 
-        and cleaning services. I take pride in showing up on time, communicating clearly, 
-        and leaving every space better than I found it. Whether you need a single room painted or a 
-        full home refresh, I'll treat your project with the same care I'd give my own.
-      </p>
+      <h2 id="aboutHeading">About this TaskLeader</h2>
+      <p class="about-text" id="aboutText"></p>
     </section>
 
     <!-- Additional Services Section (shown when provider has extras) -->
@@ -762,8 +747,8 @@
 
       <!-- ── Form step ── -->
       <div id="modalForm">
-        <h3 id="connectModalTitle">Connect with Mike</h3>
-        <p id="connectModalSub">Tell us about your job so Mike can respond quickly.</p>
+        <h3 id="connectModalTitle">Connect with this TaskLeader</h3>
+        <p id="connectModalSub">Tell us about your job so this TaskLeader can respond quickly.</p>
 
         <input type="text"  class="name-input"  id="nameInput"  placeholder="Your full name" />
         <input type="tel"   class="phone-input"  id="phoneInput"  placeholder="+1 (604) 555-1234" />
@@ -1592,7 +1577,7 @@
         ? rawMunicipality
         : '';
 
-      // Clear template defaults while loading — never show Mike Johnson or any other provider
+      // Clear template defaults while loading — never show a fake provider profile.
       setProviderName('');
       setProviderPhoto('', ''); // hides the img immediately, preventing flash of hardcoded photo
       document.title = 'TaskLeaders';
