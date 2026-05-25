@@ -170,7 +170,37 @@
     .trust-value.response {
       color: var(--green);
     }
-    
+
+    /* Building track record — shown when both response_time and reliability metrics are missing.
+       The .trust-bar.building-only modifier swaps the two metric cells for a single pill. */
+    .building-track-record {
+      display: none;
+      flex: 2;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 0 8px;
+    }
+    .trust-bar.building-only .trust-item.metric-cell { display: none; }
+    .trust-bar.building-only .building-track-record { display: flex; }
+    .building-track-record .pill {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--blue);
+      background: rgba(0,102,255,0.12);
+      border: 1px solid rgba(0,102,255,0.25);
+      border-radius: 999px;
+      padding: 6px 14px;
+      letter-spacing: 0.2px;
+    }
+    .building-track-record .pill-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
     /* Badges - match category page exactly */
     .badges-row {
       display: flex;
@@ -675,16 +705,20 @@
     </section>
 
     <!-- Trust Bar -->
-    <section class="trust-bar">
-      <div class="trust-item">
+    <section class="trust-bar" id="trustBar">
+      <div class="trust-item metric-cell">
         <div class="trust-icon">⚡</div>
         <div class="trust-label">Responds in</div>
         <div class="trust-value response" id="trustResponse">—</div>
       </div>
-      <div class="trust-item">
+      <div class="trust-item metric-cell">
         <div class="trust-icon">✓</div>
         <div class="trust-label">Reliability</div>
         <div class="trust-value reliability" id="trustReliability">—</div>
+      </div>
+      <div class="building-track-record" aria-label="New TaskLeader — performance metrics will appear as jobs are completed">
+        <span class="pill">Building track record</span>
+        <span class="pill-sub">New on TaskLeaders</span>
       </div>
       <div class="trust-item">
         <div class="trust-icon">$</div>
@@ -1154,6 +1188,24 @@
       return `$${dollars}/hr`;
     }
 
+    // Treats null / undefined / non-numeric / 0 / negative as "no real performance data yet".
+    function isMissingMetric(v) {
+      const n = Number(v);
+      return v == null || !Number.isFinite(n) || n <= 0;
+    }
+
+    // Applies the "Building track record" trust-bar state.
+    // When BOTH metrics are missing, the two metric cells are hidden via CSS
+    // (.trust-bar.building-only) and replaced by a single "Building track record" pill.
+    // When at least one metric is present, the normal three-cell layout shows
+    // values (or "—" for whichever metric is missing on its own).
+    function applyTrackRecordState(responseTime, reliability) {
+      const bar = document.getElementById('trustBar');
+      if (!bar) return;
+      const bothMissing = isMissingMetric(responseTime) && isMissingMetric(reliability);
+      bar.classList.toggle('building-only', bothMissing);
+    }
+
     function bindProfile(payload) {
       const provider = payload?.data?.provider;
       const city = payload?.data?.city;
@@ -1175,6 +1227,9 @@
       // Only show a percentage when there is real survey data; 0 / null → dash
       setText('trustReliability', Number.isFinite(reliability) && reliability > 0 ? `${reliability}%` : '—');
       setText('trustPrice', formatPrice(provider?.hourly_rate_cents));
+      // When both response_time and reliability are missing, swap the two metric
+      // cells for a single "Building track record" pill (per Guidelines §10).
+      applyTrackRecordState(provider?.response_time_minutes, provider?.reliability_percent);
 
       // About — use about_text from providers (mapped to 'about' by RPC)
       const about = provider?.about;
@@ -1506,9 +1561,12 @@
       // Location
       setText('heroLocation', p.service_area || titleCaseFromSlug(currentCitySlug) || 'Vancouver');
 
-      // Trust bar — FROM rate = rate for the active category (or min across all if no category match)
+      // Trust bar — FROM rate = rate for the active category (or min across all if no category match).
+      // The provider_accounts fallback payload carries no response_time or reliability data,
+      // so both metrics are always missing on this path → show "Building track record".
       setText('trustResponse', '—');
       setText('trustReliability', '—');
+      applyTrackRecordState(null, null);
       const activeCategoryRate = rates[activeCategory];
       const activeCategoryRateNum = Number(activeCategoryRate);
       const fromRate = (Number.isFinite(activeCategoryRateNum) && activeCategoryRateNum > 0)
