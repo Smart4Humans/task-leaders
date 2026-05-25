@@ -726,6 +726,17 @@
       if (countEl) countEl.textContent = `${list.length || '—'} TaskLeaders`;
     }
 
+    // Safe numeric coercion. Returns null for null/undefined/non-numeric so that
+    // downstream null-vs-zero checks behave correctly. Without this guard,
+    // Number(null) returns 0 and Number.isFinite(0) is true — silently converting
+    // missing API metrics into 0, which then renders as "~0 min" / "0%" and
+    // triggers Fast/Top badge logic. See category-page metric mapping below.
+    function safeNum(v) {
+      if (v == null) return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
+
     function formatResp(min) {
       if (!Number.isFinite(min)) return '—';
       return `~${min} min`;
@@ -1018,11 +1029,16 @@
 
         const apiProviders = payload.data?.providers || [];
         providers = (Array.isArray(apiProviders) ? apiProviders : []).map((r) => {
-          const price = Number.isFinite(Number(r.hourly_rate_cents)) ? Math.round(Number(r.hourly_rate_cents) / 100) : null;
-          const response = Number.isFinite(Number(r.response_time_minutes)) ? Number(r.response_time_minutes) : null;
-          const reliability = Number.isFinite(Number(r.reliability_percent)) ? Number(r.reliability_percent) : null;
-          const rank = Number.isFinite(Number(r.rank)) ? Number(r.rank) : null;
-          const isFeatured = Boolean(r.is_featured);
+          // Use safeNum so NULL fields from the API stay null and don't get
+          // coerced to 0 (which would fail downstream null-vs-zero guards
+          // and surface as "~0 min" / "0%" / Fast/Top badges for new providers
+          // with no performance data yet).
+          const priceCents  = safeNum(r.hourly_rate_cents);
+          const price       = priceCents == null ? null : Math.round(priceCents / 100);
+          const response    = safeNum(r.response_time_minutes);
+          const reliability = safeNum(r.reliability_percent);
+          const rank        = safeNum(r.rank);
+          const isFeatured  = Boolean(r.is_featured);
 
           return {
             providerSlug: r.provider_slug,

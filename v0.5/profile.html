@@ -108,7 +108,8 @@
       font-size: 28px;
       font-weight: 700;
       margin: 0 0 12px 0;
-      letter-spacing: -0.3px;
+      letter-spacing: -0.5px;
+      font-feature-settings: "kern" 1;
     }
     .hero-category {
       display: inline-block;
@@ -1541,10 +1542,19 @@
       const displayName = (p.display_name_type === 'business' && p.business_name)
         ? p.business_name.trim()
         : [p.first_name, p.last_name].filter(Boolean).join(' ').trim() || 'TaskLeader';
-      const firstName = (p.first_name || '').trim() || displayName.split(' ')[0];
+      // Compute the public-facing Connect-CTA name from the public display
+      // name, never from the internal-only p.first_name field. For business
+      // listings, use the generic "this TaskLeader" so the personal first
+      // name preserved internally for backend/Twilio routing (e.g. "Savio"
+      // on a "Demo HVAC Provider" business listing) cannot leak into public
+      // copy. For personal listings, the first word of displayName is the
+      // first name by construction (displayName = first_name + last_name).
+      const connectName = (p.display_name_type === 'business' && p.business_name)
+        ? 'this TaskLeader'
+        : (displayName.split(' ')[0] || 'this TaskLeader');
 
       setProviderName(displayName);
-      setConnectFirstName(firstName);
+      setConnectFirstName(connectName);
 
       // Profile photo — provider's own record only, no fallback to another provider
       if (p.profile_photo) setProviderPhoto(p.profile_photo, displayName);
