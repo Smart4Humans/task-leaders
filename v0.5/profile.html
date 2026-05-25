@@ -1179,11 +1179,24 @@
     }
 
     // Derives a 1- or 2-letter initials string from the public display name.
-    // "Demo HVAC Provider" → "DH"; "John Smith" → "JS"; "TaskLeader" → "T".
     // Sourced from the public display name only — never from internal p.first_name.
+    // Generic trailing suffixes ("Provider", "Inc", "Services", etc.) are stripped
+    // before picking initials so "Demo HVAC Provider" → "DH" (not "DP") and
+    // "HVAC Services Inc" → "H" (not "HS"). The single-word guard preserves
+    // "Provider" alone → "P" so the function never returns empty for a
+    // suffix-only name.
+    //
+    // Keep this helper in sync with the identical copy in v0.5/category.html.
     function deriveInitials(name) {
       if (!name) return '';
+      const GENERIC_SUFFIXES = new Set([
+        'provider','providers','taskleader','taskleaders',
+        'service','services','inc','ltd','llc','co','company'
+      ]);
       const parts = String(name).trim().split(/\s+/).filter(Boolean);
+      while (parts.length > 1 && GENERIC_SUFFIXES.has(parts[parts.length - 1].toLowerCase())) {
+        parts.pop();
+      }
       if (parts.length === 0) return '';
       if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
       return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();

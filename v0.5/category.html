@@ -845,12 +845,47 @@
       return `profile.html?${params.toString()}`;
     }
 
-    function avatarImg(p) {
-      const fallback = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=0b1020&textColor=ffffff`;
-      if (p.photoUrl) {
-        return `<img src="${escapeHtml(p.photoUrl)}" alt="" onerror="this.onerror=null;this.src='${fallback}'">`;
+    // Mirror of profile.html's deriveInitials — kept identical so both pages
+    // render the same initials for the same provider. Duplicated rather than
+    // extracted to a shared file (no existing shared-JS pattern beyond config.js).
+    // Generic trailing suffixes are stripped: "Demo HVAC Provider" → "DH"
+    // (not "DP"), "HVAC Services Inc" → "H". Single-word guard preserves
+    // "Provider" alone → "P".
+    function deriveInitials(name) {
+      if (!name) return '';
+      const GENERIC_SUFFIXES = new Set([
+        'provider','providers','taskleader','taskleaders',
+        'service','services','inc','ltd','llc','co','company'
+      ]);
+      const parts = String(name).trim().split(/\s+/).filter(Boolean);
+      while (parts.length > 1 && GENERIC_SUFFIXES.has(parts[parts.length - 1].toLowerCase())) {
+        parts.pop();
       }
-      return `<img src="${fallback}" alt="">`;
+      if (parts.length === 0) return '';
+      if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+
+    // Inline SVG initials avatar — replaces the previous api.dicebear.com call.
+    // Matches dicebear's color choices (dark navy bg, white text) so the visual
+    // look of category-card avatars is unchanged; only the algorithm changes.
+    // Self-contained: no third-party runtime dependency, no network round-trip.
+    function initialsAvatarSrc(initials) {
+      const safe = String(initials || '?').replace(/[<>&"']/g, '');
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">' +
+                  '<rect width="80" height="80" fill="#0b1020"/>' +
+                  '<text x="40" y="42" font-family="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif" ' +
+                  'font-size="32" font-weight="700" fill="#ffffff" ' +
+                  'text-anchor="middle" dominant-baseline="central">' + safe + '</text></svg>';
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    function avatarImg(p) {
+      const fallback = initialsAvatarSrc(deriveInitials(p.name));
+      if (p.photoUrl) {
+        return `<img src="${escapeHtml(p.photoUrl)}" alt="" onerror="this.onerror=null;this.src='${escapeHtml(fallback)}'">`;
+      }
+      return `<img src="${escapeHtml(fallback)}" alt="">`;
     }
 
     // P3 — service-area label.
