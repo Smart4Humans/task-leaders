@@ -104,6 +104,21 @@
       object-fit: cover;
     }
     .hero-photo img[src=""] { display: none; }
+    /* Initials placeholder — shown when the provider has no profile photo.
+       Brand-consistent inline alternative to fetching a third-party avatar. */
+    .hero-photo-initials {
+      display: none;
+      width: 100%;
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+      font-size: 44px;
+      font-weight: 700;
+      color: var(--blue);
+      background: rgba(0,102,255,0.06);
+      letter-spacing: 1px;
+      font-feature-settings: "kern" 1;
+    }
     .hero-name {
       font-size: 28px;
       font-weight: 700;
@@ -698,6 +713,7 @@
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-photo">
+        <span class="hero-photo-initials" id="providerInitials" aria-hidden="true"></span>
         <img id="providerPhoto" src="" alt="" style="display:none;" />
       </div>
       <h1 class="hero-name" id="providerNameHero">Loading profile…</h1>
@@ -783,7 +799,7 @@
     <!-- Secondary CTA -->
     <section class="secondary-cta">
       <button class="connect-btn" onclick="openModal()">
-        💬 Connect with <span id="connectBtnName">…</span>
+        💬 Connect
       </button>
       <p class="connect-note">via <span style="color:var(--success);">WhatsApp</span></p>
     </section>
@@ -1162,16 +1178,39 @@
       section.style.display = '';
     }
 
+    // Derives a 1- or 2-letter initials string from the public display name.
+    // "Demo HVAC Provider" → "DH"; "John Smith" → "JS"; "TaskLeader" → "T".
+    // Sourced from the public display name only — never from internal p.first_name.
+    function deriveInitials(name) {
+      if (!name) return '';
+      const parts = String(name).trim().split(/\s+/).filter(Boolean);
+      if (parts.length === 0) return '';
+      if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+
     function setProviderPhoto(url, name) {
-      const img = document.getElementById('providerPhoto');
+      const img  = document.getElementById('providerPhoto');
+      const init = document.getElementById('providerInitials');
       if (!img) return;
+
       if (url && url.trim()) {
+        // Real photo path — show image, hide initials.
         img.setAttribute('src', url.trim());
         img.style.display = '';
+        if (init) init.style.display = 'none';
       } else {
+        // No photo — hide img and surface initials placeholder so the circle
+        // is never empty/broken. Loading state (empty name) renders nothing,
+        // matching the prior neutral default.
         img.removeAttribute('src');
         img.setAttribute('src', '');
         img.style.display = 'none';
+        if (init) {
+          const initials = deriveInitials(name);
+          init.textContent = initials;
+          init.style.display = initials ? 'flex' : 'none';
+        }
       }
       if (name) img.setAttribute('alt', name);
     }
@@ -1556,8 +1595,10 @@
       setProviderName(displayName);
       setConnectFirstName(connectName);
 
-      // Profile photo — provider's own record only, no fallback to another provider
-      if (p.profile_photo) setProviderPhoto(p.profile_photo, displayName);
+      // Profile photo — provider's own record only, no fallback to another provider.
+      // Always call setProviderPhoto so the initials placeholder fires when no
+      // photo exists (otherwise the hero circle would render empty).
+      setProviderPhoto(p.profile_photo || '', displayName);
 
       // Category badge — use URL ?category= if it exists in provider's service_rates,
       // otherwise fall back to primary_service. Strip leading emoji for display.
