@@ -176,7 +176,6 @@
     }
     /* Match category page badge colors exactly */
     .bicon.fast { border: 1px solid rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
-    .bicon.verified { border: 1px solid var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
     .bicon.top { border: 1px solid rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
     .bicon.today { border: 1px solid rgba(255,100,50,0.25); background: rgba(255,100,50,0.08); color: rgba(255,100,50,0.95); }
     .bicon.after { border: 1px solid rgba(150,100,255,0.25); background: rgba(150,100,255,0.08); color: rgba(150,100,255,0.95); }
@@ -195,33 +194,6 @@
       white-space: nowrap;
       z-index: 10;
       margin-bottom: 4px;
-    }
-    
-    /* Verified Badge Row - icon + visible label */
-    .verified-badge-row {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 24px;
-    }
-    .verified-icon {
-      width: 24px;
-      height: 24px;
-      border-radius: 5px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      border: 1px solid var(--blue);
-      background: rgba(0,102,255,0.12);
-      color: var(--blue);
-    }
-    .verified-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--blue);
     }
     
     /* Primary CTA */
@@ -704,12 +676,6 @@
         <div class="trust-value" id="trustPrice">$40/hr</div>
       </div>
     </section>
-
-    <!-- Verified Badge - icon + visible label -->
-    <div class="verified-badge-row">
-      <span class="verified-icon">✓</span>
-      <span class="verified-label">Verified</span>
-    </div>
 
     <!-- Primary CTA -->
     <section class="primary-cta">

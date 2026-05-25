@@ -196,7 +196,6 @@
     .legend .ic { width: 18px; height: 18px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
     /* Legend icons match row badge colors exactly */
     .legend .ic.fast { border: 1px solid rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
-    .legend .ic.verified { border: 1px solid var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
     .legend .ic.top { border: 1px solid rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
 
 
@@ -330,7 +329,6 @@
     }
     /* Row badge colors match legend exactly */
     .bicon.fast { border: 1px solid rgba(0,200,83,0.25); background: rgba(0,200,83,0.08); color: rgba(0,200,83,0.95); }
-    .bicon.verified { border: 1px solid var(--blue); background: rgba(0,102,255,0.12); color: var(--blue); }
     .bicon.top { border: 1px solid rgba(255,184,0,0.25); background: rgba(255,184,0,0.08); color: rgba(255,184,0,0.95); }
 
     
@@ -587,7 +585,6 @@
 
     <div class="legend">
       <span class="item" title="Responds in under 5 minutes"><span class="ic fast">⚡</span> Fast</span>
-      <span class="item" title="Identity & background verified"><span class="ic verified">✓</span> Verified</span>
       <span class="item" title="Top 10% performance score"><span class="ic top">🏆</span> Top</span>
     </div>
 
@@ -786,7 +783,6 @@
     function renderBadges(p) {
       const badges = [];
       if (Number.isFinite(p.response) && p.response <= 5) badges.push('<span class="bicon fast" data-tooltip="Fast Responder">⚡</span>');
-      if (p.verified) badges.push('<span class="bicon verified" data-tooltip="Verified">✓</span>');
       if (p.top) badges.push('<span class="bicon top" data-tooltip="Top Performer">🏆</span>');
       return badges.slice(0, 3).join('');
     }
@@ -1025,7 +1021,6 @@
             response,
             reliability,
             price,
-            verified: true,
             top: isFeatured || (rank !== null && rank <= 3),
           };
         });
