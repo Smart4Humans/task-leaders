@@ -553,3 +553,37 @@ Do **not** update this file to reflect desired future behavior — only confirme
 - No backend file modified (no `supabase/functions/` change; no migration added; `_shared/` untouched).
 - No Stripe / Twilio / Resend / Airtable / Provider Intelligence / secrets path touched.
 - No DB mutation; no provider outreach initiated.*
+
+*2026-05-28 supplement (B7 + B8 — onboarding hole patches and TaskLeader Guidelines footer scope correction). Two same-week frontend-only cleanups following the 7-commit readiness sequence (`dc41030..5be8e5a`).*
+
+*__Commit `0bf3110` — Slice B7: plug two onboarding holes.__ Two surgical patches identified by an application/onboarding readiness audit:*
+- *`v0.5/taskleader-signin.html` previously rendered a fake sign-in form with `handleSignIn()` running a 1.5s `setTimeout` cosmetic delay then showing a "Check your email" success state — **no backend existed and no email was ever sent**. Replaced with an honest static info card: "TaskLeader sign-in is not enabled yet. If you need to update your profile or payment information, contact TaskLeaders at info@task-leaders.com." Removed all form markup, success-state HTML, `handleSignIn` / `resetForm` JS, and the inline `<script>` block. Real magic-link sign-in remains parked as a future slice.*
+- *`v0.5/taskleader-profile-setup.html` previously had a dead `else` branch in `handleSubmit()` that POSTed to a non-existent `/profile-setup` endpoint when the page was accessed without a `?slug=` parameter (live OPTIONS to that endpoint returned 404). Added a slug-presence gate in `init()`: if no slug, hide the setup form, reveal a new `#invalid-link-state` element ("Invalid or expired profile setup link" with mailto contact + Back-to-Home CTA). Added a defense-in-depth slug guard at the top of `handleSubmit()` for the DevTools-bypass case. Removed the dead `else` branch. Welcome-flow path (`?slug=…`) untouched — still POSTs to `/complete-onboarding` with photo uploads via Supabase Storage. Audit also surfaced operational follow-ons carried forward as non-blocking: welcome-link delivery is fully manual; `complete-onboarding` response shape misleadingly hard-codes `status:'active'`; `TWILIO_TEMPLATE_SID_WT1` needs verification; Supabase Storage `provider-photos` bucket policies need verification before first real activation.*
+
+*__Commit `d78b69f` — Slice B8: TaskLeader Guidelines footer scope correction.__ Slice B1 had added a standardized public footer with `Terms · Privacy · TaskLeader Guidelines · ©` to every public HTML page. Todd's later clarification: TaskLeader Guidelines are provider-facing operational rules, NOT public navigation/footer material. Removed the Guidelines footer link from 11 files (homepage, category, profile, concierge, become-task-leader, welcome, taskleader-signin, provider-profile, terms, privacy, taskleader-profile-setup). Also softened the public Lead Fee Guarantee body copy on `become-task-leader.html:351` from "subject to the conditions in the TaskLeader Guidelines" → "subject to conditions provided during onboarding" so the document name no longer appears on the initial public recruitment page. Public footers now uniformly render `Terms · Privacy · © 2026 TaskLeaders Network Inc.` (or page-local equivalents on terms/privacy with a Back link). **Preserved verbatim:** the acceptance-checkbox link on `taskleader-profile-setup.html:798` (the canonical controlled-acceptance surface — `I have read and agree to the <a href="guidelines.html" target="_blank">TaskLeader Guidelines</a>.`); `v0.5/guidelines.html` itself (reachable by direct URL for the acceptance link); Terms §7.2 body content describing the existence of a separate Guidelines agreement (legal-doc content, not navigation).*
+
+*__Operating rule recorded (final — do not revisit without explicit Todd request):__*
+- *TaskLeader Guidelines are provider-facing operational rules.*
+- *They are NOT public navigation/footer material.*
+- *They are NOT shown on the public homepage, category pages, public profile pages, Concierge page, or initial public Become a TaskLeader page.*
+- *They are exposed only inside the controlled approved-TaskLeader onboarding/profile setup submission step where the TaskLeader accepts them.*
+- *Terms and Privacy remain the public/customer-facing footer/legal links.*
+- *Do not revisit TaskLeader Guidelines placement, public footer legal links, Terms/Privacy placement, or initial application consent logic unless Todd explicitly asks.*
+
+*__Current readiness state (as of `d78b69f`):__*
+- *Provider-facing public-site cleanup remains suitable for a **controlled founder-led conversation with one real prospective TaskLeader** per the runbook produced earlier in this session.*
+- ***Slice B2 admin client-side gating** (password prompt on `/v0.5/admin/approve.html` and `/v0.5/admin/profile-review.html`) remains **parked / queued, not started**. Admin pages publicly reachable but `noindex,nofollow`; backend `admin_password` gates write actions; `/v0.5/admin/` directory listing returns 404. Not blocking one controlled screenshare with disciplined browser hygiene; should be revisited before unsupervised provider browsing or broader outreach.*
+- ***Stripe remains test mode** (`pk_test_…` in `v0.5/js/config.js`). No live cutover. No payment requested in any controlled conversation unless explicitly switched later.*
+- ***No real provider outreach has been initiated.***
+
+*__Operational invariants unchanged:__*
+- *Repo / source / deployed-bytes invariant intact across both commits.*
+- *Working tree clean; local `main` = `origin/main` = `d78b69f6ad79299dccdb2987723567c07d071064`.*
+- *GitHub Pages build healthy; last rebuild `2026-05-28 04:24:18 UTC` (commit `d78b69f`).*
+- *No backend file modified (no `supabase/functions/` change; no migration added; `_shared/` untouched).*
+- *No Stripe / Twilio / Resend / Airtable / Provider Intelligence / secrets path touched.*
+- *No admin pages modified.*
+- *No onboarding acceptance logic changed (the acceptance-checkbox link on `taskleader-profile-setup.html:798` is preserved verbatim).*
+- *No new legal/consent checkboxes added.*
+- *No Terms/Privacy legal body content rewritten.*
+- *No DB mutation; no provider outreach initiated.*
