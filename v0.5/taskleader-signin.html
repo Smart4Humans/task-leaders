@@ -182,82 +182,26 @@
   </header>
 
   <main>
-    <!-- Sign In Form -->
-    <div id="signin-form">
-      <div class="hero">
-        <h1>Welcome back, <span class="blue">Task</span>Leader</h1>
-        <p>Sign in to update your profile information</p>
-      </div>
-
-      <div class="signin-card">
-        <form onsubmit="handleSignIn(event)">
-          <div class="form-group">
-            <label for="email">Email Address</label>
-            <input
-              type="email"
-              id="email"
-              placeholder="you@example.com"
-              required
-              autocomplete="email"
-            />
-            <p class="helper-text">We'll send a secure sign-in link to the email you registered with. No password needed. Check your spam folder if you don't see it.</p>
-          </div>
-
-          <button type="submit" class="submit-btn" id="submitBtn">
-            Send Sign In Link
-          </button>
-        </form>
-      </div>
-
-      <div class="trust-badges">
-        <span class="trust-badge">🔒 Secure</span>
-        <span class="trust-badge">✓ No password needed</span>
-        <span class="trust-badge">⚡ Instant access</span>
-      </div>
+    <div class="hero">
+      <h1><span class="blue">Task</span>Leader sign-in</h1>
     </div>
 
-    <!-- Success State -->
-    <div class="success-message" id="success-message">
-      <div class="success-icon">📧</div>
-      <h2>Check your email</h2>
-      <p>We've sent a secure sign-in link to:</p>
-      <div class="email-sent" id="sentEmail">you@example.com</div>
-      <p style="font-size: 13px; color: var(--muted);">
-        Click the link in your email to update your profile.<br>
-        The link expires in 15 minutes for security.
+    <!-- Sign-in is not yet enabled. Self-serve magic-link / token-based
+         provider sign-in is parked as a separate slice. Until then,
+         direct providers to the email channel for any profile or
+         payment information change requests. -->
+    <div class="signin-card" style="text-align:center;">
+      <p style="font-size:16px;line-height:1.6;color:#fff;margin:0 0 16px 0;font-weight:600;">
+        TaskLeader sign-in is not enabled yet.
       </p>
-      <p style="margin-top: 24px; font-size: 13px; color: var(--muted);">
-        Didn't receive it? <a href="#" onclick="resetForm()" style="color: var(--blue);">Try again</a>
+      <p style="font-size:15px;line-height:1.6;color:var(--muted);margin:0;">
+        If you need to update your profile or payment information, contact TaskLeaders at
+        <a href="mailto:info@task-leaders.com" style="color:var(--blue);text-decoration:none;font-weight:600;">info@task-leaders.com</a>.
       </p>
     </div>
   </main>
 
   <script src="js/config.js"></script>
-  <script>
-    function handleSignIn(e) {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const submitBtn = document.getElementById('submitBtn');
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Sending...';
-
-      setTimeout(() => {
-        document.getElementById('sentEmail').textContent = email;
-        document.getElementById('signin-form').style.display = 'none';
-        document.getElementById('success-message').classList.add('show');
-
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Send Sign In Link';
-      }, 1500);
-    }
-
-    function resetForm() {
-      document.getElementById('email').value = '';
-      document.getElementById('signin-form').style.display = 'block';
-      document.getElementById('success-message').classList.remove('show');
-    }
-  </script>
   <footer style="text-align:center;padding:32px 20px;border-top:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);margin-top:32px;">
     <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.5);">
       <a href="terms.html" style="color:rgba(255,255,255,0.5);text-decoration:none;">Terms</a> &nbsp;&middot;&nbsp;

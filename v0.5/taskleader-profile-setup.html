@@ -822,6 +822,17 @@
       <p id="successBody">Profiles are reviewed within 24 hrs and activated barring any issues.<br>We look forward to sending you your first lead!</p>
       <a href="homepage.html" class="btn-secondary" id="successCta">Back to Home</a>
     </div>
+
+    <!-- Invalid-link state: shown when the page is opened without ?slug=...
+         Profile setup is only valid via the invite-only welcome flow that
+         is issued after an application is approved. Without a slug there
+         is no valid backend destination for the form data. -->
+    <div class="success-message" id="invalid-link-state">
+      <div class="success-icon">⚠️</div>
+      <h2>Invalid or expired profile setup link</h2>
+      <p>This page can only be opened from the TaskLeaders welcome link sent after your application is approved. If you need a new link or have questions, contact TaskLeaders at <a href="mailto:info@task-leaders.com" style="color:var(--blue);text-decoration:none;font-weight:600;">info@task-leaders.com</a>.</p>
+      <a href="homepage.html" class="btn-secondary">Back to Home</a>
+    </div>
   </main>
 
   <script src="js/config.js"></script>
@@ -848,12 +859,19 @@
       updatePrimaryServiceRateLabel();
 
       onboardingSlug = getSlug();
-      if (onboardingSlug) {
-        document.getElementById('backBtn').href = `welcome.html?slug=${encodeURIComponent(onboardingSlug)}&screen=4`;
-        await prefillFromProvider(onboardingSlug);
-      } else {
-        document.getElementById('backBtn').href = 'homepage.html';
+      if (!onboardingSlug) {
+        // Profile setup is only valid via the invite-only welcome flow that
+        // is issued after an application is approved. Without a slug there
+        // is no valid backend destination for the form data (the prior
+        // no-slug branch in handleSubmit was a silent 404 to a non-existent
+        // /profile-setup endpoint). Hide the form and surface the
+        // invalid-link state so we never collect data we cannot save.
+        document.getElementById('setup-form').style.display = 'none';
+        document.getElementById('invalid-link-state').classList.add('show');
+        return;
       }
+      document.getElementById('backBtn').href = `welcome.html?slug=${encodeURIComponent(onboardingSlug)}&screen=4`;
+      await prefillFromProvider(onboardingSlug);
     }
 
     async function prefillFromProvider(slug) {
@@ -1100,6 +1118,12 @@
     async function handleSubmit(e) {
       e.preventDefault();
 
+      // Defense-in-depth: handleSubmit must never run without a slug.
+      // init() already gates the page on slug presence and hides the form,
+      // but a DevTools-savvy user could re-enable it; without a slug there
+      // is no valid backend destination, so refuse to submit.
+      if (!onboardingSlug) return;
+
       const btn = document.getElementById('submitBtn');
       const errorEl = document.getElementById('formError');
       errorEl.style.display = 'none';
@@ -1139,53 +1163,43 @@
       const base = window.TASKLEADERS_FUNCTIONS_BASE || '';
 
       try {
-        if (onboardingSlug) {
-          // Upload profile photo + work photos to storage (non-blocking on failure)
-          btn.textContent = 'Uploading photos…';
-          const [profilePhotoUrl, workPhotoUrls] = await Promise.all([
-            uploadProfilePhoto(onboardingSlug),
-            uploadWorkPhotos(onboardingSlug),
-          ]);
-          btn.textContent = 'Submitting…';
+        // Upload profile photo + work photos to storage (non-blocking on failure).
+        // onboardingSlug is guaranteed non-empty by init() gate + handleSubmit
+        // guard above; the no-slug submission branch (which previously POSTed
+        // to a non-existent /profile-setup endpoint) has been removed.
+        btn.textContent = 'Uploading photos…';
+        const [profilePhotoUrl, workPhotoUrls] = await Promise.all([
+          uploadProfilePhoto(onboardingSlug),
+          uploadWorkPhotos(onboardingSlug),
+        ]);
+        btn.textContent = 'Submitting…';
 
-          // Coming from the welcome flow — update providers record and activate
-          const res = await fetch(`${base.replace(/\/$/, '')}/complete-onboarding`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...payload,
-              slug: onboardingSlug,
-              profilePhoto: profilePhotoUrl || undefined,
-              workPhotos: workPhotoUrls.length > 0 ? workPhotoUrls : undefined,
-            }),
-          });
-          const data = await res.json().catch(() => null);
-          if (!data || data.ok !== true) {
-            const msg = data?.error?.message || 'Submission failed. Please try again.';
-            errorEl.textContent = msg;
-            errorEl.style.display = 'block';
-            btn.disabled = false;
-            btn.textContent = 'Complete Profile';
-            return;
-          }
-        } else {
-          // Standard new profile submission
-          await fetch(`${base}/profile-setup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-        }
-      } catch (_) {
-        if (onboardingSlug) {
-          // For welcome-flow submissions, surface the error — don't silently succeed
-          errorEl.textContent = 'Network error. Please check your connection and try again.';
+        // Coming from the welcome flow — update providers record and activate
+        const res = await fetch(`${base.replace(/\/$/, '')}/complete-onboarding`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...payload,
+            slug: onboardingSlug,
+            profilePhoto: profilePhotoUrl || undefined,
+            workPhotos: workPhotoUrls.length > 0 ? workPhotoUrls : undefined,
+          }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!data || data.ok !== true) {
+          const msg = data?.error?.message || 'Submission failed. Please try again.';
+          errorEl.textContent = msg;
           errorEl.style.display = 'block';
           btn.disabled = false;
           btn.textContent = 'Complete Profile';
           return;
         }
-        // Standard flow: best-effort — always show confirmation
+      } catch (_) {
+        errorEl.textContent = 'Network error. Please check your connection and try again.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Complete Profile';
+        return;
       }
 
       document.getElementById('setup-form').style.display = 'none';
