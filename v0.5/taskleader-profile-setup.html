@@ -1036,7 +1036,7 @@
     async function uploadProfilePhoto(slug) {
       if (!_selectedProfilePhoto || !slug) return null;
       const SUPABASE_URL = 'https://iwgoafvemlsswkjroyhl.supabase.co';
-      const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3Z29hZnZlbWxzc3dranJveWhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNjMwMDksImV4cCI6MjA4ODkzOTAwOX0.1Eb-wyFk8Suyg2-POO-cy9mhPvb7-KlDg8VlZIIYMqI';
+      const ANON_KEY = window.TASKLEADERS_SUPABASE_PUBLISHABLE_KEY;
       const ext = _selectedProfilePhoto.name.split('.').pop().toLowerCase() || 'jpg';
       const path = `${slug}/profile.${ext}`;
       try {
@@ -1085,7 +1085,7 @@
     async function uploadWorkPhotos(slug) {
       if (!_selectedWorkPhotos.length || !slug) return [];
       const SUPABASE_URL = 'https://iwgoafvemlsswkjroyhl.supabase.co';
-      const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3Z29hZnZlbWxzc3dranJveWhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNjMwMDksImV4cCI6MjA4ODkzOTAwOX0.1Eb-wyFk8Suyg2-POO-cy9mhPvb7-KlDg8VlZIIYMqI';
+      const ANON_KEY = window.TASKLEADERS_SUPABASE_PUBLISHABLE_KEY;
       const urls = [];
       for (let i = 0; i < _selectedWorkPhotos.length; i++) {
         const file = _selectedWorkPhotos[i];
