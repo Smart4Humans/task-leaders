@@ -748,6 +748,58 @@
 
         <div id="conciergeList"><div class="loading-row">Loading…</div></div>
       </div>
+
+      <!-- ── Homepage Inquiries (read-only, v1A) ── -->
+      <div class="inquiries-section section-divider">
+        <div class="section-head">
+          <div class="section-title">Homepage Inquiries</div>
+          <span class="section-count" id="inquiriesCount"></span>
+        </div>
+
+        <!-- Demand rollups (computed client-side from returned rows) -->
+        <div id="inquiriesDemand" style="margin:8px 0 14px;font-size:13px;color:#444;line-height:1.6"></div>
+
+        <!-- Type filter tabs -->
+        <div class="filter-bar" id="inqTypeFilterBar">
+          <button class="filter-tab active" data-filter="all"                  onclick="setInquiryType(this)">All</button>
+          <button class="filter-tab"        data-filter="score_assessment"     onclick="setInquiryType(this)">Score requests</button>
+          <button class="filter-tab"        data-filter="marketplace_waitlist" onclick="setInquiryType(this)">Waitlist</button>
+        </div>
+
+        <!-- Status filter tabs -->
+        <div class="filter-bar" id="inqStatusFilterBar">
+          <button class="filter-tab active" data-filter="all"     onclick="setInquiryStatus(this)">All</button>
+          <button class="filter-tab"        data-filter="new"     onclick="setInquiryStatus(this)">New</button>
+          <button class="filter-tab"        data-filter="triaged" onclick="setInquiryStatus(this)">Triaged</button>
+          <button class="filter-tab"        data-filter="closed"  onclick="setInquiryStatus(this)">Closed</button>
+        </div>
+
+        <!-- Category / City / Follow-up dropdowns (populated dynamically from rows) -->
+        <div class="filter-bar" style="gap:8px;flex-wrap:wrap">
+          <select id="inqCategorySelect" class="search-input" style="max-width:220px" onchange="applyInquiryFilters()"></select>
+          <select id="inqCitySelect"     class="search-input" style="max-width:220px" onchange="applyInquiryFilters()"></select>
+          <select id="inqFollowupSelect" class="search-input" style="max-width:220px" onchange="applyInquiryFilters()"></select>
+        </div>
+
+        <!-- Search -->
+        <input
+          type="text"
+          class="search-input"
+          id="inquiriesSearch"
+          placeholder="Search by email, business, name, city, or category…"
+          oninput="applyInquiryFilters()"
+        />
+
+        <div id="inqScoreBlock">
+          <div style="font-weight:600;margin:16px 0 6px;font-size:14px">Score requests</div>
+          <div id="inqScoreList"><div class="loading-row">Loading…</div></div>
+        </div>
+
+        <div id="inqWaitlistBlock">
+          <div style="font-weight:600;margin:18px 0 6px;font-size:14px">Marketplace waitlist</div>
+          <div id="inqWaitlistList"><div class="loading-row">Loading…</div></div>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -840,6 +892,7 @@
         renderPipeline(data.data.approved         || []);
         renderConciergeQueue(data.data.concierge_clients || []);
         renderJobs(data.data.jobs                 || []);
+        renderHomepageInquiries(data.data.homepage_inquiries || []);
 
       } catch (err) {
         document.getElementById('pendingList').innerHTML =
@@ -1250,6 +1303,181 @@
             <tbody>${rows}</tbody>
           </table>
         </div>`;
+    }
+
+    // ── Render Homepage Inquiries (read-only, v1A) ──────────────────────────
+    // Pure display of public.homepage_inquiries. No POST, no mutation, no triage.
+    let allInquiries = [];
+    let inqType = 'all', inqStatus = 'all';
+
+    function renderHomepageInquiries(rows) {
+      allInquiries = Array.isArray(rows) ? rows : [];
+      populateInquiryDropdowns();
+      renderInquiryDemand();
+      applyInquiryFilters();
+    }
+
+    function setInquiryType(btn) {
+      document.querySelectorAll('#inqTypeFilterBar .filter-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      inqType = btn.dataset.filter;
+      applyInquiryFilters();
+    }
+    function setInquiryStatus(btn) {
+      document.querySelectorAll('#inqStatusFilterBar .filter-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      inqStatus = btn.dataset.filter;
+      applyInquiryFilters();
+    }
+
+    // Field selection differs by type: score rows use category_label/city_or_area,
+    // waitlist rows use category/city.
+    function inqCategoryOf(r) {
+      return (r.type === 'score_assessment')
+        ? (r.category_label || r.category_slug || '')
+        : (r.category || '');
+    }
+    function inqCityOf(r) {
+      return (r.type === 'score_assessment') ? (r.city_or_area || '') : (r.city || '');
+    }
+
+    function fillSelect(id, allLabel, opts) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const prev = el.value || 'all';
+      el.innerHTML = `<option value="all">${escHtml(allLabel)}</option>` +
+        opts.map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join('');
+      el.value = [...el.options].some(o => o.value === prev) ? prev : 'all';
+    }
+    function populateInquiryDropdowns() {
+      const cats = new Set(), cities = new Set(), fups = new Set();
+      allInquiries.forEach(r => {
+        const c  = inqCategoryOf(r).trim(); if (c)  cats.add(c);
+        const ci = inqCityOf(r).trim();     if (ci) cities.add(ci);
+        const f  = (r.followup_status || '').trim(); if (f) fups.add(f);
+      });
+      fillSelect('inqCategorySelect', 'All categories', [...cats].sort());
+      fillSelect('inqCitySelect',     'All cities',     [...cities].sort());
+      fillSelect('inqFollowupSelect', 'All follow-ups', [...fups].sort());
+    }
+
+    // Demand reflects the FULL returned set (not the current view filter) so the
+    // signal is stable regardless of what the admin is filtering to.
+    function renderInquiryDemand() {
+      const score = allInquiries.filter(r => r.type === 'score_assessment');
+      const wait  = allInquiries.filter(r => r.type === 'marketplace_waitlist');
+      const byCat = {};
+      score.forEach(r => { const k = inqCategoryOf(r).trim() || '(uncategorized)'; byCat[k] = (byCat[k] || 0) + 1; });
+      const byCityCat = {};
+      wait.forEach(r => {
+        const city = inqCityOf(r).trim() || '(no city)';
+        const cat  = inqCategoryOf(r).trim() || '(any)';
+        const k = `${city} · ${cat}`; byCityCat[k] = (byCityCat[k] || 0) + 1;
+      });
+      const fmt = (obj) => Object.keys(obj).length
+        ? Object.entries(obj).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${escHtml(k)}: ${v}`).join(' · ')
+        : 'none';
+      const el = document.getElementById('inquiriesDemand');
+      if (el) el.innerHTML =
+        `<strong>Demand</strong> (${score.length} Score · ${wait.length} Waitlist)<br>` +
+        `Score requests by category: ${fmt(byCat)}<br>` +
+        `Waitlist by city · category: ${fmt(byCityCat)}`;
+    }
+
+    function applyInquiryFilters() {
+      const q    = (document.getElementById('inquiriesSearch')?.value || '').toLowerCase().trim();
+      const cat  = document.getElementById('inqCategorySelect')?.value || 'all';
+      const city = document.getElementById('inqCitySelect')?.value || 'all';
+      const fup  = document.getElementById('inqFollowupSelect')?.value || 'all';
+
+      const match = (r) => {
+        if (inqStatus !== 'all' && (r.status || '') !== inqStatus) return false;
+        if (cat  !== 'all' && inqCategoryOf(r).trim() !== cat)  return false;
+        if (city !== 'all' && inqCityOf(r).trim()     !== city) return false;
+        if (fup  !== 'all' && (r.followup_status || '').trim() !== fup) return false;
+        if (q) {
+          const hay = [r.email, r.business_name, r.first_name, r.last_name,
+            inqCategoryOf(r), inqCityOf(r), r.page].map(x => (x || '').toLowerCase()).join(' ');
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      };
+
+      const score = (inqType === 'marketplace_waitlist') ? [] : allInquiries.filter(r => r.type === 'score_assessment' && match(r));
+      const wait  = (inqType === 'score_assessment')      ? [] : allInquiries.filter(r => r.type === 'marketplace_waitlist' && match(r));
+
+      const scoreBlock = document.getElementById('inqScoreBlock');
+      const waitBlock  = document.getElementById('inqWaitlistBlock');
+      if (scoreBlock) scoreBlock.style.display = (inqType === 'marketplace_waitlist') ? 'none' : '';
+      if (waitBlock)  waitBlock.style.display  = (inqType === 'score_assessment')      ? 'none' : '';
+
+      renderInquiryScoreTable(score);
+      renderInquiryWaitlistTable(wait);
+
+      const cnt = document.getElementById('inquiriesCount');
+      if (cnt) cnt.textContent = `${score.length + wait.length} shown · ${allInquiries.length} total`;
+    }
+
+    function inqAge(created) {
+      if (!created) return '—';
+      const then = new Date(created).getTime();
+      if (isNaN(then)) return '—';
+      const mins = Math.max(0, Math.floor((Date.now() - then) / 60000));
+      if (mins < 60) return `${mins}m`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs}h`;
+      return `${Math.floor(hrs / 24)}d`;
+    }
+    function sentMark(ts) {
+      return ts
+        ? `<span title="${escHtml(new Date(ts).toLocaleString('en-CA'))}" style="color:#1a7f37">✓</span>`
+        : `<span style="color:#b00020">✗</span>`;
+    }
+
+    function renderInquiryScoreTable(rows) {
+      const el = document.getElementById('inqScoreList');
+      if (!el) return;
+      if (!rows.length) { el.innerHTML = '<div class="empty-row">No Score requests match the current filter.</div>'; return; }
+      const body = rows.map(r => `<tr>
+        <td><span class="job-muted">${inqAge(r.created_at)}</span></td>
+        <td>${escHtml((`${r.first_name || ''} ${r.last_name || ''}`).trim() || '—')}</td>
+        <td>${escHtml(r.business_name || '—')}</td>
+        <td>${escHtml(r.category_label || r.category_slug || '—')}</td>
+        <td>${escHtml(r.city_or_area || '—')}</td>
+        <td>${escHtml(r.score_category_status || '—')}</td>
+        <td>${escHtml(r.score_status || '—')}</td>
+        <td>${escHtml(r.offer_stage || '—')}</td>
+        <td>${escHtml(r.followup_status || '—')}</td>
+        <td>${escHtml(r.email || '—')}</td>
+        <td style="text-align:center">${sentMark(r.internal_notification_sent_at)}</td>
+        <td style="text-align:center">${sentMark(r.autoresponder_sent_at)}</td>
+      </tr>`).join('');
+      el.innerHTML = `<div class="jobs-table-wrap"><table class="jobs-table"><thead><tr>
+        <th>Age</th><th>Name</th><th>Business</th><th>Category</th><th>City/Area</th>
+        <th>Cat status</th><th>Score status</th><th>Offer stage</th><th>Follow-up</th>
+        <th>Email</th><th>Notified</th><th>Auto-reply</th>
+      </tr></thead><tbody>${body}</tbody></table></div>`;
+    }
+
+    function renderInquiryWaitlistTable(rows) {
+      const el = document.getElementById('inqWaitlistList');
+      if (!el) return;
+      if (!rows.length) { el.innerHTML = '<div class="empty-row">No waitlist entries match the current filter.</div>'; return; }
+      const body = rows.map(r => `<tr>
+        <td><span class="job-muted">${inqAge(r.created_at)}</span></td>
+        <td>${escHtml(r.email || '—')}</td>
+        <td>${escHtml(r.city || '—')}</td>
+        <td>${escHtml(r.category || '—')}</td>
+        <td>${escHtml(r.status || '—')}</td>
+        <td>${escHtml(r.offer_stage || '—')}</td>
+        <td>${escHtml(r.followup_status || '—')}</td>
+        <td style="text-align:center">${sentMark(r.internal_notification_sent_at)}</td>
+        <td style="text-align:center">${sentMark(r.autoresponder_sent_at)}</td>
+      </tr>`).join('');
+      el.innerHTML = `<div class="jobs-table-wrap"><table class="jobs-table"><thead><tr>
+        <th>Age</th><th>Email</th><th>City</th><th>Category</th><th>Status</th>
+        <th>Offer stage</th><th>Follow-up</th><th>Notified</th><th>Auto-reply</th>
+      </tr></thead><tbody>${body}</tbody></table></div>`;
     }
 
     // ── Render Concierge Queue ──────────────────────────────────────────────

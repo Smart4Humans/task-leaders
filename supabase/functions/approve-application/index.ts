@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
     const pw  = url.searchParams.get("admin_password");
     if (pw !== adminPassword) return error("unauthorized", "Invalid admin password", 401);
 
-    const [pendingRes, approvedRes, conciergeRes, jobsRes, pendingOnboardingRes] = await Promise.all([
+    const [pendingRes, approvedRes, conciergeRes, jobsRes, pendingOnboardingRes, inquiriesRes] = await Promise.all([
       supabase
         .from("applications")
         .select("id, created_at, contact_name, business_name, email, whatsapp_e164, service_area, category_slug, description, status")
@@ -132,6 +132,16 @@ Deno.serve(async (req) => {
         .eq("suspended", false)
         .order("created_at", { ascending: false })
         .limit(50),
+
+      // Homepage inquiry capture (Score requests + Marketplace waitlist) — read-only
+      // admin visibility (v1A). RLS-locked table; service-role read here only.
+      // No triage/write actions in this slice; surfaced for the admin Homepage
+      // Inquiries section to remove the manual "check Supabase rows / inbox" step.
+      supabase
+        .from("homepage_inquiries")
+        .select("id, type, status, email, first_name, last_name, business_name, category_slug, category_label, city_or_area, city, category, score_category_status, score_status, offer_stage, followup_status, internal_notification_sent_at, autoresponder_sent_at, source, page, created_at")
+        .order("created_at", { ascending: false })
+        .limit(200),
     ]);
 
     return json({
@@ -142,6 +152,7 @@ Deno.serve(async (req) => {
         approved:            approvedRes.data          ?? [],
         concierge_clients:   conciergeRes.data         ?? [],
         jobs:                jobsRes.data              ?? [],
+        homepage_inquiries:  inquiriesRes.data         ?? [],
       },
     });
   }
