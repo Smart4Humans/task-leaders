@@ -11,6 +11,12 @@
 [functions.apply]
 verify_jwt = false
 
+# Public homepage Score-request + Marketplace-waitlist capture. Called by the
+# browser with no auth; validates + honeypots its own input, writes to
+# public.homepage_inquiries via service role, sends Resend notify + autoresponder.
+[functions.homepage-inquiry]
+verify_jwt = false
+
 [functions.public-homepage]
 verify_jwt = false
 
