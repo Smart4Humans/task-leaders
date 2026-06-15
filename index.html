@@ -26,7 +26,8 @@
     Marketplace section reproduces the real product UI (category grid + emoji + Concierge Request Access).
     GUARDRAILS: no public score/rank numbers, no leaderboard, no "X of N"; no Guidelines link
     (Privacy/Terms only in footer); no em dashes in public copy; no "founder-reviewed" credibility claim;
-    no fake provider rows. Form has NO backend: client-side mailto to score@task-leaders.com.
+    no fake provider rows. Forms POST to the homepage-inquiry Supabase Edge Function (JS fetch),
+    with a client-side mailto fallback on network error.
   -->
 
   <style>
