@@ -17,6 +17,12 @@ verify_jwt = false
 [functions.homepage-inquiry]
 verify_jwt = false
 
+# Internal daily digest of homepage inquiries (Score + Waitlist) — v1B.
+# pg_cron target via pg_net; SELECT-only on homepage_inquiries; sends ONE internal
+# email to TASKLEADERS_ADMIN_EMAIL. Auth: x-cron-secret header (INTERNAL_CRON_SECRET).
+[functions.homepage-inquiry-digest]
+verify_jwt = false
+
 [functions.public-homepage]
 verify_jwt = false
 
