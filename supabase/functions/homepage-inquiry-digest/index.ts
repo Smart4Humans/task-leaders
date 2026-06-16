@@ -74,7 +74,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
 
+  // Accepts EITHER the shared INTERNAL_CRON_SECRET (used by the production pg_cron
+  // job via app.cron_secret) OR a dedicated DIGEST_CRON_SECRET (for manual/admin
+  // triggers without touching the shared secret). Either match authorizes.
   const cronSecret     = Deno.env.get("INTERNAL_CRON_SECRET") ?? undefined;
+  const digestSecret   = Deno.env.get("DIGEST_CRON_SECRET") ?? undefined;
   const supabaseUrl    = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("TASKLEADERS_SERVICE_ROLE_KEY");
 
@@ -82,9 +86,13 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: "Missing configuration" }, 500);
   }
 
-  // Auth: cron secret header required (mirrors process-timeouts).
+  // Auth: x-cron-secret header must match either accepted secret.
   const incomingSecret = req.headers.get("x-cron-secret");
-  if (!cronSecret || incomingSecret !== cronSecret) {
+  const authed = !!incomingSecret && (
+    (!!cronSecret   && incomingSecret === cronSecret) ||
+    (!!digestSecret && incomingSecret === digestSecret)
+  );
+  if (!authed) {
     return json({ ok: false, error: "Unauthorized" }, 401);
   }
 
