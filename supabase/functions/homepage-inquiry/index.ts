@@ -115,8 +115,10 @@ Deno.serve(async (req) => {
     return error("bad_request", "Invalid JSON body");
   }
 
-  // ── Honeypot: bots fill the hidden "nickname" field. Pretend success; no write. ─
-  if (cleanString(body.nickname)) {
+  // ── Honeypot: bots fill the hidden honeypot field. Pretend success; no write. ─
+  // Field is named to avoid browser/password-manager autofill (was "nickname",
+  // an autofill magnet that produced false positives → silent lead loss).
+  if (cleanString(body.hp)) {
     return json({ ok: true, data: { received: true } }, 200);
   }
 

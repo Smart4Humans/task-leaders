@@ -355,7 +355,7 @@
       <div class="form-shell">
         <div class="form-main">
           <form id="af">
-            <input class="hp-field" type="text" id="af_nickname" name="nickname" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <input class="hp-field" type="text" id="af_hp" name="contact_pref" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="frow two">
               <div><label class="fl" for="first">First name</label><input class="inp" id="first" name="First name" type="text" required></div>
               <div><label class="fl" for="last">Last name</label><input class="inp" id="last" name="Last name" type="text" required></div>
@@ -486,7 +486,7 @@
         <h3>Looking for local help?</h3>
         <p>The TaskLeaders Marketplace is coming soon. Join the list and we'll let you know when service is available in your area.</p>
         <form id="wf" class="wl-form">
-          <input class="hp-field" type="text" id="wf_nickname" name="nickname" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <input class="hp-field" type="text" id="wf_hp" name="contact_pref" tabindex="-1" autocomplete="off" aria-hidden="true">
           <input class="inp" id="wlemail" name="Email" type="email" placeholder="Email" required>
           <input class="inp" id="wlcity" name="City" type="text" placeholder="City" required>
           <input class="inp" id="wlcat" name="Category needed" type="text" placeholder="Category (optional)">
@@ -552,7 +552,7 @@
           business_name:g('biz'), category:g('category'), city_or_area:g('city'),
           website:g('link'), note:g('note'),
           consent:!!(document.getElementById('consent')&&document.getElementById('consent').checked),
-          page:location.pathname, nickname:g('af_nickname') };
+          page:location.pathname, hp:g('af_hp') };
         if(btn){btn.disabled=true;}
         setMsg(afmsg,'ok','Sending...');
         fetch(BASE+'/homepage-inquiry',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
@@ -581,7 +581,7 @@
         var payload={ type:'marketplace_waitlist', email:g('wlemail'), city:g('wlcity'),
           category:g('wlcat'),
           consent:!!(document.getElementById('wlconsent')&&document.getElementById('wlconsent').checked),
-          page:location.pathname, nickname:g('wf_nickname') };
+          page:location.pathname, hp:g('wf_hp') };
         if(wbtn){wbtn.disabled=true;}
         setMsg(wfmsg,'ok','Sending...');
         fetch(BASE+'/homepage-inquiry',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
