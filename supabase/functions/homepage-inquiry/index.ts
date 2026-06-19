@@ -199,15 +199,18 @@ Deno.serve(async (req) => {
     autohtml = `<p>${esc(autotext).replace(/\n/g, "<br>")}</p>`;
   } else {
     // marketplace_waitlist
+    const firstName = cleanString(body.first_name);
+    const lastName = cleanString(body.last_name);
     const city = cleanString(body.city);
     const category = cleanString(body.category);
     if (!city) return error("validation_error", "City is required", { field: "city" });
-    for (const [f, v] of Object.entries({ city, category })) {
+    for (const [f, v] of Object.entries({ first_name: firstName, last_name: lastName, city, category })) {
       if (overCap(f, v as string)) return error("validation_error", `${f} is too long`, { field: f });
     }
 
     row = {
       type, status: "new", email,
+      first_name: firstName || null, last_name: lastName || null,
       city, category: category || null,
       consent: true, consent_text: CONSENT_TEXT_WAITLIST, consent_at: nowIso,
       source: "homepage", page: page || null, referrer, user_agent: userAgent,
@@ -255,7 +258,8 @@ Deno.serve(async (req) => {
           ]
         : [
             "New TaskLeaders Marketplace waitlist signup", "",
-            `Email: ${email}`, `City: ${r.city}`, `Category needed: ${r.category || "(not provided)"}`,
+            `Name: ${`${r.first_name || ""} ${r.last_name || ""}`.trim() || "(not provided)"}`,
+            `Email: ${email}`, `City: ${r.city}`,
             `Consent: ${CONSENT_TEXT_WAITLIST}`, `Consent at: ${nowIso}`,
             `Source: homepage  Page: ${page || "(n/a)"}`, `Record id: ${id}`,
           ];
