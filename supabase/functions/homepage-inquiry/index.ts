@@ -191,12 +191,29 @@ Deno.serve(async (req) => {
     notifyTo = "score@task-leaders.com";
     replyTo = SCORE_REPLY_TO;
     autosubject = "We received your TaskLeaders Score request";
-    if (scoreCategoryStatus === "unknown") {
-      autotext = `Hi ${firstName}, thanks for requesting your free TaskLeaders Score. We've received your request for ${businessName} and will review it before following up by email. If we need clarification about your service category, we'll ask by email. Your assessment is private and we don't publish your score.\n— The TaskLeaders Team`;
-    } else {
-      autotext = `Hi ${firstName}, thanks for requesting your free TaskLeaders Score. We've received your request for ${businessName} and will review it before following up by email. Your assessment is private and we don't publish your score. You can reply to this email with anything you'd like us to know.\n— The TaskLeaders Team`;
-    }
-    autohtml = `<p>${esc(autotext).replace(/\n/g, "<br>")}</p>`;
+    // One generic Score Summary autoresponder for every case (already scored,
+    // scored-but-not-releasable, not-yet-scored-supported, category-not-ready,
+    // identity/evidence unclear) — promises only "when it's ready"; exposes no
+    // internal status/rank/confidence/category limits. Marketplace CTA is kept
+    // clearly separate from the Score request.
+    const APPLY_URL = "https://task-leaders.com/v0.5/become-task-leader.html";
+    autotext = `Hi ${firstName},\n\n` +
+      `Thanks for requesting your free TaskLeaders Score Summary.\n\n` +
+      `We'll review your business information and email your private Score Summary when it's ready.\n\n` +
+      `In the meantime, if you'd also like to be considered for the TaskLeaders Marketplace and local service pro network, you can apply to become a TaskLeader here:\n` +
+      `${APPLY_URL}\n\n` +
+      `Your Score request and Marketplace application are separate. A free Score request does not guarantee Marketplace invitation or visibility. Marketplace participation depends on TaskLeaders standards, category fit, service area, and network needs.\n\n` +
+      `— The TaskLeaders Team`;
+    autohtml =
+      `<div style="font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;line-height:1.55;color:#0f1115">` +
+      `<p>Hi ${esc(firstName)},</p>` +
+      `<p>Thanks for requesting your free <strong>TaskLeaders Score Summary</strong>.</p>` +
+      `<p>We'll review your business information and email your private Score Summary when it's ready.</p>` +
+      `<p>In the meantime, if you'd also like to be considered for the TaskLeaders Marketplace and local service pro network, you can apply to become a TaskLeader:</p>` +
+      `<p><a href="${APPLY_URL}" style="display:inline-block;background:#00c853;color:#04240f;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:10px">Apply to become a TaskLeader</a></p>` +
+      `<p style="color:#5b6470;font-size:13px">Your Score request and Marketplace application are separate. A free Score request does not guarantee Marketplace invitation or visibility. Marketplace participation depends on TaskLeaders standards, category fit, service area, and network needs.</p>` +
+      `<p>— The TaskLeaders Team</p>` +
+      `</div>`;
   } else {
     // marketplace_waitlist
     const firstName = cleanString(body.first_name);
@@ -247,6 +264,7 @@ Deno.serve(async (req) => {
       const internalLines = type === "score_assessment"
         ? [
             "New TaskLeaders Score request (manual review)", "",
+            "Next step: review whether this business/category is already scored, needs scoring, or needs manual identity/category review.", "",
             `Name: ${r.first_name} ${r.last_name}`, `Email: ${email}`,
             `Business: ${r.business_name}`,
             `Category: ${r.category_label} (slug: ${r.category_slug}; status: ${r.score_category_status})`,
